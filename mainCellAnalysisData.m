@@ -1,9 +1,7 @@
     %% 1. Initialization:
 clear all; close all;
 addpath(genpath('\\phhydra\data-new\phkinnerets\home\lab\CODE\Hydra\'));
-addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\OrientationAnalysis'));
-addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\CellAnalysis'));
-addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes'));
+addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\GroupCodes'));
 
 mainDir='\\phhydra\phhydraB\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\'; % Main directory for movie you are analysing.
 cellDir = [mainDir,'\Cells\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).

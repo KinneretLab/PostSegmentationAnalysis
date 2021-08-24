@@ -24,8 +24,16 @@ for k = 1:length(sortedFolderNames)
         
         thisIm=importdata('handCorrection.tif');
         
+        cd(maskDir);
+        try 
+            thisMaskBW = imbinarize(imread([thisFolder,'.tiff']));
+        catch
+            thisMaskBW = imbinarize(imread([thisFolder,'.tif']));
+        end
+        
         thisImGray = rgb2gray(thisIm);
         thisImBW = imbinarize(thisImGray);
+        thisImBW = thisImBW.*thisMaskBW;
         thisImWB = imcomplement(thisImBW);
         
         CC = bwconncomp(thisImWB,4);
@@ -49,16 +57,12 @@ for k = 1:length(sortedFolderNames)
         end
         lastInd = length(fullCellData);
         
+        cd([segDir,'\',thisFolder]);
         vertexIm=importdata('vertices.tif');
         vertexImGray = rgb2gray(vertexIm);
         vertexImBW = imbinarize(vertexImGray);
         
-        cd(maskDir);
-        try 
-            thisMaskBW = imbinarize(imread([thisFolder,'.tiff']));
-        catch
-            thisMaskBW = imbinarize(imread([thisFolder,'.tif']));
-        end
+
         vertexImBW = vertexImBW.*thisMaskBW;
         [v_y,v_x]=find(vertexImBW);
         

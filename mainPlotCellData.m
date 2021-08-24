@@ -1,13 +1,12 @@
 clear all; close all;
 addpath(genpath('\\phhydra\data-new\phkinnerets\home\lab\CODE\Hydra\'));
-addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\OrientationAnalysis'));
-addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\CellAnalysis'));
-addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes'));
+addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\GroupCodes'));
+
 
 mainDir='\\phhydra\phhydraB\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\';
 cellPlotDir = [mainDir,'\Cells'];
 cellDir = [mainDir,'\Cells'];
-cellIMDir = [mainDir,'\Cells\Segmentation_Yonit'];
+cellIMDir = [mainDir,'\Cells\Segmentation_Yonit']; % Directory of images of the cell cortices
 
 cd(cellIMDir); fileNames=dir ('*.tif*');
 frames=[1:length(fileNames)];
@@ -16,7 +15,7 @@ sortedFileNames = natsortfiles({fileNames.name});
 datasetPlots = [cellPlotDir,'\datasetPlots'];
 mkdir(datasetPlots);
 
-expName = '2021_05_6_pos6';
+expName = '2021_05_06_pos6';
 calibrationXY = 0.52; % um per pixel in XY plane
 calibrationZ = 3; % um per pixel in Z direction
 umCurvWindow = (32/1.28); % Window for averaging curvature around single cell (in um). Default - 32 pixels in 1.28 um/pixel.
@@ -97,7 +96,17 @@ for i = 1:size(fullCellDataMod,2)
     else
         neighbourVec(i)=length(fullCellDataMod(i).neighbourList);
     end
-    
+        if isempty (fullCellDataMod(i).stress)
+        stressVec{i} = NaN;
+        normStressVec(i) = NaN;
+        normStressVec2(i) = NaN;
+
+    else
+        stressVec{i}= fullCellDataMod(i).stress;
+        normStressVec(i) = norm(stressVec{i});
+        normStressVec2(i) = det(stressVec{i});
+
+    end
     %     if isempty(fullCellDataMod(i).umThickness)
     %         thicknessVec(i)=NaN;
     %     else
@@ -122,9 +131,11 @@ sortedPA = sortedPerimeter./sqrt(sortedArea);
 sortedFOrient = ForientVec(ind);
 sortedCOrient = orientAngleVec(ind);
 sortedCoh = cohVec(ind);
+sortedStress = normStressVec2(ind);
 
 
-distVal= 0:((max(sortedDist)*calibrationXY)/(length(fullCellDataMod)-1)):(max(sortedDist)*calibrationXY); % distance in pixels for calcaulting the mean trace
+
+distVal= 0:((max(sortedDist))/(length(fullCellDataMod)-1)):(max(sortedDist)); % distance in pixels for calcaulting the mean trace
 sigma = 10;
 [stdArea ,  meanArea] = stdGaussianXval (sortedDist, sortedArea, distVal, sigma, 0); % calculate the mean and std using a Gaussian filter for each data on the same time points
 [stdAspectRatio ,  meanAspectRatio] = stdGaussianXval (sortedDist, sortedAspectRatio, distVal, sigma, 0); % calculate the mean and std using a Gaussian filter for each data on the same time points
@@ -589,6 +600,7 @@ for m = 0:length(fileNames)-1
     sizeX = size(thisIm,2);
     sizeY = size(thisIm,2);
     areaMap = zeros(size(thisIm));
+    aspectRatioMap = zeros(size(thisIm));
     PAMap = zeros(size(thisIm));
     neighbourMap = zeros(size(thisIm));
     %     thicknessMap = zeros(size(thisIm));
@@ -602,6 +614,7 @@ for m = 0:length(fileNames)-1
             neighbours(k) = length(fullCellDataMod(fIndex(k)).neighbourList);
             in{k} = inpolygon(xq,yq,outline{k}(:,1),outline{k}(:,2));
             areaMap(in{k})=fullCellDataMod(fIndex(k)).area;
+            aspectRatioMap(in{k})=fullCellDataMod(fIndex(k)).aspect_ratio;
             PAMap(in{k})=fullCellDataMod(fIndex(k)).perimeter./sqrt(fullCellDataMod(fIndex(k)).area);
             neighbourMap(in{k})= neighbours(k);
             %             thicknessMap(in{k})= fullCellDataMod(fIndex(k)).umThickness;
@@ -614,6 +627,8 @@ for m = 0:length(fileNames)-1
     %   Rotate and flip maps to match visualisation of read images
     rotAreaMap = rot90(areaMap,3);
     flipAreaMap = flip(rotAreaMap,2);
+    rotARMap = rot90(aspectRatioMap,3);
+    flipARMap = flip(rotARMap,2);
     rotPAMap = rot90(PAMap,3);
     flipPAMap = flip(rotPAMap,2);
     rotNeighbourMap = rot90(neighbourMap,3);
@@ -632,7 +647,7 @@ for m = 0:length(fileNames)-1
     mkdir(areaMapOutDir);
     cd(areaMapOutDir); saveas(fig1,[thisFileImName,'.png'])
     close all
-    %     % Save images of cells color-coded by number of neighbours:
+    % Save images of cells color-coded by number of neighbours:
     fig2 = figure();
     imshow(flipNeighbourMap,[]);
     colormap jet;
@@ -643,7 +658,7 @@ for m = 0:length(fileNames)-1
     mkdir(neighbourMapOutDir);
     cd(neighbourMapOutDir); saveas(fig2,[thisFileImName,'.png'])
     close all
-    %      % Save images of cells color-coded by cell shape anisotropy (P/sqrt(A)):
+    % Save images of cells color-coded by cell shape anisotropy (P/sqrt(A)):
     fig3 = figure();
     imshow(flipPAMap,[]);
     colormap jet;
@@ -664,6 +679,18 @@ for m = 0:length(fileNames)-1
     %     mkdir(ThicknessMapOutDir);
     %     cd(ThicknessMapOutDir); saveas(fig4,[thisFileImName,'.png'])
     %     close all
+    
+     % Save images of cells color-coded by aspect ratio:
+    fig5 = figure();
+    imshow(flipARMap,[]);
+    colormap jet;
+    colorbar;
+    caxis([	1 5])
+    title(' {\bf\fontsize{16} Cell Aspect RAtio)}')
+    ARMapOutDir = [cellPlotDir,'\AspectRatioMaps'];
+    mkdir(ARMapOutDir);
+    cd(ARMapOutDir); saveas(fig5,[thisFileImName,'.png'])
+    close all
     
     % Histograms and statistics of measures per frame (area, p/sqrt(A),
     % aspect ratio:
@@ -938,12 +965,24 @@ end
 
 figure();
 errorbar(areaMean,areaStd)
+title('{\bf\fontsize{16} Cell area (mean +/- std)}'); 
+xlabel('{\bf\fontsize{14} Timepoint (dt = 5 min)}');
+ylabel('{\bf\fontsize{14} Cell area (um^2)}');
+
 
 figure();
 errorbar(aspectRatioMean,aspectRatioStd)
+title('{\bf\fontsize{16} Cell aspect ratio (mean +/- std)}'); 
+xlabel('{\bf\fontsize{14} Timepoint (dt = 5 min)}');
+ylabel('{\bf\fontsize{14} Cell aspect ratio}');
+
 
 figure();
 errorbar(PAMean,PAStd)
+title('{\bf\fontsize{16} Cell shape anisotropy P/Sqrt(A) (mean +/- std)}'); 
+xlabel('{\bf\fontsize{14} Timepoint (dt = 5 min)}');
+ylabel('{\bf\fontsize{14} Cell shape anisotropy}');
+
 %% Vertex data - calculate distances between vertices, and identify >3-fold vertices using minimum distance between vertices
 
 maxDist = 2; % Maximum distance between vertices to count them as a single vertex.
@@ -1002,3 +1041,66 @@ if ~isempty(vDefectDist)
 end
 % Plot 4-fold vertices as function of OP or distance from defect - need to
 % read data from defects and OP into vertex list as well as cell list.
+
+
+%% Relations to cell mechanics from VMSI:
+
+% Plot stress tensor magnitude as function of aspect ratio:
+figure();
+sigma = 10*((prctile(aspectRatioVec,99.9)-min(aspectRatioVec))/1000);
+arVal = min(aspectRatioVec):((prctile(aspectRatioVec,99.9)-min(aspectRatioVec))/1000):prctile(aspectRatioVec,99.9);
+[stdStress ,  meanStress] = stdGaussianXval (aspectRatioVec, abs(normStressVec2), arVal, sigma, 0); % calculate the mean and std using a Gaussian filter for each data on the same time points
+
+MeanPlusStdStress = meanStress+stdStress;
+MeanMinusStdStress = meanStress-stdStress;
+% Distribution as function of aspect ratio
+%plot(aspectRatioVec,normStressVec,'.')
+%hold on
+plot(aspectRatioVec,abs(normStressVec2),'.r')
+hold on
+plot(arVal,meanStress,'c','LineWidth',2)
+hold on
+inBetween = [MeanPlusStdStress, fliplr(MeanMinusStdStress)]; % shaded region with std
+dist2 = [arVal,fliplr(arVal)];
+inBetweenNan = inBetween(~isnan(inBetween));
+dist2Nan = dist2(~isnan(inBetween));
+
+h=fill(dist2Nan, inBetweenNan, [0 1 1]);
+set(h,'facecolor',[0 1 1],'facealpha',.1,'linestyle','none');
+title ('{\bf\fontsize{16} Cell stress vs. aspect ratio}')
+legend('cell stress','mean +/- std')
+xlabel('{\bf\fontsize{16} Aspect ratio}')
+ylabel('{\bf\fontsize{16} Stress magnitued}')
+set(gca,'fontsize',14)
+
+
+% Plot stress tensor magnitude as function of distance from defect: 
+
+distVal= 0:((max(sortedDist))/(length(fullCellDataMod)-1)):(max(sortedDist)); % distance in pixels for calcaulting the mean trace
+sigma = 10;
+[stdStress ,  meanStress] = stdGaussianXval (sortedDist, sortedStress, distVal, sigma, 0); % calculate the mean and std using a Gaussian filter for each data on the same time points
+
+fig2S = figure();
+
+MeanPlusStdStress = meanStress+stdStress;
+MeanMinusStdStress = meanStress-stdStress;
+% Distribution as function of distance from defect
+plot(sortedDist,sortedStress,'.')
+hold on
+plot(distVal,meanStress,'c','LineWidth',2)
+hold on
+inBetween = [MeanPlusStdStress, fliplr(MeanMinusStdStress)]; % shaded region with std
+dist2 = [distVal,fliplr(distVal)];
+inBetweenNan = inBetween(~isnan(inBetween));
+dist2Nan = dist2(~isnan(inBetween));
+
+h=fill(dist2Nan, inBetweenNan, [0 1 1]);
+set(h,'facecolor',[0 1 1],'facealpha',.1,'linestyle','none');
+title ('{\bf\fontsize{16} Cell stress magnitude vs. distance to nearest defect}')
+legend('cell stress','mean +/- std')
+xlabel('{\bf\fontsize{16} Distance from nearest defect (um)}')
+ylabel('{\bf\fontsize{16} Cell stress magnitude (au)}')
+set(gca,'fontsize',14)
+ylim([-0.5 1.5])
+
+ cd(datasetPlots); saveas(fig2S,['StressVs.Dist','.png'])

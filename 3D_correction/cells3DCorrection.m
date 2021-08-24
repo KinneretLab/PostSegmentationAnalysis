@@ -25,7 +25,7 @@ curvWindow = round(umCurvWindow*XY_to_Micron); % Window for averaging curvature 
 firstHM = importdata (sortedHMfiles{1});
 pix_max = size(firstHM);
 
-[x_planeO,y_planeO] = meshgrid(1:pix_max(1),1:pix_max(2)); % Making a grid
+[y_planeO,x_planeO] = meshgrid(1:pix_max(1),1:pix_max(2)); % Making a grid
 x_plane = x_planeO(:);
 y_plane = y_planeO(:);
 
@@ -51,12 +51,12 @@ for i = 1:size(fullCellData,2)
     % Find z-values of edges
     zp = zeros(length(xp),1);
     for k = 1:length(xp)
-        zp(k) = thisHM(yp(k),xp(k));
+        zp(k) = thisHM(xp(k),yp(k));
     end
     
     x_cent = round(mean(xp));
     y_cent = round(mean(yp));
-    z_cent = thisHM(y_cent,x_cent);
+    z_cent = thisHM(x_cent,y_cent);
     normXrange = (x_cent-round(curvWindow/2)):(x_cent+round(curvWindow/2));
     % Make sure all points are within the frame boundaries
     minXpoint = max(find(normXrange>0,1),1);
@@ -67,8 +67,7 @@ for i = 1:size(fullCellData,2)
     thisMin = max(minXpoint,minYpoint);
     thisMax = min(maxXpoint-1,maxYpoint-1);
     
-    ind = sub2ind(size(thisHM),normYrange(thisMin:thisMax),normXrange(thisMin:thisMax));
-    normZvals = thisHM(ind);% MAKE SURE THIS IS CORRECT! (AND NOT x,y FLIPPED)
+    ind = sub2ind(size(thisHM),normXrange(thisMin:thisMax),normYrange(thisMin:thisMax));
     
     Nmat = [Nx(ind'),Ny(ind'),Nz(ind')];
     N = mean(Nmat);
@@ -81,7 +80,7 @@ for i = 1:size(fullCellData,2)
     RY = [Nprime(3) 0 -Nprime(1); 0 1 0 ; Nprime(1) 0 Nprime(3)];
     
     
-    if round(N,4) == [0,0,1]
+    if or(round(N,4) == [0,0,1],round(N,4) == [0,0,-1])
         translatedProj = proj-[x_cent,y_cent,z_cent];
         rotatedProj = translatedProj;
         s = null(N);
