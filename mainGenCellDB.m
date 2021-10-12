@@ -25,7 +25,8 @@ cropped = cell(1, lenImages);
 
 statIdx = ones(3, 1);
 stat = cell(3, 1);
-for cellData = fullCellDataMod
+for cellIdx = 1:length(fullCellDataMod)
+    cellData = fullCellDataMod(cellIdx);
     % iterate over each cell in the data to get its dimensions by min/max x/y coords or vertices
     images = loadedFrames(str2num(cellData.frame) + 1, :);
 
@@ -36,11 +37,11 @@ for cellData = fullCellDataMod
         cropped{i} = imcrop(images{i}, crop);
     end
 
-    if ismember(status, [2]) % 0 is cell, 1 is fake, 2 is ????, 3 is ignore.
+    if ismember(status, [3]) % 0 is cell, 1 is fake, 2 is ????, 3 is ignore.
         status = displayImageDiff(cropped{1}, cropped{4}, status, pixelDiff);
     end
 
-    %saveCropsToFolder(...);
+    saveToFolder(cellDir, cropped, status, num2str(cellIdx));
 
     stat{status + 1}(statIdx(status + 1)) = pixelDiff;
     statIdx(status + 1) = statIdx(status + 1) + 1;
@@ -138,4 +139,21 @@ function [status, pixelDiff] = compareImages(cellData, rawImg, trueImg)
     else
         status = 2;
     end
+end
+
+function saveToFolder(location, images, status, imgID)
+    combinedImage = cat(3, images{1}(:,:,1), images{2}(:,:,1), im2uint8(images{3}));
+    subFolder = "";
+    switch status
+        case 0
+            subFolder = "CellDB/cells/";
+        case 1
+            subFolder = "CellDB/fakes/";
+        otherwise
+            subFolder = "CellDB/unclassified/";
+    end
+    if ~exist(location + subFolder, 'dir')
+        mkdir(location + subFolder);
+    end
+    imwrite(combinedImage, location + subFolder + imgID + ".tif");
 end
