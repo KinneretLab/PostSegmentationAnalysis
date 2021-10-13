@@ -25,12 +25,13 @@ cropped = cell(1, lenImages);
 
 statIdx = ones(3, 1);
 stat = cell(3, 1);
+summaryImages = loadedFrames(:,1);
 for cellIdx = 1:length(fullCellDataMod)
     cellData = fullCellDataMod(cellIdx);
     % iterate over each cell in the data to get its dimensions by min/max x/y coords or vertices
     images = loadedFrames(str2num(cellData.frame) + 1, :);
 
-    [status, pixelDiff] = compareImages(cellData, images{1}, images{4});
+    [status, pixelDiff, maskedRaw] = compareImages(cellData, images{1}, images{4});
 
     crop = getCrop(cellData.outline, 2);
     for i = 1:lenImages
@@ -42,6 +43,7 @@ for cellIdx = 1:length(fullCellDataMod)
     end
 
     saveToFolder(cellDir, cropped, status, num2str(cellIdx));
+    summaryImages{str2num(cellData.frame) + 1}(:,:,statusToChannel(status)) = summaryImages{str2num(cellData.frame) + 1}(:,:,statusToChannel(status)) + uint8(maskedRaw * 255);
 
     stat{status + 1}(statIdx(status + 1)) = pixelDiff;
     statIdx(status + 1) = statIdx(status + 1) + 1;
@@ -52,6 +54,15 @@ hold on
 histogram(stat{2}, 'BinWidth', 10);
 histogram(stat{3}, 'BinWidth', 10);
 hold off
+
+for imgIdx = 1:length(subDirs)
+    sumImg{1} = cat(3, loadedFrames{imgIdx,1}(:,:,1), loadedFrames{imgIdx,4}(:,:,1), loadedFrames{imgIdx,2}(:,:,1));
+    sumImg{2} = summaryImages{imgIdx};
+    rawImg = im2uint8(loadedFrames{imgIdx,3});
+    sumImg{3} = cat(3,rawImg,rawImg,rawImg);
+    sumImg = [sumImg{:}];
+    saveToFolder(cellDir, {sumImg(:,:,1), sumImg(:,:,2), sumImg(:,:,3)},-1,num2str(imgIdx - 1));
+end
 
 function crop = getCrop(outline, buffer)
     minPos = flip(min(outline));
@@ -110,10 +121,14 @@ function retStatus = makeUI(msgStr, images)
     close(f)
 end
 
-function [status, pixelDiff] = compareImages(cellData, rawImg, trueImg)
+function [status, pixelDiff, maskedRaw] = compareImages(cellData, rawImg, trueImg)
     center = [floor(cellData.centre_y) floor(cellData.centre_x)];
-    [in, on] = inpolygon(center(2), center(1), cellData.outline(:, 2), cellData.outline(:, 1));
+
+    % calculate raw mask, requires for output anyways, via subtraction
+    maskedRaw = imfill(im2bw(rawImg), center) - im2bw(rawImg);
+
     % make sure the center is inside the cell, otherwise return error code (too concave).
+    [in, on] = inpolygon(center(2), center(1), cellData.outline(:, 2), cellData.outline(:, 1));
     if ~in || on
         status = 1;
         pixelDiff = -2;
@@ -127,11 +142,11 @@ function [status, pixelDiff] = compareImages(cellData, rawImg, trueImg)
         return;
     end
     % calculate pixel image of the images via subtraction
-    maskedTrue = imfill(im2bw(trueImg), center) - im2bw(trueImg);
-    maskedRaw = imfill(im2bw(rawImg), center) - im2bw(rawImg);
+    maskedTrue = imfill(im2bw(trueImg), center) - imbinarize(trueImg);
 
     % calculate difference
     pixelDiff = abs(sum(sum(maskedRaw)) - sum(sum(maskedTrue)));
+    pixelDiff = pixelDiff(1);
     if pixelDiff < 100
         status = 0;
     elseif pixelDiff > 200
@@ -145,6 +160,8 @@ function saveToFolder(location, images, status, imgID)
     combinedImage = cat(3, images{1}(:,:,1), images{2}(:,:,1), im2uint8(images{3}));
     subFolder = "";
     switch status
+        case -1
+            subFolder = "CellDB/summaries/";
         case 0
             subFolder = "CellDB/cells/";
         case 1
@@ -156,4 +173,15 @@ function saveToFolder(location, images, status, imgID)
         mkdir(location + subFolder);
     end
     imwrite(combinedImage, location + subFolder + imgID + ".tif");
+end
+
+function channel = statusToChannel(status)
+    switch status
+        case 0
+            channel = 2;
+        case 1
+            channel = 1;
+        otherwise
+            channel = 3;
+    end
 end
