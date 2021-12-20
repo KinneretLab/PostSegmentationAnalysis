@@ -19,7 +19,7 @@ orientWindow = 20/calibrationXY; % Average cell radius in um, divided by calibra
 cohWindow = 40/calibrationXY;
 OPWindow = 20/calibrationXY;
 
-useDefects = 1; % Set to 1 if you are using manually marked defects, and 0 if not.
+useDefects = 0; % Set to 1 if you are using manually marked defects, and 0 if not.
 
 %% 2. Extract defect data
 if useDefects ==1

@@ -1,6 +1,6 @@
 mainDir='Z:\Analysis\users\Projects\Noam'; % Main directory for movie you are analysing.
 cellDir = [mainDir,'\Cells\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
-segDir = [cellDir,'Inference\2021_10_07_CEE3_CEE5_CEE1E_CEE1E_CEE6']; % Segmentation folder.
+segDir = [cellDir,'Inference\2021_10_12_CEE3_CEE5_CEE1E_CEE1E_CEE6']; % Segmentation folder.
 
 cd(cellDir);
 load('fullCellDataMod');
@@ -11,6 +11,7 @@ subDirs = subDirs([subDirs.isdir] & ~strcmp({subDirs.name},'.') & ~strcmp({subDi
 
 % load all frames into memory
 loadedFrames = cell(length(subDirs), 4);
+disp('loading frames...');
 for i = 1:length(subDirs)
     subDirectory = subDirs(i);
     % get all the images
@@ -26,6 +27,7 @@ cropped = cell(1, lenImages);
 statIdx = ones(3, 1);
 stat = cell(3, 1);
 summaryImages = loadedFrames(:,1);
+disp('Creating composites & categorizing...');
 for cellIdx = 1:length(fullCellDataMod)
     cellData = fullCellDataMod(cellIdx);
     % iterate over each cell in the data to get its dimensions by min/max x/y coords or vertices
@@ -47,6 +49,10 @@ for cellIdx = 1:length(fullCellDataMod)
 
     stat{status + 1}(statIdx(status + 1)) = pixelDiff;
     statIdx(status + 1) = statIdx(status + 1) + 1;
+
+    if rem(cellIdx, 1000) == 0
+        disp(num2str(cellIdx))
+    end
 end
 for k = 1:3; stat{k}(stat{k} > 500) = -3; end
 histogram(stat{1}, 'BinWidth', 10);
@@ -55,13 +61,14 @@ histogram(stat{2}, 'BinWidth', 10);
 histogram(stat{3}, 'BinWidth', 10);
 hold off
 
+disp('Creating summary images...');
 for imgIdx = 1:length(subDirs)
     sumImg{1} = cat(3, loadedFrames{imgIdx,1}(:,:,1), loadedFrames{imgIdx,4}(:,:,1), loadedFrames{imgIdx,2}(:,:,1));
     sumImg{2} = summaryImages{imgIdx};
     rawImg = im2uint8(loadedFrames{imgIdx,3});
     sumImg{3} = cat(3,rawImg,rawImg,rawImg);
-    sumImg = [sumImg{:}];
-    saveToFolder(cellDir, {sumImg(:,:,1), sumImg(:,:,2), sumImg(:,:,3)},-1,num2str(imgIdx - 1));
+    savable = [sumImg{:}];
+    saveToFolder(cellDir, {savable(:,:,1), savable(:,:,2), savable(:,:,3)},-1,num2str(imgIdx - 1));
 end
 
 function crop = getCrop(outline, buffer)
@@ -125,7 +132,7 @@ function [status, pixelDiff, maskedRaw] = compareImages(cellData, rawImg, trueIm
     center = [floor(cellData.centre_y) floor(cellData.centre_x)];
 
     % calculate raw mask, requires for output anyways, via subtraction
-    maskedRaw = imfill(im2bw(rawImg), center) - im2bw(rawImg);
+    maskedRaw = imfill(im2bw(rawImg), cellData.outline(1, :)) - im2bw(rawImg);
 
     % make sure the center is inside the cell, otherwise return error code (too concave).
     [in, on] = inpolygon(center(2), center(1), cellData.outline(:, 2), cellData.outline(:, 1));
