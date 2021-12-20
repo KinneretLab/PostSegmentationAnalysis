@@ -49,7 +49,14 @@ for k = 1:length(sortedFolderNames)
             fullCellData(i+lastInd-shift).frame = num2str(k-1);
             fullCellData(i+lastInd-shift).centre_x = stats(i).Centroid(1);
             fullCellData(i+lastInd-shift).centre_y = stats(i).Centroid(2);
-            cellLabel =  L( round(fullCellData(i+lastInd-shift).centre_y),round(fullCellData(i+lastInd-shift).centre_x));
+            [thisX,thisY] = ind2sub(size(L),CC.PixelIdxList{1,i}(round(length(CC.PixelIdxList{1,i})/2)));
+            cellLabel = L(thisX,thisY);
+            cellLabelC =  L( round(fullCellData(i+lastInd-shift).centre_y),round(fullCellData(i+lastInd-shift).centre_x)); 
+            if (cellLabel == cellLabelC)
+                fullCellData(i+lastInd-shift).isConvex = 1;
+            else
+                fullCellData(i+lastInd-shift).isConvex = 0;
+            end
             fullCellData(i+lastInd-shift).outline = B{cellLabel};
             fullCellData(i+lastInd-shift).uniqueID = [num2str(k-1,formatSpec),num2str(cellLabel)];
             fullCellData(i+lastInd-shift).vertices = [];
