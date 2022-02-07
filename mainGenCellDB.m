@@ -1,4 +1,8 @@
-mainDir='Z:\Analysis\users\Projects\Noam'; % Main directory for movie you are analysing.
+clear all; close all;
+addpath(genpath('\\phhydra\data-new\phkinnerets\home\lab\CODE\Hydra\'));
+addpath(genpath('\\phhydra\phhydraB\Analysis\users\Projects\Noam'));
+
+mainDir='Z:\Analysis\users\Projects\Noam\Workshop\\timepoints'; % Main directory for movie you are analysing.
 cellDir = [mainDir,'\Cells\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
 segDir = [cellDir,'Inference\2021_10_12_CEE3_CEE5_CEE1E_CEE1E_CEE6']; % Segmentation folder.
 
@@ -8,17 +12,18 @@ load('fullVertexData');
 
 subDirs = dir(segDir);
 subDirs = subDirs([subDirs.isdir] & ~strcmp({subDirs.name},'.') & ~strcmp({subDirs.name},'..'));
+subDirNames = natsortfiles({subDirs.name});
 
 % load all frames into memory
 loadedFrames = cell(length(subDirs), 4);
 disp('loading frames...');
-for i = 1:length(subDirs)
-    subDirectory = subDirs(i);
+for i = 1:length(subDirNames)
+    dirName = subDirNames{i};
     % get all the images
-    loadedFrames{i, 1} = imread(fullfile(subDirectory.folder, subDirectory.name, 'handCorrection.tif'));
-    loadedFrames{i, 2} = imread(fullfile(subDirectory.folder, subDirectory.name + ".tif"));
-    loadedFrames{i, 3} = imread(fullfile(cellDir, 'Raw Cortices', subDirectory.name + ".tiff"));
-    loadedFrames{i, 4} = imread(fullfile(subDirectory.folder, subDirectory.name, 'groundTruth.tif'));
+    loadedFrames{i, 1} = imread(fullfile(segDir, dirName, 'handCorrection.tif'));
+    loadedFrames{i, 2} = imread(fullfile(segDir, dirName + ".tif"));
+    loadedFrames{i, 3} = imread(fullfile(cellDir, 'Raw Cortices', dirName + ".tiff"));
+    loadedFrames{i, 4} = imread(fullfile(segDir, dirName, 'groundTruth.tif'));
 end
 
 lenImages = size(loadedFrames, 2);
