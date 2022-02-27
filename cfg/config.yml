@@ -1,0 +1,142 @@
+# configuration file for Merger.
+
+# training: in here, we describe parameters tailored specifically for the training program
+training:
+  # the main directory where we expect to find folders containing the input images
+  # and in there we also expect to write a directory containing the results.
+  # this does not have a default value, and must be set by you.
+  # If left empty, an error will be thrown.
+  # you should probably change this!
+  work_dir: Z:\Analysis\users\Projects\Noam\Workshop
+
+  # the general format of where to put the result output directory.
+  # the files will be placed in either existing or new directory with the path below relative to the work directory, where:
+  #  - {date} is replaced with the current date in YYYY_MM_DD format
+  #  - {models} is replaced with a shortened list of the models that generated the data sources (for example, EE3_EE5)
+  #    note that this is only an attempt at making a short & descriptive model name, it might be better to write one by hand.
+  # default: Inference/{date}_{models}
+  # you might want to replace this, but it is usually unnecessary.
+  output_format: Models/{date}_{models}.pth
+
+  # the path from the work directory to where the ground truth of the training images are.
+  # the directory specified must contain image names that match those provided in the data sources.
+  # this might change from time to time.
+  ground_truth_dir: Inference/GroundTruth_inference/High_sigma2_5
+
+  # a list describing the relative path of all source directories to the work directory.
+  # for example, if my directory structure is
+  # C://Work
+  #    - Cells
+  #      - Model1
+  #        - cells
+  #        - fakes
+  #      - Model2
+  #        - cells
+  #        - fakes
+  # then I would set the parameter to ['Cells/Model1', 'Cells/Model2']
+  # wildcards (and the glob format in general) are also available. In the case above, we could also use ['Cells/*']
+  # the program is also smart, and will add wildcards if it thinks that is necessary.
+  # if left empty, no image will be processed.
+  # this should probably not change unless you know what you are doing
+  data_sources:
+    - DumbDB
+
+  # ============== Optimizer Parameters ===============
+
+  # number of epochs, or training cycles the trainer goes through.
+  # between every two epochs, to ensure we reach the best case scenario, the system randomizes the weights a little bit.
+  # this can yield better results. However, more epochs means more time spent training.
+  # default: 50
+  num_epochs: 50
+
+  # the learning rate is a tuning parameter describing how big the change in the weights can be. Since we use a SGM
+  # optimizer within the code, this learning rate is no longer linear with the gradient and has a momentum.
+  # Changing this value therefore can have little meaning in the long run.
+  # default: 0.0005
+  inital_learning_rate: 0.01
+
+  # momentum is a factor that causes the learning rate to change based on how quickly the parameters change during
+  # training. This is a very niche parameter to change but can speed up the process if done right.
+  # default: 0.9
+  momentum: 0.9
+
+  # to allow the earlier epochs to do significant changes, we decrease the leaning rate throughout the epochs
+  # this parameter specifies how often to reduce this learning rate
+  # default: 7 (once per 7 epochs)
+  lr_decay_step: 7
+
+  # each time the learning rate is reduced, by what factor should the learning rate be reduced?
+  # default: 0.1
+  lr_decay_size: 0.1
+
+  # ============== Misc. Training Parameters ===============
+
+  # the percent of the available data that will be dedicated to validation rather than training.
+  # changing this value can be helpful, but you would usually want to keep it around 0.1
+  # default: 0.05
+  valid_ratio: 0.05
+
+  # Most cell databases do not perfectly classify all cells into "fakes" and "cells".
+  # Such cells are "unclassified". Using this setting, you can choose how the trainer will these these as
+  # -1 means ignore them completely from training
+  # 0 means treat them as fakes
+  # 1 means treat them as cells
+  flag_unclassified: -1
+
+  # Most cells do not perfectly fit into a square canvas with the original input size of the network.
+  # therefore, we must make geometric adjustments so they can be used.
+  # The decision of which geometric adjustment to make can greatly impact the performance of the network.
+  # 0 means no stretching, but instead add black padding with the cell at the center.
+  # 1 means rescale the cell to the correct size and add padding to make it square
+  # 2 means stretch the cell to be exactly the square
+  stretch_level: 0
+
+# activation: in here, we use parameters used specifically when we are using a model, i.e activation.
+activation:
+  # the main directory where we expect to find folders containing the input images
+  # and in there we also expect to write a directory containing the results.
+  # this does not have a default value, and must be set by you.
+  # If left empty, an error will be thrown.
+  # you should probably change this!
+  work_dir: Z:\Analysis\users\Projects\Noam\Workshop\timepoints\Cells
+
+  # the general format of where to put the result output directory.
+  # the files will be placed in either existing or new directory with the path below relative to the work directory, where:
+  #  - {date} is replaced with the current date in YYYY_MM_DD format
+  #  - {models} is replaced with a shortened list of the models that generated the data sources (for example, EE3_EE5)
+  #    note that this is only an attempt at making a short & descriptive model name, it might be better to write one by hand.
+  # default: Inference/{date}_{models}
+  # you might want to replace this, but it is usually unnecessary.
+  output_format: Inference/{date}_{models}
+
+  # a list describing the relative path of all source directories to the work directory.
+  # for example, if my directory structure is
+  # C://Work
+  #    - Cells
+  #      - Model1
+  #        - img1 ...
+  #      - Model2
+  #        - img1 ...
+  # then I would set the parameter to ['Cells/Model1', 'Cells/Model2']
+  # wildcards (and the glob format in general) are also available. In the case above, we could also use ['Cells/*']
+  # the program is also smart, and will add wildcards if it thinks that is necessary.
+  # if left empty, no image will be processed.
+  # this should probably not change unless you know what you are doing
+  data_sources:
+    - CARE_ensemble/EPySegRaw/3/*
+    - CARE_ensemble/EPySegRaw/5/*
+    - CARE_ensemble/ensembles/19Aug_E3/*consent?
+    - CARE_ensemble/ensembles/19Aug_E5/*consent?
+    - CARE_ensemble/EPySegRaw/6/*
+#    - CARE_ensemble/compData/ensembles/21July/*_mean
+#    - CARE_ensemble/compData/ensembles/21July/*_std
+#    - EPySegRaw/3/*
+#    - EPySegRaw/5/*
+#    - EPySegRaw/6/*
+#    - Ensembles/21July_E3/*
+#    - Ensembles/21July_E5/*
+
+  # the path from the home directory of THIS PYTHON SCRIPT to the model file used to process the data
+  # it is entirely valid to use an absolute path, but it is better to save the model along with the script that uses it.
+  # This should really stay untouched since the model changes very infrequently.
+  model: checkpoints/NN_1layer_whole_yonit_21July_rep1.pth
