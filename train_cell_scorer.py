@@ -55,9 +55,8 @@ def train(num_epochs: int, out_path: str, model, device, criterion, optimizer, s
                 # forward
                 # track history if only in train
                 with torch.set_grad_enabled(phase == 'train'):
-                    outputs = model(inputs)
-                    _, preds = torch.max(outputs, 1)
-                    loss = criterion(outputs, labels)
+                    preds = model(inputs)
+                    loss = criterion(preds, labels)
 
                     # backward + optimize only if in training phase
                     if phase == 'train':
@@ -66,7 +65,7 @@ def train(num_epochs: int, out_path: str, model, device, criterion, optimizer, s
 
                 # statistics
                 running_loss += loss.item() * inputs.size(0)
-                running_corrects += torch.sum(preds == labels.data).data
+                running_corrects += torch.sum((preds >= 0.0) == labels).item()
             if phase == 'train':
                 scheduler.step()
 

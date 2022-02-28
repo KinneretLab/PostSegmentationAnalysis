@@ -39,7 +39,9 @@ training:
   # if left empty, no image will be processed.
   # this should probably not change unless you know what you are doing
   data_sources:
-    - DumbDB
+#    - DumbDB
+    - timelapse\Cells\CellDB_all
+    - timepoints\Cells\CellDB_all
 
   # ============== Optimizer Parameters ===============
 
@@ -89,7 +91,7 @@ training:
   # 0 means no stretching, but instead add black padding with the cell at the center.
   # 1 means rescale the cell to the correct size and add padding to make it square
   # 2 means stretch the cell to be exactly the square
-  stretch_level: 0
+  stretch_level: 2
 
 # activation: in here, we use parameters used specifically when we are using a model, i.e activation.
 activation:
