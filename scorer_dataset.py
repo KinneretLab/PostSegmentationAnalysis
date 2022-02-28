@@ -24,11 +24,11 @@ class ScorerDataset(data.Dataset):
         """
         gets an image, and resizes it in some strategy to 224x224
         :param img_index: the index of the image to get
-        :return:
+        :return: a pair of tensors, the first being the input image, the second being the label of the image (0 or 1)
         """
 
         label = int(img_index >= len(self.files[0]))
-        img = tf.ToTensor()(tifffile.imread(self.files[label][img_index - label * len(self.files[0])]))
+        img = tf.ToTensor()(tifffile.imread(self.get_path(img_index)))
 
         if self.resize_strategy == 0:
             img = tf.Pad([(224 - np.size(img, 0)) // 2 + 1, (224 - np.size(img, 1)) // 2 + 1]).forward(img)
@@ -44,7 +44,15 @@ class ScorerDataset(data.Dataset):
 
         return img, torch.Tensor([label])
 
-    def __len__(self):
+    def get_path(self, img_index: int) -> str:
+        """
+        the absolute path to the file of the file with the corresponding index in the dataset
+        :param img_index: the index of the image in the dataset
+        """
+        label = int(img_index >= len(self.files[0]))
+        return self.files[label][img_index - label * len(self.files[0])]
+
+    def __len__(self) -> int:
         return len(self.files[0]) + len(self.files[1])
 
     @staticmethod

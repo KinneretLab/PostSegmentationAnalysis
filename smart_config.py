@@ -31,14 +31,16 @@ class SmartConfig:
             if not work_dir.endswith('/'):
                 work_dir += '/'
 
-            output: str = raw['output_format']
-            output = 'Inference/{date}_{models}' if output is None else output
+            output: str = raw['output_format' if self._section == 'training' else 'table_format']
+            if output is None:
+                output = 'Inference/{date}_{models}' if self._section == 'training' \
+                    else '{source}/../fullCellDataMod.csv'
             today = date.today()
             output = output.replace('{date}', f'{today.year:04d}_{today.month:02d}_{today.day:02d}')
             if '{models}' in output:
                 model_str = '_'.join([self.get_model_name(source_dir) for source_dir in raw['data_sources']])
                 output = output.replace('{models}', model_str)
-            self.out_path = self.to_absolute(work_dir, output)
+            self.out_path = output if output.startswith('{source}') else self.to_absolute(work_dir, output)
             for raw_source in raw['data_sources']:
                 if raw_source.endswith('/'):
                     raw_source = raw_source[0:-1]
@@ -48,7 +50,7 @@ class SmartConfig:
                 self.model_path = raw['model']
             if self._section == 'training':
                 self.epochs = raw['num_epochs']
-                self.lr_init = raw['inital_learning_rate']
+                self.lr_init = raw['initial_learning_rate']
                 self.ground_truth_dir = self.to_absolute(work_dir, raw['ground_truth_dir'])
                 self.valid_ratio = raw['valid_ratio']
                 self.lr_momentum = raw['momentum']
