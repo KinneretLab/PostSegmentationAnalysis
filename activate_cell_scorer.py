@@ -12,6 +12,7 @@ from torch.utils import data
 from pandas import DataFrame
 
 # noinspection PyUnresolvedReferences
+import model_loader
 from smart_config import SmartConfig
 from scorer_dataset import ScorerDataset
 
@@ -35,19 +36,13 @@ def main():
     dataset = ScorerDataset(cfg.sources, 0, cfg.resize_strategy)
     dl = data.DataLoader(dataset, batch_size=1, shuffle=False)
 
-    # "sacred code": basically, NVIDIA did not update their model version and saved their neural network using an old
-    # class definition of ResNet. as a result, the only way to load this old definition in a robust way
-    # is by directly downloading the original model every time from the internet, forcing python to cache the target
-    # classes we need to work. This is bad and inefficient, but we are forced to use this because NVIDIA.
-    torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_se_resnext101_32x4d')
-
-    model = torch.load(cfg.model_path)
+    model = model_loader.load(cfg.model_path)
     model.eval()
 
     if not os.path.exists(cfg.out_path):
         os.makedirs(cfg.out_path)
 
-    loaded_csvs: Dict[str, DataFrame] = {}
+    loaded_tables: Dict[str, DataFrame] = {}
 
     with torch.no_grad():
         for i, new_data in enumerate(dl, 0):
@@ -55,14 +50,14 @@ def main():
             valid_outputs = torch.squeeze(model(new_data[0].to(device)))
             pred_confidence = torch.sigmoid(valid_outputs).item()
 
-            df, cell_id = get_csv(cfg, loaded_csvs, dataset, i)
+            df, cell_id = get_csv(cfg, loaded_tables, dataset, i)
             df['confidence'][cell_id - 1] = pred_confidence
 
             print(f"completed image {i + 1} of {len(dataset)}")
 
     print("saving files...")
-    for file in loaded_csvs:
-        loaded_csvs[file].to_csv(file)
+    for file in loaded_tables:
+        loaded_tables[file].to_csv(file)
 
 
 def get_csv(cfg: SmartConfig, csv_db: Dict[str, DataFrame], ds: ScorerDataset, index: int) -> Tuple[DataFrame, int]:

@@ -10,6 +10,7 @@ import yaml
 from torch import nn, optim
 from torch.utils import data
 
+import model_loader
 from scorer_dataset import ScorerDataset
 from smart_config import SmartConfig
 
@@ -24,7 +25,7 @@ def get_device() -> torch.device:
     return device
 
 
-def train(num_epochs: int, out_path: str, model, device, criterion, optimizer, scheduler, dataloaders, dataset_sizes):
+def train(num_epochs: int, out_path: str, model, device, criterion, optimizer, scheduler, data_loaders, dataset_sizes):
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -45,7 +46,7 @@ def train(num_epochs: int, out_path: str, model, device, criterion, optimizer, s
             running_corrects = 0
 
             # Iterate over data.
-            for inputs, labels in dataloaders[phase]:
+            for inputs, labels in data_loaders[phase]:
                 inputs = inputs.to(device)
                 labels = labels.to(device)
 
@@ -55,8 +56,8 @@ def train(num_epochs: int, out_path: str, model, device, criterion, optimizer, s
                 # forward
                 # track history if only in train
                 with torch.set_grad_enabled(phase == 'train'):
-                    preds = model(inputs)
-                    loss = criterion(preds, labels)
+                    predictions = model(inputs)
+                    loss = criterion(predictions, labels)
 
                     # backward + optimize only if in training phase
                     if phase == 'train':
@@ -65,7 +66,7 @@ def train(num_epochs: int, out_path: str, model, device, criterion, optimizer, s
 
                 # statistics
                 running_loss += loss.item() * inputs.size(0)
-                running_corrects += torch.sum((preds >= 0.0) == labels).item()
+                running_corrects += torch.sum((predictions >= 0.0) == labels).item()
             if phase == 'train':
                 scheduler.step()
 
@@ -102,7 +103,7 @@ def main():
     device = get_device()
 
     # load model from internet
-    model = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_se_resnext101_32x4d')
+    model = model_loader.load()
 
     model.fc = nn.Linear(model.fc.in_features, 1)
     model.to(device)
