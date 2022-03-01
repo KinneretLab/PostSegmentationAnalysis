@@ -132,4 +132,7 @@ activation:
   # the path from the home directory of THIS PYTHON SCRIPT to the model file used to process the data
   # it is entirely valid to use an absolute path, but it is better to save the model along with the script that uses it.
   # This should really stay untouched since the model changes very infrequently.
-  model: Models/2022_02_28_D.pth
+  model: Models/2022_03_01_D.pth
+
+  # the stretch level matching the model used. Should probably be 2
+  stretch_level: 2

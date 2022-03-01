@@ -36,13 +36,14 @@ def main():
     dataset = ScorerDataset(cfg.sources, 0, cfg.resize_strategy)
     dl = data.DataLoader(dataset, batch_size=1, shuffle=False)
 
-    model = model_loader.load(cfg.model_path)
+    model = model_loader.load(cfg.model_path).to(device)
     model.eval()
 
     if not os.path.exists(cfg.out_path):
         os.makedirs(cfg.out_path)
 
     loaded_tables: Dict[str, DataFrame] = {}
+    cells_correct: int = 0
 
     with torch.no_grad():
         for i, new_data in enumerate(dl, 0):
@@ -53,11 +54,17 @@ def main():
             df, cell_id = get_csv(cfg, loaded_tables, dataset, i)
             df['confidence'][cell_id - 1] = pred_confidence
 
+            # statistical analysis
+            # noinspection PyUnresolvedReferences
+            cells_correct += ((valid_outputs >= 0.0) == new_data[1].to(device)).item()
+
             print(f"completed image {i + 1} of {len(dataset)}")
+
+    print(f"total accuracy: {cells_correct/len(dataset)}")
 
     print("saving files...")
     for file in loaded_tables:
-        loaded_tables[file].to_csv(file)
+        loaded_tables[file].to_csv(file, index=False)
 
 
 def get_csv(cfg: SmartConfig, csv_db: Dict[str, DataFrame], ds: ScorerDataset, index: int) -> Tuple[DataFrame, int]:

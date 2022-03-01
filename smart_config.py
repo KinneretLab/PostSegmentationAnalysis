@@ -46,6 +46,8 @@ class SmartConfig:
                     raw_source = raw_source[0:-1]
                 self.sources += self.from_glob(self.to_absolute(work_dir, raw_source))
 
+            self.resize_strategy = raw['stretch_level']
+
             if self._section == 'activation':
                 self.model_path = raw['model']
             if self._section == 'training':
@@ -57,7 +59,6 @@ class SmartConfig:
                 self.lr_decay_step = raw['lr_decay_step']
                 self.lr_decay_size = raw['lr_decay_size']
                 self.flag_unknowns = raw['flag_unclassified']
-                self.resize_strategy = raw['stretch_level']
 
     @staticmethod
     def get_model_name(source_dir: str) -> str:

@@ -76,7 +76,7 @@ def train(num_epochs: int, out_path: str, model, device, criterion, optimizer, s
             print(f'{phase} Loss: {epoch_loss:.4f} Acc: {epoch_acc:.4f}')
 
             # deep copy the model
-            if phase == 'val' and epoch_acc > best_acc:
+            if phase == 'val' and epoch_acc >= best_acc:
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(model.state_dict())
         print()
@@ -89,7 +89,7 @@ def train(num_epochs: int, out_path: str, model, device, criterion, optimizer, s
     model.load_state_dict(best_model_wts)
     # save model
     print('==> Finished Training ...')
-    torch.save(model, out_path)
+    torch.save(model.state_dict(), out_path)
 
 
 def main():
@@ -104,8 +104,6 @@ def main():
 
     # load model from internet
     model = model_loader.load()
-
-    model.fc = nn.Linear(model.fc.in_features, 1)
     model.to(device)
 
     # Loss and optimizer
