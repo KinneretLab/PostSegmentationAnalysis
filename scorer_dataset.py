@@ -6,6 +6,8 @@ import torch
 from tifffile import tifffile
 from torch.utils import data
 from torchvision import transforms as tf
+import albumentations.augmentations as aug
+from albumentations.core.composition import Compose
 
 
 class ScorerDataset(data.Dataset):
@@ -20,6 +22,8 @@ class ScorerDataset(data.Dataset):
         self.files: Dict[int, List[str]] = self.index_files(gt_dirs, flag_unknowns)
         self.resize_strategy: int = resize_strategy
 
+        self._augmentation = Compose([aug.RandomRotate90(p=0.5), aug.Transpose(p=0.5), aug.Flip(p=0.5)])
+
     def __getitem__(self, img_index: int) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         gets an image, and resizes it in some strategy to 224x224
@@ -28,7 +32,7 @@ class ScorerDataset(data.Dataset):
         """
 
         label = int(img_index >= len(self.files[0]))
-        img = tf.ToTensor()(tifffile.imread(self.get_path(img_index)))
+        img = tf.ToTensor()(self._augmentation(image=tifffile.imread(self.get_path(img_index)))['image'])
 
         if self.resize_strategy == 0:
             img = tf.Pad([(224 - np.size(img, 0)) // 2 + 1, (224 - np.size(img, 1)) // 2 + 1]).forward(img)

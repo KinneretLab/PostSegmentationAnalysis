@@ -33,7 +33,7 @@ def main():
         return
     device = get_device()
 
-    dataset = ScorerDataset(cfg.sources, 0, cfg.resize_strategy)
+    dataset = ScorerDataset(cfg.sources, 1, cfg.resize_strategy)
     dl = data.DataLoader(dataset, batch_size=1, shuffle=False)
 
     model = model_loader.load(cfg.model_path).to(device)
