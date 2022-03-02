@@ -1,15 +1,14 @@
-import os
 from pathlib import Path
 from typing import Dict, Tuple
 
 import re
 
-import pandas
+import numpy as np
+import scipy.io
 import torch
 import yaml
 import torch.nn
 from torch.utils import data
-from pandas import DataFrame
 
 # noinspection PyUnresolvedReferences
 import model_loader
@@ -39,10 +38,7 @@ def main():
     model = model_loader.load(cfg.model_path).to(device)
     model.eval()
 
-    if not os.path.exists(cfg.out_path):
-        os.makedirs(cfg.out_path)
-
-    loaded_tables: Dict[str, DataFrame] = {}
+    loaded_tables: Dict[str, Dict[str, np.ndarray]] = {}
     cells_correct: int = 0
 
     with torch.no_grad():
@@ -51,8 +47,8 @@ def main():
             valid_outputs = torch.squeeze(model(new_data[0].to(device)))
             pred_confidence = torch.sigmoid(valid_outputs).item()
 
-            df, cell_id = get_csv(cfg, loaded_tables, dataset, i)
-            df['confidence'][cell_id - 1] = pred_confidence
+            df, cell_id = get_table(cfg, loaded_tables, dataset, i)
+            df['fullCellDataMod']['confidence'][0, cell_id - 1] = pred_confidence
 
             # statistical analysis
             # noinspection PyUnresolvedReferences
@@ -64,20 +60,26 @@ def main():
 
     print("saving files...")
     for file in loaded_tables:
-        loaded_tables[file].to_csv(file, index=False)
+        scipy.io.savemat(file, loaded_tables[file])
 
 
-def get_csv(cfg: SmartConfig, csv_db: Dict[str, DataFrame], ds: ScorerDataset, index: int) -> Tuple[DataFrame, int]:
+def get_table(cfg: SmartConfig, table_db: Dict[str, Dict[str, np.ndarray]], ds: ScorerDataset, index: int) -> \
+        Tuple[Dict[str, np.ndarray], int]:
     path = ds.get_path(index)
     for source in cfg.sources:
         if Path(path).is_relative_to(source):
             key = cfg.out_path.replace('{source}', source)
-            if key in csv_db:
-                df = csv_db[key]
+            if key in table_db:
+                df = table_db[key]
             else:
-                df = pandas.read_csv(key)
-                csv_db[key] = df
-                df['confidence'] = -1
+                df = scipy.io.loadmat(key)
+                if 'confidence' not in df['fullCellDataMod'].dtype.names:
+                    merged = np.full(df['fullCellDataMod'].shape, -1,
+                                     dtype=df['fullCellDataMod'].dtype.descr + [('confidence', 'O')])
+                    for name in df['fullCellDataMod'].dtype.names:
+                        merged[name] = df['fullCellDataMod'][name]
+                    df['fullCellDataMod'] = merged
+                table_db[key] = df
             cell_id = int(re.findall(r'\d+', path)[-1])
             return df, cell_id
 

@@ -120,14 +120,14 @@ activation:
   data_sources:
     - DumbDB
 
-  # the location of each CSV file relative to the work directory where the score data should be appended.
+  # the location of each MAT file relative to the work directory where the score data should be appended.
   # Template language is supported:
   #  - {date} is replaced with the current date in YYYY_MM_DD format
   #  - {source} is replaced with the corresponding relative location of the data source
   #    (may only be added at the start)
-  # default: {source}/../fullCellDataMod.csv
+  # default: {source}/../fullCellDataMod.mat
   # you might want to replace this, but it is usually unnecessary.
-  table_format: "{source}/../fullCellDataMod.csv"
+  table_format: "{source}/../fullCellDataMod.mat"
 
   # the path from the home directory of THIS PYTHON SCRIPT to the model file used to process the data
   # it is entirely valid to use an absolute path, but it is better to save the model along with the script that uses it.
