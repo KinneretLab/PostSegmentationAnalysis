@@ -40,6 +40,8 @@ def main():
 
     loaded_tables: Dict[str, Dict[str, np.ndarray]] = {}
     cells_correct: int = 0
+    false_pos: int = 0
+    false_neg: int = 0
 
     with torch.no_grad():
         for i, new_data in enumerate(dl, 0):
@@ -53,10 +55,14 @@ def main():
             # statistical analysis
             # noinspection PyUnresolvedReferences
             cells_correct += ((valid_outputs >= 0.0) == new_data[1].to(device)).item()
+            false_neg += int((valid_outputs < 0.0) and new_data[1].to(device))
+            false_pos += int((valid_outputs >= 0.0) and not new_data[1].to(device))
 
             print(f"completed image {i + 1} of {len(dataset)}")
 
     print(f"total accuracy: {cells_correct/len(dataset)}")
+    print(f"false positives: {false_pos/len(dataset)}")
+    print(f"false negatives: {false_neg/len(dataset)}")
 
     print("saving files...")
     for file in loaded_tables:

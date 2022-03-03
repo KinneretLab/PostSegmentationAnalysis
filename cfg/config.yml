@@ -118,7 +118,9 @@ activation:
   # if left empty, no image will be processed.
   # this should probably not change unless you know what you are doing
   data_sources:
-    - DumbDB
+#    - DumbDB
+    - timelapse\Cells\CellDB_all
+    - timepoints\Cells\CellDB_all
 
   # the location of each MAT file relative to the work directory where the score data should be appended.
   # Template language is supported:
@@ -132,7 +134,7 @@ activation:
   # the path from the home directory of THIS PYTHON SCRIPT to the model file used to process the data
   # it is entirely valid to use an absolute path, but it is better to save the model along with the script that uses it.
   # This should really stay untouched since the model changes very infrequently.
-  model: Models/2022_03_01_D.pth
+  model: Models/2022_03_01_TA_TA.pth
 
   # the stretch level matching the model used. Should probably be 2
   stretch_level: 2
