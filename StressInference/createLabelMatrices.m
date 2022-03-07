@@ -8,9 +8,10 @@ function [L] = createLabelMatrices(segDir)
 
 % Get number of frames from Tissue Miner DBs.
 cd(segDir); frames = dir('*.tif*');
+sortedFrames = natsortfiles({frames.name});
 L=[];
-for k = 1:length(frames)
-    thisFile = frames(k).name;
+for k = 1:length(sortedFrames)
+    thisFile = sortedFrames{k};
     endName=strfind(thisFile,'.');
     fName = thisFile (1:endName-1); %without the .filetype
     frameDir = [segDir,'\',fName];

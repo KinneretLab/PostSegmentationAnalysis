@@ -3,7 +3,7 @@ clear all; close all;
 addpath(genpath('\\phhydra\data-new\phkinnerets\home\lab\CODE\Hydra\'));
 addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes'));
 
-mainDir='\\phhydra\phhydraB\Analysis\users\Yonit\Movie_Analysis\DefectLibrary\2020_09_01_18hr_set1\';
+mainDir='\\phhydra\phhydraB\Analysis\users\Yonit\Movie_Analysis\DefectLibrary\test1\';
 cellDir = [mainDir,'\Cells']; % Directory for cell analysis
 cellImDir = [mainDir,'\Cells\AllSegmented']; % Directory for cell images
 segDir = [mainDir,'\Cells\AllSegmented']; % Directory for segmentation images
@@ -124,37 +124,36 @@ save(outfn, 'Struct', 'ERes', 'PN','-v7.3');
 %% YONIT: Match with cell geometry analysis database and add corresponding information to Struct:
 
 % Check if cell geometry analysis has been performed by looking for saved
-% data "fullCellDataMod.m":
+% data "fullCellData.m":
 
-if exist([cellDir,'\fullCellDataMod.mat'])
+if exist([cellDir,'\fullCellData.mat'])
     disp('found cell geometrical analysis')
     % If database exists, perform the following steps:
     % 1. Ask the user to confirm that frame numbers match between databases.
     
     check = input('Please confirm that the frame number and order for VMSI match those for geometrical analysis by pressing 1 and Enter: ');
     if check ~= 1, disp('Stopped - frames do not match.'); return, end
-    % 2. For every cell in fullCellDataMod.m, find the correct frame in the
+    % 2. For every cell in fullCellData.m, find the correct frame in the
     % VMSI struct, and find Struct(frame).labelMat(centre_y,centre_x)
     % (centroids from geometrical analysis. According to this, recognise the
     % corresponding cell in the VMSI struct.
-    cd(cellDir); load ('fullCellDataMod.mat');
-    for i = 1:size(fullCellDataMod,2)
-        i
-        thisFrame =  str2double(fullCellDataMod(i).frame)+1;
-        thisCentre_x = round(fullCellDataMod(i).centre_x);
-        thisCentre_y = round(fullCellDataMod(i).centre_y);
+    cd(cellDir); load ('fullCellData.mat');
+    for i = 1:size(fullCellData,2)
+        thisFrame =  str2double(fullCellData(i).frame)+1;
+        thisCentre_x = round(fullCellData(i).centre_x);
+        thisCentre_y = round(fullCellData(i).centre_y);
         
         thisCell = Struct(thisFrame).labelMat(thisCentre_y,thisCentre_x);
         
         % 3. Save unique cell ID from geometrical analysis as a field in
         % Struct(frame).cdat(cellNum).
-        Struct(thisFrame).Cdat(thisCell).uniqueID = fullCellDataMod(i).uniqueID;
+        Struct(thisFrame).Cdat(thisCell).uniqueID = fullCellData(i).uniqueID;
         
         % 4. Copy all cell mechanics data from Struct(frame).cdat(cellNum) to
         % fullCellDataMod.mat.
         
-        fullCellDataMod(i).pressure = Struct(thisFrame).Cdat(thisCell).pressure;
-        fullCellDataMod(i).stress = Struct(thisFrame).Cdat(thisCell).stress;
+        fullCellData(i).pressure = Struct(thisFrame).Cdat(thisCell).pressure;
+        fullCellData(i).stress = Struct(thisFrame).Cdat(thisCell).stress;
         
     end
     
@@ -164,7 +163,7 @@ end
 
 cd(cellDir);
 save(outfn, 'Struct', 'ERes', 'PN','-v7.3');
-save('fullCellDataMod','fullCellDataMod');
+save('fullCellData','fullCellData');
 
 %% Plot the segmentation
 for t = 1:length(PN)

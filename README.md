@@ -22,31 +22,41 @@ The second part of the post segmentation analysis is the stress inference. This 
 ####Part 1: Geometric analysis
 1.	The next step is running the main script for analysing the cell data in matlab, ‘mainCellAnalysisData.m’. The script performs a few main steps, each is performed in a separate section and annotated accordingly. Notice that for analysing the data in relation to the fibres, you will need to have run the full Orientation Analysis on your data (if you are not interested in this, you can just skip sections 5-7 in the script that are relevant to the fibres). Similarly, if you are interested in relation to defect location, you will need to have marked the defect locations manually using the manual defect analysis process (details for both are in the Orientation Analysis manual). If you are using fibre orientation, you can run the full script. 
 
+The script runs over a given list of movies and frames for each movie/dataset. If any analysis has already been performed for the movie, the new data will be added to the existing data. Frames that are included in the frame list and have already been analyzed in the past will be re-analyzed and the old data will be replaced.
+
 The parameters you will need to change in the main analysis script are as follows:
 ```matlab
-mainDir='\\phhydra\phhydraB\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\'; % Main directory for movie you are analysing.
-cellDir = [mainDir,'\Cells\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
-segDir = [cellDir,'Seg_for_training']; % Segmentation folder.
-maskDir =  [mainDir,'\Display\Masks']; % Folder with masks for 
- 
-expName = '2021_05_06_pos6';
-calibrationXY = 0.52; % um per pixel in XY plane
-calibrationZ = 3; % um per pixel in Z direction
+%% 0.1 Define mainDirList
+topAnalysisDir='\\PHHYDRA\phhydraB\Analysis\users\Yonit\Movie_Analysis\'; % main folder for layer separation results
+mainAnalysisDirList= { ... % enter in the following line all the output dirs for cost calculation.
+    
+'DefectLibrary\test1\', ...
+'DefectLibrary\test2\', ...
+
+};
+for i=1:length(mainAnalysisDirList),mainDirList{i}=[topAnalysisDir,mainAnalysisDirList{i}];end
+%% 0.2 Define parameters per movie
+
+% Comment out the following irrelevant choice for framelist:
+% frameList = cell(1,length(mainAnalysisDirList));
+ frameList = {1:6,1:9}; % Enter specific frame ranges in this format if you
+% want to run on particular frames (in this example, 1:6 is for the first
+% movie, 1:9 is for the second). If left empty, runs on all frames.
+
+calibrationXY_list = [0.65,0.52]; % um per pixel in XY plane (can be a single value or vector of length of movie list if different for each movie).
+calibrationZ_list = [3,3]; % um per pixel in Z direction(can be a single value or vector of length of movie list if different for each movie).
+   
+useDefects_list = 1; % Set to 1 if you are using manually marked defects, and 0 if not. (can be a single value or vector of length of movie list if different for each movie).
+
+%% 0.3 Define general parameters for analysis
+
 umCurvWindow = (32/1.28); % Window for averaging curvature around single cell (in um). Default - 32 pixels in 1.28 um/pixel.
 cellHMnum = 1; % Set to 0 or 1 according to whether the cell layer is labeled 0 or 1 in layer separation.
- 
-% Window for orientation, local OP and coherence
-orientWindow = 20/calibrationXY; % Average cell radius in um, divided by calibrationXY
-cohWindow = 40/calibrationXY;
-OPWindow = 20/calibrationXY;
- 
-useDefects = 0; % Set to 1 if you are using manually marked defects, and 0 if not.
 
 ```
-
 Two matlab files will be saved:
 
-- fullCellDataMod.mat – Matlab structure holding the information on all cells in the dataset/movie after geometric correction – includes frame, location, outline (2 and 3D), area, perimeter, aspect ratio, orientation (2 and 3D), vertices, neighbours, and data on local fibre alignment and defects.
+- fullCellData.mat – Matlab structure holding the information on all cells in the dataset/movie after geometric correction – includes frame, location, outline (2 and 3D), area, perimeter, aspect ratio, orientation (2 and 3D), vertices, neighbours, and data on local fibre alignment and defects. Each cell is identified with a unique ID based on the image name and numerical label given to each cell in the image (for example, "2021_06_05_pos6_T001_###", # representing the label number).
 - fullVertexData.mat - matlab structure holding the information on all vertices in the dataset/movie – includes frame, location, and associated cells.
 
 2.	To visualise the data, run the script “mainPlotCellData.m”. All parameters in section one are as in the previous script (step 1). The only additional parameter to set is the directory where the output will be saved, which should be kept consistent as already set:
@@ -79,7 +89,7 @@ The current visualisations script includes:
 * Calculations and plots of spatial correlations of the measures listed above, currently calculated by neighbour rank (as opposed to distance – this overcomes the need to calculate distances on the curved surface, and is robust to the effect of general tissue expansions and contractions). 
 
 ### Part 2: Stress inference
-This involves running just one main script: **mainRunStressInference.m**. The parameters that need setting are: 
+This involves running just one main script: **mainRunStressInference.m**. In this case, the analysis is per movie/dataset. The parameters that need setting are: 
 ```matlab
 mainDir='\\phhydra\phhydraB\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\\';
 cellDir = [mainDir,'\Cells\Seg_for_training']; % Directory for cell images

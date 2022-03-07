@@ -38,7 +38,6 @@ allHM = read3DstackMat (HMDir);
 allHM = allHM * Z_to_XY; % Scaling
 %% Take cell outlines from fullCellData, for each one apply geometric correction, and calculate area, perimeter, aspect ration, and orientation.
 for i = 1:size(fullCellData,2)
-    i
     thisFrame = str2double(fullCellData(i).frame)+1;
     thisHM = allHM(:,:,thisFrame);
     [Nx,Ny,Nz] = surfnorm(reshape(x_plane,pix_max),reshape(y_plane,pix_max),thisHM);
