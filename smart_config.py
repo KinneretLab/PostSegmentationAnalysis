@@ -33,7 +33,7 @@ class SmartConfig:
 
             output: str = raw['output_format' if self._section == 'training' else 'table_format']
             if output is None:
-                output = 'Inference/{date}_{models}' if self._section == 'training' \
+                output = 'Models/{date}_{models}' if self._section == 'training' \
                     else '{source}/../fullCellDataMod.mat'
             today = date.today()
             output = output.replace('{date}', f'{today.year:04d}_{today.month:02d}_{today.day:02d}')

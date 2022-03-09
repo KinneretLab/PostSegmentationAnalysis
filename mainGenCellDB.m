@@ -49,7 +49,7 @@ for cellIdx = 1:length(fullCellDataMod)
         status = displayImageDiff(cropped{1}, cropped{4}, status, pixelDiff);
     end
 
-    saveToFolder(cellDir, cropped, status, num2str(cellIdx));
+    saveToFolder(cellDir, cropped, status, cellData.uniqueID);
     summaryImages{str2num(cellData.frame) + 1}(:,:,statusToChannel(status)) = summaryImages{str2num(cellData.frame) + 1}(:,:,statusToChannel(status)) + uint8(maskedRaw * 255);
 
     stat{status + 1}(statIdx(status + 1)) = pixelDiff;
@@ -73,7 +73,7 @@ for imgIdx = 1:length(subDirs)
     rawImg = im2uint8(loadedFrames{imgIdx,3});
     sumImg{3} = cat(3,rawImg,rawImg,rawImg);
     savable = [sumImg{:}];
-    saveToFolder(cellDir, {savable(:,:,1), savable(:,:,2), savable(:,:,3)},-1,num2str(imgIdx - 1));
+    saveToFolder(cellDir, {savable(:,:,1), savable(:,:,2), savable(:,:,3)},-1, subDirNames(imgIdx));
 end
 
 function crop = getCrop(outline, buffer)

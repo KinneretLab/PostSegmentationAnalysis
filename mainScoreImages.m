@@ -49,7 +49,7 @@ histogram([fullCellDataMod.confidence], 'BinWidth', 0.01);
 disp('Saving images...');
 for imgIdx = 1:length(subDirs)
     sumImg = cat(3, summaryImages{imgIdx}(:,:,1), summaryImages{imgIdx}(:,:,2), im2uint8(loadedFrames{imgIdx, 3}(:,:,1)));
-    saveToFolder(cellDir, sumImg, num2str(imgIdx - 1));
+    saveToFolder(cellDir, sumImg, subDirNames(imgIdx));
 end
 
 function [fakeImg, cellImg] = fillScore(cellData, fakeImg, cellImg)

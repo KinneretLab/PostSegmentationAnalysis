@@ -1,4 +1,4 @@
-# configuration file for Merger.
+# configuration file for Scorer.
 
 # training: in here, we describe parameters tailored specifically for the training program
 training:
@@ -17,11 +17,6 @@ training:
   # default: Inference/{date}_{models}
   # you might want to replace this, but it is usually unnecessary.
   output_format: Models/{date}_{models}.pth
-
-  # the path from the work directory to where the ground truth of the training images are.
-  # the directory specified must contain image names that match those provided in the data sources.
-  # this might change from time to time.
-  ground_truth_dir: Inference/GroundTruth_inference/High_sigma2_5
 
   # a list describing the relative path of all source directories to the work directory.
   # for example, if my directory structure is
