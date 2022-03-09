@@ -3,7 +3,7 @@ clear all; close all;
 addpath(genpath('\\phhydra\data-new\phkinnerets\home\lab\CODE\Hydra\'));
 addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes'));
 
-mainDir='\\phhydra\phhydraB\Analysis\users\Yonit\Movie_Analysis\DefectLibrary\test1\';
+mainDir='\\phhydra\phhydraB\Analysis\users\Yonit\Movie_Analysis\DefectLibrary\2020_09_01_18hr_set1\';
 cellDir = [mainDir,'\Cells']; % Directory for cell analysis
 cellImDir = [mainDir,'\Cells\AllSegmented']; % Directory for cell images
 segDir = [mainDir,'\Cells\AllSegmented']; % Directory for segmentation images
@@ -156,14 +156,12 @@ if exist([cellDir,'\fullCellData.mat'])
         fullCellData(i).stress = Struct(thisFrame).Cdat(thisCell).stress;
         
     end
-    
+    cd(cellDir);
+    save(outfn, 'Struct', 'ERes', 'PN','-v7.3');
+    save('fullCellData','fullCellData');
 else
     disp ('cannot find cell geometrical analysis')
 end
-
-cd(cellDir);
-save(outfn, 'Struct', 'ERes', 'PN','-v7.3');
-save('fullCellData','fullCellData');
 
 %% Plot the segmentation
 for t = 1:length(PN)
