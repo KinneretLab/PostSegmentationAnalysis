@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="272px" preserveAspectRatio="none" style="width:622px;height:272px;background:#FFFFFF;" version="1.1" viewBox="0 0 622 272" width="622px" zoomAndPan="magnify"><defs><filter height="300%" id="f13ghuv0u4y3gn" width="300%" x="-1" y="-1"><feGaussianBlur result="blurOut" stdDeviation="2.0"/><feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/><feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/><feBlend in="SourceGraphic" in2="blurOut3" mode="normal"/></filter></defs><g><!--MD5=[53ccf4b3ee6cf4337a0ab93ac09644f3]
+entity main--><rect fill="#FEFECE" filter="url(#f13ghuv0u4y3gn)" height="47.6094" style="stroke:#A80036;stroke-width:1.5;" width="151" x="277.5" y="7"/><rect fill="#FEFECE" height="10" style="stroke:#A80036;stroke-width:1.5;" width="15" x="408.5" y="12"/><rect fill="#FEFECE" height="2" style="stroke:#A80036;stroke-width:1.5;" width="4" x="406.5" y="14"/><rect fill="#FEFECE" height="2" style="stroke:#A80036;stroke-width:1.5;" width="4" x="406.5" y="18"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="111" x="292.5" y="41.5332">activation/training</text><!--MD5=[6a88aea038141ee488e61f39bf1ca119]
+entity cfg--><rect fill="#FEFECE" filter="url(#f13ghuv0u4y3gn)" height="47.6094" style="stroke:#A80036;stroke-width:1.5;" width="118" x="406" y="115"/><rect fill="#FEFECE" height="10" style="stroke:#A80036;stroke-width:1.5;" width="15" x="504" y="120"/><rect fill="#FEFECE" height="2" style="stroke:#A80036;stroke-width:1.5;" width="4" x="502" y="122"/><rect fill="#FEFECE" height="2" style="stroke:#A80036;stroke-width:1.5;" width="4" x="502" y="126"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="78" x="421" y="149.5332">SmartConfig</text><!--MD5=[defbd921a4842d1508ad36753a2e7750]
+entity nn--><rect fill="#FEFECE" filter="url(#f13ghuv0u4y3gn)" height="47.6094" style="stroke:#A80036;stroke-width:1.5;" width="126" x="7" y="115"/><rect fill="#FEFECE" height="10" style="stroke:#A80036;stroke-width:1.5;" width="15" x="113" y="120"/><rect fill="#FEFECE" height="2" style="stroke:#A80036;stroke-width:1.5;" width="4" x="111" y="122"/><rect fill="#FEFECE" height="2" style="stroke:#A80036;stroke-width:1.5;" width="4" x="111" y="126"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="86" x="22" y="149.5332">model_loader</text><!--MD5=[703ea5a149c5871c74522bf38bdfe548]
+entity data--><rect fill="#FEFECE" filter="url(#f13ghuv0u4y3gn)" height="47.6094" style="stroke:#A80036;stroke-width:1.5;" width="131" x="168.5" y="115"/><rect fill="#FEFECE" height="10" style="stroke:#A80036;stroke-width:1.5;" width="15" x="279.5" y="120"/><rect fill="#FEFECE" height="2" style="stroke:#A80036;stroke-width:1.5;" width="4" x="277.5" y="122"/><rect fill="#FEFECE" height="2" style="stroke:#A80036;stroke-width:1.5;" width="4" x="277.5" y="126"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="91" x="183.5" y="149.5332">ScorerDataset</text><!--MD5=[299fab198508a3058463d655f7d46800]
+entity torch--><rect fill="#FEFECE" filter="url(#f13ghuv0u4y3gn)" height="33.6094" style="stroke:#A80036;stroke-width:1.5;" width="63" x="204.5" y="227"/><rect fill="#FEFECE" height="33.6094" style="stroke:#A80036;stroke-width:1.5;" width="63" x="200.5" y="223"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="47" x="208.5" y="245.5332">pytorch</text><!--MD5=[f37238dc75bc5d185960aec9cdff45d3]
+entity pd--><rect fill="#FEFECE" filter="url(#f13ghuv0u4y3gn)" height="33.6094" style="stroke:#A80036;stroke-width:1.5;" width="63" x="547.5" y="227"/><rect fill="#FEFECE" height="33.6094" style="stroke:#A80036;stroke-width:1.5;" width="63" x="543.5" y="223"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="47" x="551.5" y="245.5332">scipy.io</text><!--MD5=[be6155fad3a4ee2585d9196117651dd6]
+entity yaml--><rect fill="#FEFECE" filter="url(#f13ghuv0u4y3gn)" height="33.6094" style="stroke:#A80036;stroke-width:1.5;" width="69" x="432.5" y="227"/><rect fill="#FEFECE" height="33.6094" style="stroke:#A80036;stroke-width:1.5;" width="69" x="428.5" y="223"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="53" x="436.5" y="245.5332">PyYAML</text><!--MD5=[aa3b458352135463a5a0f2d2a48ef4d9]
+entity models--><rect fill="#FEFECE" filter="url(#f13ghuv0u4y3gn)" height="33.6094" style="stroke:#A80036;stroke-width:1.5;" width="126" x="24" y="227"/><rect fill="#FEFECE" height="33.6094" style="stroke:#A80036;stroke-width:1.5;" width="126" x="20" y="223"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="110" x="28" y="245.5332">pretrainedmodels</text><!--MD5=[39a07cb51939be100393dc36abaebca9]
+link data to torch--><path d="M234,163.17 C234,174.95 234,189.58 234,202.96 " fill="none" id="data-to-torch" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="none" points="241,202.97,234,222.97,227,202.97,241,202.97" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[9eb4d8049cbe5d7f016ada548ca48588]
+link nn to models--><path d="M73.44,163.17 C75.87,179.5 79.1,201.27 81.53,217.64 " fill="none" id="nn-to-models" style="stroke:#A80036;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/><polygon fill="#A80036" points="82.32,222.97,84.9648,213.4829,81.5909,218.0234,77.0503,214.6495,82.32,222.97" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[c7b886af76703e2ddc65c8cb02f25a60]
+link nn to data--><path d="M133.1,139 C143.06,139 153.02,139 162.97,139 " fill="none" id="nn-to-data" style="stroke:#A80036;stroke-width:1.0;"/><polygon fill="#A80036" points="168.18,139,159.18,135,163.18,139,159.18,143,168.18,139" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[c0b92f35364e2330315179f30e23a4cd]
+link cfg to yaml--><path d="M465,163.17 C465,179.5 465,201.27 465,217.64 " fill="none" id="cfg-to-yaml" style="stroke:#A80036;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/><polygon fill="#A80036" points="465,222.97,469,213.97,465,217.97,461,213.97,465,222.97" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[bf0cff962d57d8b323420d1a175b316b]
+link main to cfg--><path d="M377.3,55 C394.65,71.42 418.04,93.56 436.31,110.84 " fill="none" id="main-to-cfg" style="stroke:#A80036;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/><polygon fill="#A80036" points="440.36,114.68,436.5844,105.5836,436.7329,111.2385,431.078,111.387,440.36,114.68" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[7d814bc30abfc5beb939ff8fc98efe8f]
+link main to nn--><path d="M291.59,55 C245.86,72.13 183.48,95.5 136.55,113.07 " fill="none" id="main-to-nn" style="stroke:#A80036;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/><polygon fill="#A80036" points="131.77,114.86,141.6015,115.4452,136.4516,113.1044,138.7925,107.9546,131.77,114.86" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[8ec7755fda6ef6a32c3974931126263d]
+link main to torch--><path d="M350.48,55.28 C346.67,82.7 337.57,128.86 317,163 C303.43,185.52 281.57,205.68 263.69,219.87 " fill="none" id="main-to-torch" style="stroke:#A80036;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/><polygon fill="#A80036" points="259.71,222.98,269.2681,220.6048,263.6545,219.9073,264.3519,214.2936,259.71,222.98" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[60ab04dd06e0d8ec0b9923052ed1bfc3]
+link main to pd--><path d="M428.72,48.66 C467.65,60.89 512.9,81.42 542,115 C567.23,144.12 574.39,189.99 576.35,217.62 " fill="none" id="main-to-pd" style="stroke:#A80036;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/><polygon fill="#A80036" points="576.68,222.89,580.1059,213.6562,576.3654,217.8999,572.1217,214.1595,576.68,222.89" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[046dc559fad178814efcfc7f215c365d]
+link main to data--><path d="M327.18,55 C308.59,71.55 283.47,93.93 264,111.28 " fill="none" id="main-to-data" style="stroke:#A80036;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/><polygon fill="#A80036" points="260.18,114.68,269.5577,111.6703,263.9099,111.3502,264.2301,105.7024,260.18,114.68" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[d4a9d3822fbbf69d45d298608d4854e3]
+link models to torch--><path d="M150.19,242 C165.19,242 180.19,242 195.19,242 " fill="none" id="models-to-torch" style="stroke:#A80036;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/><polygon fill="#A80036" points="200.28,242,191.28,238,195.28,242,191.28,246,200.28,242" style="stroke:#A80036;stroke-width:1.0;"/><!--MD5=[10753ecbd396b1203450860ea6d6da08]
+@startuml
+
+[activation/training] as main
+[SmartConfig] as cfg
+[model_loader] as nn
+[ScorerDataset] as data
+collections pytorch as torch
+collections scipy.io as pd
+collections PyYAML as yaml
+collections pretrainedmodels as models
+
+data - -|> torch
+nn ..> models
+
+nn -> data
+
+cfg ..> yaml
+
+main ..> cfg
+main ..> nn
+main ..> torch
+main ...> pd
+main ..> data
+
+models .> torch
+
+
+@enduml
+
+PlantUML version 1.2021.7(Sun May 23 15:40:07 IDT 2021)
+(GPL source distribution)
+Java Runtime: OpenJDK Runtime Environment
+JVM: OpenJDK 64-Bit Server VM
+Default Encoding: Cp1252
+Language: en
+Country: US
+--></g></svg>

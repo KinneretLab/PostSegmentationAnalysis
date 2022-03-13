@@ -6,6 +6,8 @@ mainDir='Z:\Analysis\users\Projects\Noam\Workshop\\timepoints'; % Main directory
 cellDir = [mainDir,'\Cells\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
 segDir = [cellDir,'Inference\2021_10_12_CEE3_CEE5_CEE1E_CEE1E_CEE6']; % Segmentation folder.
 
+training = false
+
 cd(cellDir);
 load('fullCellDataMod');
 load('fullVertexData');
@@ -23,7 +25,9 @@ for i = 1:length(subDirNames)
     loadedFrames{i, 1} = imread(fullfile(segDir, dirName, 'handCorrection.tif'));
     loadedFrames{i, 2} = imread(fullfile(segDir, dirName + ".tif"));
     loadedFrames{i, 3} = imread(fullfile(cellDir, 'Raw Cortices', dirName + ".tiff"));
-    loadedFrames{i, 4} = imread(fullfile(segDir, dirName, 'groundTruth.tif'));
+    if training
+        loadedFrames{i, 4} = imread(fullfile(segDir, dirName, 'groundTruth.tif'));
+    end
 end
 
 lenImages = size(loadedFrames, 2);
@@ -38,42 +42,51 @@ for cellIdx = 1:length(fullCellDataMod)
     % iterate over each cell in the data to get its dimensions by min/max x/y coords or vertices
     images = loadedFrames(str2num(cellData.frame) + 1, :);
 
-    [status, pixelDiff, maskedRaw] = compareImages(cellData, images{1}, images{4});
+    if training
+        [status, pixelDiff, maskedRaw] = compareImages(cellData, images{1}, images{4});
+    end
 
     crop = getCrop(cellData.outline, 2);
     for i = 1:lenImages
         cropped{i} = imcrop(images{i}, crop);
     end
 
-    if ismember(status, [3]) % 0 is cell, 1 is fake, 2 is ????, 3 is ignore.
-        status = displayImageDiff(cropped{1}, cropped{4}, status, pixelDiff);
+    if training
+        if ismember(status, [3]) % 0 is cell, 1 is fake, 2 is ????, 3 is ignore.
+            status = displayImageDiff(cropped{1}, cropped{4}, status, pixelDiff);
+        end
+
+        saveToFolder(cellDir, cropped, status, cellData.uniqueID);
+        summaryImages{str2num(cellData.frame) + 1}(:,:,statusToChannel(status)) = summaryImages{str2num(cellData.frame) + 1}(:,:,statusToChannel(status)) + uint8(maskedRaw * 255);
+
+        stat{status + 1}(statIdx(status + 1)) = pixelDiff;
+        statIdx(status + 1) = statIdx(status + 1) + 1;
+    else
+        saveToFolder(cellDir, cropped, 0, cellData.uniqueID);
     end
-
-    saveToFolder(cellDir, cropped, status, num2str(cellIdx));
-    summaryImages{str2num(cellData.frame) + 1}(:,:,statusToChannel(status)) = summaryImages{str2num(cellData.frame) + 1}(:,:,statusToChannel(status)) + uint8(maskedRaw * 255);
-
-    stat{status + 1}(statIdx(status + 1)) = pixelDiff;
-    statIdx(status + 1) = statIdx(status + 1) + 1;
 
     if rem(cellIdx, 1000) == 0
         disp(num2str(cellIdx))
     end
 end
-for k = 1:3; stat{k}(stat{k} > 500) = -3; end
-histogram(stat{1}, 'BinWidth', 10);
-hold on
-histogram(stat{2}, 'BinWidth', 10);
-histogram(stat{3}, 'BinWidth', 10);
-hold off
 
-disp('Creating summary images...');
-for imgIdx = 1:length(subDirs)
-    sumImg{1} = cat(3, loadedFrames{imgIdx,1}(:,:,1), loadedFrames{imgIdx,4}(:,:,1), loadedFrames{imgIdx,2}(:,:,1));
-    sumImg{2} = summaryImages{imgIdx};
-    rawImg = im2uint8(loadedFrames{imgIdx,3});
-    sumImg{3} = cat(3,rawImg,rawImg,rawImg);
-    savable = [sumImg{:}];
-    saveToFolder(cellDir, {savable(:,:,1), savable(:,:,2), savable(:,:,3)},-1,num2str(imgIdx - 1));
+if training
+    for k = 1:3; stat{k}(stat{k} > 500) = -3; end
+    histogram(stat{1}, 'BinWidth', 10);
+    hold on
+    histogram(stat{2}, 'BinWidth', 10);
+    histogram(stat{3}, 'BinWidth', 10);
+    hold off
+
+    disp('Creating summary images...');
+    for imgIdx = 1:length(subDirs)
+        sumImg{1} = cat(3, loadedFrames{imgIdx,1}(:,:,1), loadedFrames{imgIdx,4}(:,:,1), loadedFrames{imgIdx,2}(:,:,1));
+        sumImg{2} = summaryImages{imgIdx};
+        rawImg = im2uint8(loadedFrames{imgIdx,3});
+        sumImg{3} = cat(3,rawImg,rawImg,rawImg);
+        savable = [sumImg{:}];
+        saveToFolder(cellDir, {savable(:,:,1), savable(:,:,2), savable(:,:,3)},-1, subDirNames(imgIdx));
+    end
 end
 
 function crop = getCrop(outline, buffer)

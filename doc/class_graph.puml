@@ -1,0 +1,28 @@
+@startuml
+
+[activation/training] as main
+[SmartConfig] as cfg
+[model_loader] as nn
+[ScorerDataset] as data
+collections pytorch as torch
+collections scipy.io as pd
+collections PyYAML as yaml
+collections pretrainedmodels as models
+
+data --|> torch
+nn ..> models
+
+nn -> data
+
+cfg ..> yaml
+
+main ..> cfg
+main ..> nn
+main ..> torch
+main ...> pd
+main ..> data
+
+models .> torch
+
+
+@enduml
