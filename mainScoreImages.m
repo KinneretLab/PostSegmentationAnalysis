@@ -7,10 +7,10 @@ cellDir = [mainDir,'\Cells\']; % Cell directory for movie (this is our normal fo
 segDir = [cellDir,'Inference\2022_01_11_CEE3_CEE5_CEE1E_CEE1E_CEE6']; % Segmentation folder.
 
 % various visual configurations for the result images
-isBinary = false; % whether binary score images should be saved or a more continuous variant with a variable color.
+isBinary = true; % whether binary score images should be saved or a more continuous variant with a variable color.
 darken = false; % whether the cell coloring should be darked overall so the raw image can be more visible
-erodeCells = false; % whether there should be a buffer space between the indicators of each cell
-showBorders = true; % whether the automatic segmentatio borders should be shown (in yellow)
+erodeCells = true; % whether there should be a buffer space between the indicators of each cell
+showBorders = false; % whether the automatic segmentatio borders should be shown (in yellow)
 
 cd(cellDir);
 load('fullCellData');
@@ -95,6 +95,13 @@ end
 
 function img = tryErode(img, erode)
     if erode
-        img = imerode(img, strel('disk', 3));
+        sourceImg = imerode(img, strel('disk', 3));
+        % select the middle index (arbitrary) for rendering a circle
+        [y_cord, x_cord] = find(sourceImg);
+        ind = floor(size(y_cord, 1) / 2);
+        if ind > 0
+            [rows, cols] = meshgrid(1:size(img, 1), 1:size(img, 2));
+            img = (rows - x_cord(ind)) .^ 2 + (cols - y_cord(ind)) .^ 2 <= 4;
+        end
     end
 end
