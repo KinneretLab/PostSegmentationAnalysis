@@ -114,8 +114,7 @@ activation:
   # this should probably not change unless you know what you are doing
   data_sources:
 #    - DumbDB
-    - timelapse\Cells\CellDB_all
-    - timepoints\Cells\CellDB_all
+    - CellDB
 
   # the location of each MAT file relative to the work directory where the score data should be appended.
   # Template language is supported:
@@ -124,7 +123,7 @@ activation:
   #    (may only be added at the start)
   # default: {source}/../fullCellDataMod.mat
   # you might want to replace this, but it is usually unnecessary.
-  table_format: "{source}/../fullCellDataMod.mat"
+  table_format: "{source}/../fullCellData.mat"
 
   # the path from the home directory of THIS PYTHON SCRIPT to the model file used to process the data
   # it is entirely valid to use an absolute path, but it is better to save the model along with the script that uses it.

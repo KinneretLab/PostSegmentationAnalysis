@@ -80,7 +80,7 @@ class SmartConfig:
         if len(result) == 0:
             print(f'\033[31mNo file was found with the template {raw_path}. Skipping...\033[0m')
             return []
-        if 'fakes' not in [filesystem_entity.name for filesystem_entity in Path(result[0]).iterdir()]:
+        if 'cells' not in [filesystem_entity.name for filesystem_entity in Path(result[0]).iterdir()]:
             return self.from_glob(raw_path + '/*')
         return result
 

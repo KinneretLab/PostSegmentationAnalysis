@@ -50,7 +50,7 @@ def main():
             pred_confidence = torch.sigmoid(valid_outputs).item()
 
             df, cell_id = get_table(cfg, loaded_tables, dataset, i)
-            df['fullCellDataMod']['confidence'][0, cell_id - 1] = pred_confidence
+            df['fullCellData']['confidence'][0, cell_id] = pred_confidence
 
             # statistical analysis
             # noinspection PyUnresolvedReferences
@@ -79,15 +79,16 @@ def get_table(cfg: SmartConfig, table_db: Dict[str, Dict[str, np.ndarray]], ds: 
                 df = table_db[key]
             else:
                 df = scipy.io.loadmat(key)
-                if 'confidence' not in df['fullCellDataMod'].dtype.names:
-                    merged = np.full(df['fullCellDataMod'].shape, -1,
-                                     dtype=df['fullCellDataMod'].dtype.descr + [('confidence', 'O')])
-                    for name in df['fullCellDataMod'].dtype.names:
-                        merged[name] = df['fullCellDataMod'][name]
-                    df['fullCellDataMod'] = merged
+                if 'confidence' not in df['fullCellData'].dtype.names:
+                    merged = np.full(df['fullCellData'].shape, -1,
+                                     dtype=df['fullCellData'].dtype.descr + [('confidence', 'O')])
+                    for name in df['fullCellData'].dtype.names:
+                        merged[name] = df['fullCellData'][name]
+                    df['fullCellData'] = merged
                 table_db[key] = df
-            cell_id = int(re.findall(r'\d+', path)[-1])
-            return df, cell_id
+            cell_id = re.findall(r'[^.\\]+', path)[-2]
+            cell_index = np.where(df['fullCellData']['uniqueID'] == cell_id)[1][0]
+            return df, cell_index
 
 
 if __name__ == '__main__':

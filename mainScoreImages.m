@@ -13,7 +13,7 @@ erodeCells = false; % whether there should be a buffer space between the indicat
 showBorders = true; % whether the automatic segmentatio borders should be shown (in yellow)
 
 cd(cellDir);
-load('fullCellDataMod');
+load('fullCellData');
 
 subDirs = dir(segDir);
 subDirs = subDirs([subDirs.isdir] & ~strcmp({subDirs.name},'.') & ~strcmp({subDirs.name},'..'));
@@ -30,16 +30,19 @@ for i = 1:length(subDirNames)
     loadedFrames{i, 2} = imread(fullfile(cellDir, 'Raw Cortices', dirName + ".tiff"));
 end
 
-imgSize = size(loadedFrames{1, 1})
+imgSize = size(loadedFrames{1, 1});
 if showBorders
     summaryImages = loadedFrames(:, 1);
 else
-    summaryImages = {zeros(imgSize), zeros(imgSize)};
+    summaryImages = cell(length(subDirs), 1);
+    for i = 1:length(subDirs)
+        summaryImages{i} = uint8(zeros(imgSize));
+    end
 end
 
 disp('Creating composite images...');
-for cellIdx = 1:length(fullCellDataMod)
-    cellData = fullCellDataMod(cellIdx);
+for cellIdx = 1:length(fullCellData)
+    cellData = fullCellData(cellIdx);
     images = loadedFrames(str2double(cellData.frame) + 1, :);
 
     [fakeImg, cellImg] = fillScore(cellData, images{1});
@@ -52,7 +55,7 @@ for cellIdx = 1:length(fullCellDataMod)
     end
 end
 
-histogram([fullCellDataMod.confidence], 'BinWidth', 0.01);
+histogram([fullCellData.confidence], 'BinWidth', 0.01);
 
 disp('Saving images...');
 for imgIdx = 1:length(subDirs)
@@ -64,8 +67,10 @@ function [fakeImg, cellImg] = fillScore(cellData, segImg)
     rawMask = 255 * uint8(imfill(imbinarize(segImg(:,:,1)), double(cellData.outline(1,:))) - imbinarize(segImg(:,:,1)));
     if cellData.confidence >= 0.5
         cellImg = rawMask;
+        fakeImg = uint8(imbinarize(segImg(:,:,1)));
     else
         fakeImg = rawMask;
+        cellImg = uint8(imbinarize(segImg(:,:,1)));
     end
 end
 
@@ -90,6 +95,6 @@ end
 
 function img = tryErode(img, erode)
     if erode
-        img = imerode(img, strel('disk', 3))
+        img = imerode(img, strel('disk', 3));
     end
 end

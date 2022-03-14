@@ -6,10 +6,10 @@ mainDir='Z:\Analysis\users\Projects\Noam\Workshop\\timepoints'; % Main directory
 cellDir = [mainDir,'\Cells\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
 segDir = [cellDir,'Inference\2021_10_12_CEE3_CEE5_CEE1E_CEE1E_CEE6']; % Segmentation folder.
 
-training = false
+training = false;
 
 cd(cellDir);
-load('fullCellDataMod');
+load('fullCellData');
 load('fullVertexData');
 
 subDirs = dir(segDir);
@@ -17,7 +17,7 @@ subDirs = subDirs([subDirs.isdir] & ~strcmp({subDirs.name},'.') & ~strcmp({subDi
 subDirNames = natsortfiles({subDirs.name});
 
 % load all frames into memory
-loadedFrames = cell(length(subDirs), 4);
+loadedFrames = cell(length(subDirs), 3 + training);
 disp('loading frames...');
 for i = 1:length(subDirNames)
     dirName = subDirNames{i};
@@ -37,8 +37,8 @@ statIdx = ones(3, 1);
 stat = cell(3, 1);
 summaryImages = loadedFrames(:,1);
 disp('Creating composites & categorizing...');
-for cellIdx = 1:length(fullCellDataMod)
-    cellData = fullCellDataMod(cellIdx);
+for cellIdx = 1:length(fullCellData)
+    cellData = fullCellData(cellIdx);
     % iterate over each cell in the data to get its dimensions by min/max x/y coords or vertices
     images = loadedFrames(str2num(cellData.frame) + 1, :);
 
