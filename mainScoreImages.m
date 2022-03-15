@@ -67,10 +67,10 @@ function [fakeImg, cellImg] = fillScore(cellData, segImg)
     rawMask = 255 * uint8(imfill(imbinarize(segImg(:,:,1)), double(cellData.outline(1,:))) - imbinarize(segImg(:,:,1)));
     if cellData.confidence >= 0.5
         cellImg = rawMask;
-        fakeImg = uint8(imbinarize(segImg(:,:,1)));
+        fakeImg = uint8(zeros(size(segImg)));
     else
         fakeImg = rawMask;
-        cellImg = uint8(imbinarize(segImg(:,:,1)));
+        cellImg = uint8(zeros(size(segImg)));
     end
 end
 
