@@ -11,6 +11,7 @@ isBinary = true; % whether binary score images should be saved or a more continu
 darken = false; % whether the cell coloring should be darked overall so the raw image can be more visible
 erodeCells = true; % whether there should be a buffer space between the indicators of each cell
 showBorders = false; % whether the automatic segmentatio borders should be shown (in yellow)
+rawInWhite = true; % show the raw image in white instead of blue (channel-wise)
 
 cd(cellDir);
 load('fullCellData');
@@ -59,7 +60,11 @@ histogram([fullCellData.confidence], 'BinWidth', 0.01);
 
 disp('Saving images...');
 for imgIdx = 1:length(subDirs)
-    sumImg = cat(3, summaryImages{imgIdx}(:,:,1), summaryImages{imgIdx}(:,:,2), im2uint8(loadedFrames{imgIdx, 2}(:,:,1)));
+    if rawInWhite
+        sumImg = cat(3, summaryImages{imgIdx}(:,:,1), summaryImages{imgIdx}(:,:,2), zeros(imgSize)) + im2uint8(loadedFrames{imgIdx, 2});
+    else
+        sumImg = cat(3, summaryImages{imgIdx}(:,:,1), summaryImages{imgIdx}(:,:,2), im2uint8(loadedFrames{imgIdx, 2}(:,:,1)));
+    end
     saveToFolder(cellDir, sumImg, subDirNames(imgIdx));
 end
 
