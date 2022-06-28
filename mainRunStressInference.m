@@ -1,14 +1,13 @@
 %% 1. Initialization:
 clear all; close all;
-addpath(genpath('\\phhydra\data-new\phkinnerets\home\lab\CODE\Hydra\'));
-addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes'));
+addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\GroupCodes\July2021'));
 
-mainDir='\\phhydra\phhydraB\Analysis\users\Yonit\Movie_Analysis\DefectLibrary\2020_09_01_18hr_set1\';
+mainDir='\\phhydra\phhydraB\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_06_21_pos2\';
 cellDir = [mainDir,'\Cells']; % Directory for cell analysis
 cellImDir = [mainDir,'\Cells\AllSegmented']; % Directory for cell images
 segDir = [mainDir,'\Cells\AllSegmented']; % Directory for segmentation images
 cellPlotDir = [mainDir,'\Cells']; % Directory for saving output data, should be kept consistent.
-calibrationXY = 0.65; % um per pixel in XY plane
+calibrationXY = 0.52; % um per pixel in XY plane
 calibrationZ = 3; % um per pixel in Z direction
 
 %% Parameters
@@ -140,10 +139,15 @@ if exist([cellDir,'\fullCellData.mat'])
     cd(cellDir); load ('fullCellData.mat');
     for i = 1:size(fullCellData,2)
         thisFrame =  str2double(fullCellData(i).frame)+1;
-        thisCentre_x = round(fullCellData(i).centre_x);
-        thisCentre_y = round(fullCellData(i).centre_y);
-        
-        thisCell = Struct(thisFrame).labelMat(thisCentre_y,thisCentre_x);
+        frameSize = size(Struct(thisFrame).labelMat);
+        cellRegion = poly2mask(fullCellData(i).outline(:,1),fullCellData(i).outline(:,2),frameSize(1),frameSize(2));
+        SE = strel("disk",1);
+        cellRegion = imerode(cellRegion,SE);
+        [inX,inY]=find(cellRegion==1);
+%         thisCentre_x = round(fullCellData(i).centre_x);
+%         thisCentre_y = round(fullCellData(i).centre_y);
+         
+        thisCell = Struct(thisFrame).labelMat(inY(round(length(inY/2))),inX(round(length(inX/2))));
         
         % 3. Save unique cell ID from geometrical analysis as a field in
         % Struct(frame).cdat(cellNum).

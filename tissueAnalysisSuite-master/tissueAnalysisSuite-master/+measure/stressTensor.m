@@ -58,6 +58,10 @@
                 ind = [];
             end
             
+            if (length(ind)>=1)
+                ind = ind(1);
+            end
+            
             if (~isempty(ind) && ~isempty(Struct(t).Bdat(ind).tension))
                 T(b) = Struct(t).Bdat(ind).tension;
                 i1(b) = ind;

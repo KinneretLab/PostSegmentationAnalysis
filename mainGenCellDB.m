@@ -1,10 +1,10 @@
 clear all; close all;
-addpath(genpath('\\phhydra\data-new\phkinnerets\home\lab\CODE\Hydra\'));
-addpath(genpath('\\phhydra\phhydraB\Analysis\users\Projects\Noam'));
+addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\GroupCodes\July2021'));
 
-mainDir='Z:\Analysis\users\Projects\Noam\Workshop\\timepoints'; % Main directory for movie you are analysing.
+mainDir='\\phhydra\phhydraB\Analysis\users\Liora\Movie_Analysis\2021_07_26\2021_07_26_pos2\'; % Main directory for movie you are analysing.
 cellDir = [mainDir,'\Cells\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
-segDir = [cellDir,'Inference\2021_10_12_CEE3_CEE5_CEE1E_CEE1E_CEE6']; % Segmentation folder.
+segDir = [cellDir,'AllSegmented\']; % Segmentation folder.
+infDir = [cellDir,'\Inference\2022_04_26_CEE3_CEE5_CEE1E_CEE1E_CEE6\']; % Inference images folder.
 
 training = false;
 
@@ -23,8 +23,8 @@ for i = 1:length(subDirNames)
     dirName = subDirNames{i};
     % get all the images
     loadedFrames{i, 1} = imread(fullfile(segDir, dirName, 'handCorrection.tif'));
-    loadedFrames{i, 2} = imread(fullfile(segDir, dirName + ".tif"));
-    loadedFrames{i, 3} = imread(fullfile(cellDir, 'Raw Cortices', dirName + ".tiff"));
+    loadedFrames{i, 2} = imread(fullfile(infDir, dirName + ".tif"));
+    loadedFrames{i, 3} = imread(fullfile(cellDir, 'Adjusted_cortices', dirName + ".tiff"));
     if training
         loadedFrames{i, 4} = imread(fullfile(segDir, dirName, 'groundTruth.tif'));
     end
