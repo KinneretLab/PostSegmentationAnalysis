@@ -3,13 +3,19 @@ clear all; close all;
 addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\GroupCodes\July2021'));
 
 %% 0.1 Define mainDirList
-topAnalysisDir='\\PHHYDRA\phhydraB\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\'; % main folder for layer separation results
-mainAnalysisDirList= { ... % enter in the following line all the output dirs for cost calculation.
+
+% Locations of original data - needed only for timestamps
+topMainDir = '\\phhydra\phhydraB\SD2\Users\Yonit\2021_05\2021_05_06'; % main folder of original files
+
+topAnalysisDir='\\PHHYDRA\phhydraB\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\'; % main folder for movie analysis
+mainAnalysisDirList= { ... % enter in the following line all sub-directories for movie analysis.
 
 '2021_05_06_pos6\', ...
 
 };
 for i=1:length(mainAnalysisDirList),mainDirList{i}=[topAnalysisDir,mainAnalysisDirList{i}];end
+
+
 %% 0.2 Define parameters per movie
 
 % Comment out the following irrelevant choice for framelist:
@@ -53,52 +59,132 @@ for n=1:length(mainDirList)
     disp('Applying geometric correction')
     [fullCellData,fullBondData] = cells3DCorrectionTMformat(mainDir,fullCellDataRaw,fullVertexData,fullBondDataRaw,fullDBondData,calibrationXY, calibrationZ,umCurvWindow,cellHMnum,frameList{n});
     
-    %% 4. Produce tables from structures to be saved accorting to Tissue Miner format.
-    % Create frames table from frame numbers and timestamps to convert to
-    % actual time.
     
+    %% 4. Load order parameter, orientation and coherence
+    disp('Preparing fibre data')
+    dirOrientation=[mainDir,'\Orientation_Analysis\Orientation']; % masked orientation field
+    dirCoherence = [mainDir,'\Orientation_Analysis\Coherence']; % masked coherence field
+    dirLocalOP = [mainDir,'\Orientation_Analysis\LocalOP']; % masked local order parameter field
+    
+    cd(segDir); fileNames=dir ('*.tif*');
+    frames=[1:length(fileNames)];
+    sortedFileNames = natsortfiles({fileNames.name});
+    
+    % Loop over frame and load data from orientation analysis
+    for k=frames,  % loop on all frames
+        thisFile=sortedFileNames{k}; % find this frame's file name
+        endName=strfind(thisFile,'.');
+        thisFileImNameBase = thisFile (1:endName-1); %without the .filetype
+        thisOrientation = load([dirOrientation,'\',thisFileImNameBase,'.mat']);
+        allOrientation(k)= thisOrientation;
+        thisCoherence = load([dirCoherence,'\',thisFileImNameBase,'.mat']);
+        allCoherence(k)= thisCoherence;
+        thisLocalOP = load([dirLocalOP,'\',thisFileImNameBase,'.mat']);
+        allLocalOP(k)= thisLocalOP;
+        
+    end
+    
+    %% 5. Extract local fibre orientaion, local OP and coherence for every cell
+    % Add another function here to extract fibre data into vertex structure as
+    % well.
+    disp('Analyzing relation to fibres')
+    for i = 1:size(fullCellData,2)
+        thisFrame = fullCellData(i).frame;
+        [meanOrient, meanOP, meanCoh] = extractFibreData(fullCellData(i),allOrientation(thisFrame),allLocalOP(thisFrame), allCoherence(thisFrame), orientWindow, OPWindow, cohWindow);
+        fullCellData(i).fibreOrientation = meanOrient;
+        fullCellData(i).localOP = meanOP;
+        fullCellData(i).fibreCoherence = meanCoh;
+        
+    end
+    
+    %% 6. Produce tables from structures to be saved accorting to Tissue Miner format.
+
     % Save only data required for TM format to tables:
 
     %Directed bonds table
-    directed_bonds = struct2table(fullDBondData);
+    dbond_id = {fullDBondData.dbond_id}';
+    frame = {fullDBondData.frame}';   
+    cell_id = {fullDBondData.cell}'; 
+    conj_dbond_id = {fullDBondData.conjugate_dbond}';
+    bond_id = {fullDBondData.bond}';
+    allVertexPairs = cat(1,fullDBondData.ordered_vertices);
+    vertex_id = allVertexPairs(:,1); 
+    vertex2_id = allVertexPairs(:,2);
+    left_dbond_id = {fullDBondData.next_dBond}';
+    directed_bonds = table(dbond_id,frame,cell_id,conj_dbond_id,bond_id,vertex_id,vertex2_id,left_dbond_id);
+    clear('dbond_id','frame','cell_id','conj_dbond_id','bond_id','vertex_id','vertex2_id','left_dbond_id');
+    
     
     % Bonds table
-    bond_id = (1:length(fullBondData))';
+    bond_id = {fullBondData.bond_id}';
     frame = {fullBondData.frame}';   
     bond_length = {fullBondData.length}';    
     
     bonds = table(bond_id,frame,bond_length);
-    clear(bond_id,frame,bond_length);
+    clear('bond_id','frame','bond_length');
     
     % Vertices table
-    vertex_id = (1:length(fullVertexData))';
+    vertex_id = {fullVertexData.vertex_id}';
     frame = {fullVertexData.frame}';   
     x_pos = {fullVertexData.x_pos}';    
     y_pos = {fullVertexData.y_pos}';    
 
     vertices = table(vertex_id,frame, x_pos, y_pos);
-    clear(vertex_id,frame, x_pos, y_pos);
+    clear('vertex_id','frame', 'x_pos', 'y_pos');
     
     % Cells table
-    cell_id = (1:length(fullCellData))';
+    cell_id = {fullCellData.cell_id}';
     frame = {fullCellData.frame}';   
     center_x = {fullCellData.centre_x}';    
     center_y = {fullCellData.centre_y}';    
     area =  {fullCellData.area}';
-    elong_xx =  {fullCellData.orienation(1)}';
-    elong_yy = {fullCellData.orienation(2)}';
-    elong_zz = {fullCellData.orienation(3)}';
-    
-    cells = table(cell_id,frame, center_x, center_y, area, elong_xx, elong_yy, elong_zz );
-    clear(cell_id,frame, center_x, center_y, area, elong_xx, elong_yy, elong_zz );
+    aspect_ratio = {fullCellData.aspect_ratio}';
+    perimeter = {fullCellData.perimeter}';
+    is_edge = {fullCellData.isEdge}';
+    is_convex = {fullCellData.isConvex}';
+    allCellOrientation = cat(1,fullCellData.orientation);
+    elong_xx = allCellOrientation(:,1);
+    elong_yy = allCellOrientation(:,2);
+    elong_zz = allCellOrientation(:,3);
+    fibre_orientation = {fullCellData.fibreOrientation}';
+    fibre_localOP = {fullCellData.localOP}';
+    fibre_coherence = {fullCellData.fibreCoherence}';
+    score = {fullCellData.score}';
+
+    cells = table(cell_id,frame, center_x, center_y, area, aspect_ratio, perimeter, is_edge, is_convex, elong_xx, elong_yy, elong_zz ,fibre_orientation,fibre_localOP,fibre_coherence, score);
+    clear('cell_id','frame', 'center_x', 'center_y', 'area','aspect_ratio', 'perimeter', 'is_edge', 'is_convex', 'elong_xx', 'elong_yy', 'elong_zz', 'fibre_orientation','fibre_localOP','fibre_coherence','score');
     
     % Frames table
     
+    frame = (frameList{n})';
+    sortedFolderNames = listFoldersInDir(segDir);
+    frame_name = ([sortedFolderNames(frameList{n})])';
+    timeStampDir = [topMainDir,'\TimeStamps'];
+    movieName = mainAnalysisDirList{n}(1:end-1);
+    time_sec = getTimeStamps(timeStampDir,movieName,frame);
     
+    frames = table(frame,frame_name, time_sec);
+    clear('frame','frame_name','time_sec');
+    
+    % Bond pixel table
+    
+    [allBondPixels,allBond3DPixels,allBondIDs,allBondFrames] = getBondPixelLists(fullBondData);
+    orig_x_coord = allBondPixels(:,1);
+    orig_y_coord =  allBondPixels(:,2);
+    smooth_x_coord = allBond3DPixels(:,1);
+    smooth_y_coord =  allBond3DPixels(:,2);
+    smooth_z_coord =  allBond3DPixels(:,3);
+    pixel_bondID = allBondIDs;
+    pixel_frame = allBondFrames;
+    
+    bond_pixels = table(orig_x_coord,orig_y_coord,smooth_x_coord,smooth_y_coord,smooth_z_coord,pixel_bondID,pixel_frame);
+    clear('orig_x_coord','orig_y_coord','smooth_x_coord','smooth_y_coord','smooth_z_coord','pixel_bondID','pixel_frame');
+    
+    % CHECK DEFECT TABLE FORMAT AND SEE IF SUITABLE
     
     % Save all tables to folder:
     
-   
+     cd(cellDir); save('cells','cells'); save('vertices','vertices'); save('bonds','bonds');save('directed_bonds','directed_bonds');save('frames','frames');save('bond_pixels','bond_pixels');
     
     %% 4. Extract defect data
     if useDefects ==1
@@ -166,43 +252,7 @@ for n=1:length(mainDirList)
 %     cd(cellDir); save('fullCellDataMod','fullCellDataMod');
     
     
-    %% 6. Load order parameter, orientation and coherence
-    disp('Preparing fibre data')
-    dirOrientation=[mainDir,'\Orientation_Analysis\Orientation']; % masked orientation field
-    dirCoherence = [mainDir,'\Orientation_Analysis\Coherence']; % masked coherence field
-    dirLocalOP = [mainDir,'\Orientation_Analysis\LocalOP']; % masked local order parameter field
-    
-    cd(segDir); fileNames=dir ('*.tif*');
-    frames=[1:length(fileNames)];
-    sortedFileNames = natsortfiles({fileNames.name});
-    
-    % Loop over frame and load data from orientation analysis
-    for k=frames,  % loop on all frames
-        thisFile=sortedFileNames{k}; % find this frame's file name
-        endName=strfind(thisFile,'.');
-        thisFileImNameBase = thisFile (1:endName-1); %without the .filetype
-        thisOrientation = load([dirOrientation,'\',thisFileImNameBase,'.mat']);
-        allOrientation(k)= thisOrientation;
-        thisCoherence = load([dirCoherence,'\',thisFileImNameBase,'.mat']);
-        allCoherence(k)= thisCoherence;
-        thisLocalOP = load([dirLocalOP,'\',thisFileImNameBase,'.mat']);
-        allLocalOP(k)= thisLocalOP;
-        
-    end
-    
-    %% 7. Extract local fibre orientaion, local OP and coherence for every cell
-    % Add another function here to extract fibre data into vertex structure as
-    % well.
-    disp('Analyzing relation to fibres')
-    for i = 1:size(fullCellData,2)
-        
-        thisFrame = str2double(fullCellData(i).frame)+1;
-        [meanOrient, meanOP, meanCoh] = extractFibreData(fullCellData(i),allOrientation(thisFrame),allLocalOP(thisFrame), allCoherence(thisFrame), orientWindow, OPWindow, cohWindow);
-        fullCellData(i).fibreOrientation = meanOrient;
-        fullCellData(i).localOP = meanOP;
-        fullCellData(i).fibreCoherence = meanCoh;
-        
-    end
+
     
 %     cd(cellDir); save('fullCellDataMod','fullCellDataMod');
     
@@ -337,4 +387,4 @@ for n=1:length(mainDirList)
         
     end
 
-end
+end 
