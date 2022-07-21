@@ -17,22 +17,22 @@ function     [meanOrient, meanOP, meanCoh] = extractFibreData(thisCellDataMod,Or
     end
     thisOrientation = Orientation.orientation;
     sizeXY = size(thisOrientation);
-    [y_fullRange,x_fullRange] = meshgrid(1:sizeXY(1),1:sizeXY(2)); % Making a grid
+    [x_fullRange,y_fullRange] = meshgrid(1:sizeXY(1),1:sizeXY(2)); % Making a grid
     in = inpolygon(x_fullRange,y_fullRange, thisCellDataMod.outline(:,1),thisCellDataMod.outline(:,2));% Find pixels inside cell
     % If want averaging to be on constant window size:
 %   in = ((x_fullRange-thisCentre_x).^2 + (y_fullRange-thisCentre_y).^2) <= orientWindwo.^2;
     orientations = thisOrientation(in);
-    meanOrient = nanmean(orientations);
+    meanOrient = mean(orientations,'omitnan');
     
     thisOP = LocalOP.localOP;
     OPmask = ((x_fullRange-thisCentre_x).^2 + (y_fullRange-thisCentre_y).^2) <= OPWindow.^2;
     OPvals = thisOP(OPmask);
-    meanOP = nanmean(OPvals);
+    meanOP = mean(OPvals,'omitnan');
 
     thisCoh = Coherence.coherence;
     Cohmask = ((x_fullRange-thisCentre_x).^2 + (y_fullRange-thisCentre_y).^2) <= cohWindow.^2;
     Cohvals = thisCoh(Cohmask);
-    meanCoh = nanmean(Cohvals);
+    meanCoh = mean(Cohvals,'omitnan');
 
 end
 
