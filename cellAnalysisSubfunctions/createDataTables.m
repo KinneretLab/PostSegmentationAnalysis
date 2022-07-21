@@ -37,7 +37,7 @@ for i = 1:length(sortedDatasets)
     frame_directed_bonds = table(dbond_id,frame,cell_id,conj_dbond_id,bond_id,vertex_id,vertex2_id,left_dbond_id);
     clear('dbond_id','frame','cell_id','conj_dbond_id','bond_id','vertex_id','vertex2_id','left_dbond_id');
     
-    
+
     % Bonds table
     bond_id = {thisBondData.bond_id}';
     frame = {thisBondData.frame}';   
@@ -77,13 +77,20 @@ for i = 1:length(sortedDatasets)
     fibre_orientation = {thisCellData.fibreOrientation}';
     fibre_localOP = {thisCellData.localOP}';
     fibre_coherence = {thisCellData.fibreCoherence}';
+    bb_xStart = {thisCellData.bb_xStart}';
+    bb_xEnd = {thisCellData.bb_xEnd}';
+    bb_yStart = {thisCellData.bb_yStart}';
+    bb_yEnd = {thisCellData.bb_yEnd}';
+
+
+
  %   score = {thisCellData.score}';
 % 
 %     frame_cells = table(cell_id,frame, center_x, center_y, area, aspect_ratio, perimeter, is_edge, is_convex, elong_xx, elong_yy, elong_zz ,fibre_orientation,fibre_localOP,fibre_coherence, score);
 %     clear('cell_id','frame', 'center_x', 'center_y', 'area','aspect_ratio', 'perimeter', 'is_edge', 'is_convex', 'elong_xx', 'elong_yy', 'elong_zz', 'fibre_orientation','fibre_localOP','fibre_coherence','score');
     
-    frame_cells = table(cell_id,frame, center_x, center_y, center_z, area, aspect_ratio, perimeter, is_edge, is_convex, elong_xx, elong_yy, elong_zz ,norm_x, norm_y, norm_z, fibre_orientation,fibre_localOP,fibre_coherence);
-    clear('cell_id','frame', 'center_x', 'center_y', 'center_z','area','aspect_ratio', 'perimeter', 'is_edge', 'is_convex', 'elong_xx', 'elong_yy', 'elong_zz', 'norm_x', 'norm_y', 'norm_z','fibre_orientation','fibre_localOP','fibre_coherence');
+    frame_cells = table(cell_id,frame, center_x, center_y, center_z, area, aspect_ratio, perimeter, is_edge, is_convex, elong_xx, elong_yy, elong_zz ,norm_x, norm_y, norm_z, fibre_orientation,fibre_localOP,fibre_coherence,  bb_xStart , bb_yStart, bb_xEnd, bb_yEnd);
+    clear('cell_id','frame', 'center_x', 'center_y', 'center_z','area','aspect_ratio', 'perimeter', 'is_edge', 'is_convex', 'elong_xx', 'elong_yy', 'elong_zz', 'norm_x', 'norm_y', 'norm_z','fibre_orientation','fibre_localOP','fibre_coherence',  'bb_xStart' , 'bb_yStart', 'bb_xEnd', 'bb_yEnd');
    
     % Bond pixel table
     

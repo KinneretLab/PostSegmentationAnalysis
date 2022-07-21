@@ -36,6 +36,7 @@ classdef Cell
         
         function dBonds = dBonds(obj)
             thisID = [obj.cell_id];
+            thisDBpath = [obj.DB.path];
             % Need to find how to do this vectorically
             %             flags = ([obj.DB.dBonds.cell_id] == thisID);
             %             dBonds = obj.DB.dBonds(flags);

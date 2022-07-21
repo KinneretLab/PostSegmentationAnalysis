@@ -1,4 +1,4 @@
-function [] = cells3DCorrectionTMformat(mainDir,rawDatasetsDir, calibrationXY, calibrationZ,umCurvWindow,cellHMnum,frameList)
+function [] = cells3DCorrectionTMformat(mainDir,rawDatasetsDir,segDir, calibrationXY, calibrationZ,umCurvWindow,cellHMnum,frameList)
 % This function takes the data on cell outlines from "fullCellData",
 % applies a geometric correction to the outlines according to the height
 % maps to find area, orientation, and aspect ratio, and returns them to the main function to be saved back into
@@ -8,9 +8,14 @@ function [] = cells3DCorrectionTMformat(mainDir,rawDatasetsDir, calibrationXY, c
 HMDir = [mainDir,'\Layer_Separation\Output\Smooth_Height_Maps_',num2str(cellHMnum)]; % NOTICE IF NEEDS TO BE "Height_Maps_1" or "Height_Maps_0"
 %% Load Data and Height Map lists
 
-cd(rawDatasetsDir);
-dataFiles = dir('*_CellData.mat');
-sortedDataFiles = natsortfiles({dataFiles.name});
+files = dir(segDir);
+folders = files([files.isdir]);
+sortedFolderNames = natsortfiles({folders.name});
+index = cellfun(@(x) x(1)~= '.', sortedFolderNames , 'UniformOutput',1);
+sortedFolderNames = sortedFolderNames(index);
+
+
+
 
 % Calibration
 Z_to_XY = calibrationZ/calibrationXY; % Z to XY calibration
@@ -30,8 +35,7 @@ for n = frames
         display(['Computing geometric correction for frame ',num2str(n)])
 
         % Load all cell,vertex,bond and directed bond data.
-        name_end = find(sortedDataFiles{n} == '_');
-        thisFileName = [sortedDataFiles{n}(1:(name_end(end)-1))];
+        thisFileName = sortedFolderNames{n};
         cd(rawDatasetsDir);
         thisCellData = importdata([thisFileName,'_CellData.mat']);
         thisVertexData = importdata([thisFileName,'_VertexData.mat']);
@@ -188,7 +192,11 @@ for n = frames
         thisCellData(thisCell).perimeter = Perimeter;
         thisCellData(thisCell).normal = N;
         thisCellData(thisCell).centre_z = z_cent*(1/Z_to_XY);
-        
+        thisCellData(thisCell).bb_xStart = min(xp);
+        thisCellData(thisCell).bb_xEnd = max(xp);
+        thisCellData(thisCell).bb_yStart = min(yp);
+        thisCellData(thisCell).bb_yEnd = max(yp);
+
         % Save new smoothed bonds to bond database:
         
         thisBondData = saveCellBonds(thisCellData,thisBondData,thisDBondData,thisCell,backProj,verts);
