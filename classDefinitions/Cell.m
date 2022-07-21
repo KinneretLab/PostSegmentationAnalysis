@@ -36,18 +36,29 @@ classdef Cell
         
         function dBonds = dBonds(obj)
             thisID = [obj.cell_id];
-            thisDBpath = [obj.DB.path];
-            % Need to find how to do this vectorically
-            %             flags = ([obj.DB.dBonds.cell_id] == thisID);
-            %             dBonds = obj.DB.dBonds(flags);
             dbArray = [obj.DB];
-            dBondArray = dbArray.dBonds;
+            dbFolderArray = {dbArray.folder_};
+            [~,ia,ic] = unique(dbFolderArray);
+            
+            for i=1:length(ia)
+                dBondArray(i,:) = dbArray(ia(i)).dBonds;
+            end
+            maxLength = 0;
             flags = [];
             for i=1:length(thisID)
-                cellIDArray = [dBondArray(i,:).cell_id];
-                flags(i,:) = (cellIDArray == thisID(i));
+                if mod(a,100) ==0
+                    sprintf(['Finding directed bonds for cell # ',num2str(i)]);
+                end
+                cellIDArray = [dBondArray(ic(i),:).cell_id];
+                flags = (cellIDArray == thisID(i));
+                thisLength = sum(flags);
+                if thisLength > maxLength
+                    dBonds(:,(maxLength+1):thisLength) = DBond();
+                    maxLength = thisLength;
+                end
+                dBonds(i,1:thisLength) = dBondArray(flags);
             end
-            dBonds = dbArray.dBonds(flags);
+            
         end
         
         
