@@ -39,45 +39,68 @@ classdef Cell
             dbArray = [obj.DB];
             dbFolderArray = {dbArray.folder_};
             [~,ia,ic] = unique(dbFolderArray);
-            
+            dBonds = DBond();
             for i=1:length(ia)
-                dBondArray(i,:) = dbArray(ia(i)).dBonds;
+                dBondArray{i} = dbArray(ia(i)).dBonds;
             end
             maxLength = 0;
             flags = [];
             for i=1:length(thisID)
-                if mod(a,100) ==0
+                if mod(i,100) ==0
                     sprintf(['Finding directed bonds for cell # ',num2str(i)]);
                 end
-                cellIDArray = [dBondArray(ic(i),:).cell_id];
+                cellIDArray = [dBondArray{ic(i)}.cell_id];
                 flags = (cellIDArray == thisID(i));
                 thisLength = sum(flags);
                 if thisLength > maxLength
                     dBonds(:,(maxLength+1):thisLength) = DBond();
                     maxLength = thisLength;
                 end
-                dBonds(i,1:thisLength) = dBondArray(flags);
+                dBonds(i,1:thisLength) = dBondArray{ic(i)}(flags);
             end
             
         end
         
+        function frames = frames(obj)
+            frameList = [obj.frame];
+            dbArray = [obj.DB];
+            dbFolderArray = {dbArray.folder_};
+            [~,ia,ic] = unique(dbFolderArray);
+            for i=1:length(ia)
+                frameArray(i,:) = dbArray(ia(i)).frames;
+            end
+            flags = [];
+            for i=1:length(frameList)
+                if mod(i,100) ==0
+                    sprintf(['Returning frame for cell # ',num2str(i)]);
+                end
+                frameNumArray = [frameArray(ic(i),:).frame];
+                flags = (frameNumArray == frameList(i));
+                frames(i) = frameArray(flags);
+            end
+        end
         
+%         function bondList = bondList(obj)
+%             theseDBonds = dBonds(obj);
+%             bondList = [theseDBonds.bond_id];
+%         end
 %         
-%         thisID = [cellArray.cell_id];
-%
-% dbArray = [cellArray(1).DB]; % create d_bonds just once for each DB, readtable needs to happen in creating DB and not just addresses.
-% display('made dbArray')
-% dBondArray = dbArray.dBonds;
-% display('made dBondArray')
-% 
-% flags = [];
-% for i=1:length(thisID)
-%     i
-%     cellIDArray = [dBondArray.cell_id];
-%     flags(i,:) = (cellIDArray == thisID(i));
-% end
-% dBonds = dbArray.dBonds(flags);
+%         
+%         function bonds = bonds(obj)
+%             theseDBonds = dBonds(obj);
+%             bondID =[];
+%             for row = 1:size(theseDBonds,1)
+%                 for column = 1:size(theseDBonds,2)
+%                     bondID(row,column) = theseDBonds.bond_id;
+%                 end
+%             end
+%             
+%             
+%         end
         
+        
+        
+
 %         
 %         function these_bonds = getBonds(obj,dataDir)
 %             
