@@ -115,15 +115,16 @@ for n=1:length(mainDirList)
     else
         thisFrameList = frameList{n};
     end
-    frame = thisFrameList';
+    frameArr = (thisFrameList)';
+    frame = num2cell(thisFrameList)';
     frame_name = ([sortedFolderNames(thisFrameList)])';
     timeStampDir = [rawMainDirList{n},'\TimeStamps'];
     movieName = mainAnalysisDirList{n}(1:end-1);
-    time_sec = getTimeStamps(timeStampDir,movieName,frame);
+    time_sec = getTimeStamps(timeStampDir,movieName,frameArr);
     
     frames = table(frame,frame_name, time_sec);
     clear('frame','frame_name','time_sec');
-    cd(cellDir); writetable(frames,'frames.csv')
+    cd(cellDir); writetable(frames,'frames.csv','Delimiter',',')
 
      %% 4. Extract defect data
      if useDefects ==1

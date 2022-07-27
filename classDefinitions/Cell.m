@@ -20,6 +20,10 @@ classdef Cell
         fibre_localOP
         fibre_coherence
         score
+        bb_xStart
+        bb_yStart
+        bb_xEnd
+        bb_yEnd
         DB
     end
     
@@ -58,7 +62,6 @@ classdef Cell
                 end
                 dBonds(i,1:thisLength) = dBondArray{ic(i)}(flags);
             end
-            
         end
         
         function frames = frames(obj)
@@ -67,63 +70,75 @@ classdef Cell
             dbFolderArray = {dbArray.folder_};
             [~,ia,ic] = unique(dbFolderArray);
             for i=1:length(ia)
-                frameArray(i,:) = dbArray(ia(i)).frames;
+                frameArray{i,:} = dbArray(ia(i)).frames;
             end
             flags = [];
+            frames = Frame();
             for i=1:length(frameList)
                 if mod(i,100) ==0
                     sprintf(['Returning frame for cell # ',num2str(i)]);
                 end
-                frameNumArray = [frameArray(ic(i),:).frame];
+                frameNumArray = [frameArray{ic(i),:}.frame];
                 flags = (frameNumArray == frameList(i));
-                frames(i) = frameArray(flags);
+                frames(i) = frameArray{ic(i)}(flags);
             end
         end
         
-%         function bondList = bondList(obj)
-%             theseDBonds = dBonds(obj);
-%             bondList = [theseDBonds.bond_id];
-%         end
-%         
-%         
-%         function bonds = bonds(obj)
-%             theseDBonds = dBonds(obj);
-%             bondID =[];
-%             for row = 1:size(theseDBonds,1)
-%                 for column = 1:size(theseDBonds,2)
-%                     bondID(row,column) = theseDBonds.bond_id;
-%                 end
-%             end
-%             
-%             
-%         end
         
-        
-        
+        function bonds = bonds(obj)
+            theseDBonds = dBonds(obj);
+            dbArray = [obj.DB];
+            dbFolderArray = {dbArray.folder_};
+            [~,ia,ic] = unique(dbFolderArray);
+            for i=1:length(ia)
+                bondArray{i} = dbArray(ia(i)).bonds;
+            end
+            flags = [];
+            for i=1:size(obj,2)
+                if mod(i,100) ==0
+                    sprintf(['Finding bonds for cell # ',num2str(i)])
+                end
+                for j=1:length(theseDBonds(i,:))
+                    bondIDArray = [bondArray{ic(i)}.bond_id];
+                    thisID = theseDBonds(i,j).bond_id;
+                    if ~isempty(thisID)
+                        flag = (bondIDArray == thisID);
+                        bonds(i,j) = bondArray{ic(i)}(flag);
+                    else
+                        bonds(i,j) = Bond();
+                    end
+                end
+            end
 
-%         
-%         function these_bonds = getBonds(obj,dataDir)
-%             
-%             these_bonds = [];
-%             dBonds = getDBonds(obj,dataDir);
-%             cd(dataDir);
-%             directed_bonds = readtable('directed_bonds.csv');
-%             for i=1:height(dBonds)
-%                 dBondInds = (directed_bonds{:,'dbond_id'} == dBonds(i));
-%                 bondID = directed_bonds{dBondInds,'bond_id'};
-%                 these_bonds = unique([these_bonds;bondID]);
-%             end
-%             
-%         end
-%         
-%         function these_vertices = getVertices(obj,dataDir)
-%             dBonds = getDBonds(obj,dataDir);  
-%             cd(dataDir);
-%             directed_bonds = readtable('directed_bonds.csv');
-%             dBondInds = (directed_bonds{:,'dbond_id'} == dBonds(1));
-%             these_vertices = [directed_bonds{dBondInds,'vertex_id'};directed_bonds{dBondInds,'vertex2_id'}];
-%         end
-
+        end
+        
+        function vertices = vertices(obj)
+            theseDBonds = dBonds(obj);
+            dbArray = [obj.DB];
+            dbFolderArray = {dbArray.folder_};
+            [~,ia,ic] = unique(dbFolderArray);
+            for i=1:length(ia)
+                vertexArray{i} = dbArray(ia(i)).vertices;
+            end
+            flags = [];
+            for i=1:size(obj,2)
+                if mod(i,100) ==0
+                    sprintf(['Finding vertices for cell # ',num2str(i)])
+                end
+                for j=1:length(theseDBonds(i,:))
+                    vertexIDArray = [vertexArray{ic(i)}.vertex_id];
+                    thisID = theseDBonds(i,j).vertex_id;
+                    if ~isempty(thisID)
+                        flag = (vertexIDArray == thisID);
+                        vertices(i,j) = vertexArray{ic(i)}(flag);
+                    else
+                        vertices(i,j) = Vertex();
+                    end
+                end
+            end
+            
+        end
+        
         
     end
 end

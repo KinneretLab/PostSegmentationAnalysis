@@ -50,38 +50,77 @@ classdef DB
                 columns = find(flags(row,:));
                 for column = 1:length(columns)
                     count = count+1;
-                    dbond_arr(count) = DBond([dbond_table(columns(column),:)]);
+                    dbond_arr(count) = DBond(obj(row),dbond_table(columns(column),:));
                 end
             end
         end
         
-
-        function bond_arr = bonds(obj)
-            bond_table = readtable(obj.bond_file_);
+        function bond_arr = bonds(obj,flags)
             bond_arr = Bond();
-            for row = 1:height(bond_table)
-                bond_arr(row) = Bond(bond_table(row,:));
+            count = 0;
+            for row=1:size(obj,2)
+                bond_table = readtable(obj(row).bond_file_);
+                if nargin < 2
+                    flags = logical(ones(size(obj,2),height(bond_table)));
+                end
+                columns = find(flags(row,:));
+                for column = 1:length(columns)
+                    count = count+1;
+                    bond_arr(count) = Bond(obj(row),bond_table(columns(column),:));
+                end
             end
         end
         
         function vertex_arr = vertices(obj)
-            vertex_table = readtable(obj.vertex_file_);
             vertex_arr = Vertex();
-            for row = 1:height(vertex_table)
-                vertex_arr(row) = Vertex(vertex_table(row,:));
+            count = 0;
+            for row=1:size(obj,2)
+                vertex_table = readtable(obj(row).vertex_file_);
+                if nargin < 2
+                    flags = logical(ones(size(obj,2),height(vertex_table)));
+                end
+                columns = find(flags(row,:));
+                for column = 1:length(columns)
+                    count = count+1;
+                    vertex_arr(count) = Vertex(obj(row),vertex_table(columns(column),:));
+                end
             end
         end
-            
-        function frame_arr = frames(obj)
-            frame_table = readtable(obj.frame_file_);
+        
+        function frame_arr = frames(obj,flags)
             frame_arr = Frame();
-            for row = 1:height(frame_table)
-                frame_arr(row) = Frame(frame_table(row,:));
+            count = 0;
+            for row=1:size(obj,2)
+                frame_table = readtable(obj(row).frame_file_,'Delimiter',',');
+                if nargin < 2
+                    flags = logical(ones(size(obj,2),height(frame_table)));
+                end
+                columns = find(flags(row,:));
+                for column = 1:length(columns)
+                    count = count+1;
+                    frame_arr(count) = Frame(obj(row),frame_table(columns(column),:));
+                end
             end
         end
-               
         
         
+        function bond_pixels_arr = bond_pixel_lists(obj) % Here the function sorts the bond pixels by the bond they belong to and collects the row numbers to pass on to the constructor of the bond outline.
+            bond_pixels_arr = BondPixelList();
+            count = 0;
+            for row=1:size(obj,2)
+                bond_pixel_table = readtable(obj(row).bond_pixel_file_);
+                bondIDList = bond_pixel_table{:,'pixel_bondID'};
+                [~,ia,ic] = unique(bondIDList);
+                for i=1:length(ia)
+                    count = count+1;
+                    rowNums = (ic == i);
+                    table_rows = bond_pixel_table(rowNums,:);
+                    bond_pixels_arr(count) = BondPixelList(obj(row),table_rows);
+                end
+            end
+        end
+        
+    
     end
     
 end

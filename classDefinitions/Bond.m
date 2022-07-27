@@ -3,76 +3,146 @@ classdef Bond
         frame
         bond_id
         bond_length
+        pixel_list
+        DB
 
     end
     
     methods
         
-%         function obj = Bond(dataDir,ID)
-%             
-%             cd(dataDir);
-%             bonds = readtable('bonds.csv');
-%             bond_ind = (bonds{:,'bond_id'} == ID);
-%             obj.frame = bonds{bond_ind,'frame'};
-%             obj.bond_id = ID;
-%             obj.bond_length = bonds{bond_ind,'bond_length'};
-%             
-%         end
         
-        function obj = Bond(bond_table_row)
+        function obj = Bond(db,bond_table_row)
             if nargin > 0
                 for name = bond_table_row.Properties.VariableNames
                     obj.(name{1}) = bond_table_row{1, name}; %% be careful with variable refactoring
                 end
+                obj.pixel_list = [];
+                obj.DB = db;
+
             end
         end
         
-        
-        
-        function dBonds = getDBonds(obj,dataDir)
-            
-            cd(dataDir);
-            directed_bonds = readtable('directed_bonds.csv');
-            thisID = obj.bon   d_id;
-            dBondInds = (directed_bonds{:,'bond_id'} == thisID);
-            dBonds = table2array(directed_bonds(dBondInds,'dbond_id'));
-        end
-        
-        function these_cells = getCells(obj,dataDir)
-            
-            these_cells = [];
-            dBonds = getDBonds(obj,dataDir);  
-            cd(dataDir);
-            directed_bonds = readtable('directed_bonds.csv');
-            for i=1:height(dBonds)
-            dBondInds = (directed_bonds{:,'dbond_id'} == dBonds(i));
-            cellID = directed_bonds{dBondInds,'cell_id'};
-            these_cells = unique([these_cells;cellID]);
+          function dBonds = dBonds(obj)
+            thisID = [obj.bond_id];
+            dbArray = [obj.DB];
+            dbFolderArray = {dbArray.folder_};
+            [~,ia,ic] = unique(dbFolderArray);
+            dBonds = DBond();
+            for i=1:length(ia)
+                dBondArray{i} = dbArray(ia(i)).dBonds;
             end
-            
-        end
-        
-        function these_vertices = getVertices(obj,dataDir)
-            dBonds = getDBonds(obj,dataDir);  
-            cd(dataDir);
-            directed_bonds = readtable('directed_bonds.csv');
-            dBondInds = (directed_bonds{:,'dbond_id'} == dBonds(1));
-            these_vertices = [directed_bonds{dBondInds,'vertex_id'};directed_bonds{dBondInds,'vertex2_id'}];
-        end
-        
-        function coords = getXYCoords(obj,dataDir)
-            cd(dataDir);
-            bond_pixels = readtable('bond_pixels.csv');
-            pixelInds = (bond_pixels{:,'pixel_bondID'} == obj.bond_id);
-            coords = [bond_pixels{pixelInds,'orig_x_coord'},bond_pixels{pixelInds,'orig_y_coord'}];
-        end
-        
-        function coords3D = get3Coords3D(obj,dataDir)
-            cd(dataDir);
-            bond_pixels = readtable('bond_pixels.csv');
-            pixelInds = (bond_pixels{:,'pixel_bondID'} == obj.bond_id);
-            coords3D = [bond_pixels{pixelInds,'smooth_x_coord'},bond_pixels{pixelInds,'smooth_y_coord'},bond_pixels{pixelInds,'smooth_z_coord'}];
-        end
+            maxLength = 0;
+            flags = [];
+            for i=1:length(thisID)
+                if mod(i,100) ==0
+                    sprintf(['Finding directed bonds for bond # ',num2str(i)])
+                end
+                bondIDArray = [dBondArray{ic(i)}.bond_id];
+                flags = (bondIDArray == thisID(i));
+                thisLength = sum(flags);
+                if thisLength > maxLength
+                    dBonds(:,(maxLength+1):thisLength) = DBond();
+                    maxLength = thisLength;
+                end
+                dBonds(i,1:thisLength) = dBondArray{ic(i)}(flags);
+            end
+          end
+          
+          
+          function frames = frames(obj)
+              frameList = [obj.frame];
+              dbArray = [obj.DB];
+              dbFolderArray = {dbArray.folder_};
+              [~,ia,ic] = unique(dbFolderArray);
+              for i=1:length(ia)
+                  frameArray{i,:} = dbArray(ia(i)).frames;
+              end
+              flags = [];
+              frames = Frame();
+              for i=1:length(frameList)
+                  if mod(i,100) ==0
+                      sprintf(['Returning frame for cell # ',num2str(i)])
+                  end
+                  frameNumArray = [frameArray{ic(i),:}.frame];
+                  flags = (frameNumArray == frameList(i));
+                  frames(i) = frameArray{ic(i)}(flags);
+              end
+          end
+          
+          
+          function vertices = vertices(obj)
+              theseDBonds = dBonds(obj);
+              dbArray = [obj.DB];
+              dbFolderArray = {dbArray.folder_};
+              [~,ia,ic] = unique(dbFolderArray);
+              for i=1:length(ia)
+                  vertexArray{i} = dbArray(ia(i)).vertices;
+              end
+              flags = [];
+              for i=1:size(obj,2)
+                  if mod(i,100) ==0
+                      sprintf(['Finding vertices for bond # ',num2str(i)])
+                  end
+                  for j=1:length(theseDBonds(i,:))
+                      vertexIDArray = [vertexArray{ic(i)}.vertex_id];
+                      thisID = theseDBonds(i,j).vertex_id;
+                      if ~isempty(thisID)
+                          flag = (vertexIDArray == thisID);
+                          vertices(i,j) = vertexArray{ic(i)}(flag);
+                      else
+                          vertices(i,j) = Vertex();
+                      end
+                  end
+              end
+              
+          end
+          
+          function cells = cells(obj)
+              theseDBonds = dBonds(obj);
+              dbArray = [obj.DB];
+              dbFolderArray = {dbArray.folder_};
+              [~,ia,ic] = unique(dbFolderArray);
+              for i=1:length(ia)
+                  cellArray{i} = dbArray(ia(i)).cells;
+              end
+              flags = [];
+              for i=1:size(obj,2)
+                  if mod(i,100) ==0
+                      sprintf(['Finding cells for bond # ',num2str(i)])
+                  end
+                  for j=1:length(theseDBonds(i,:))
+                      cellIDArray = [cellArray{ic(i)}.cell_id];
+                      thisID = theseDBonds(i,j).cell_id;
+                      if ~isempty(thisID)
+                          flag = (cellIDArray == thisID);
+                          cells(i,j) = cellArray{ic(i)}(flag);
+                      else
+                          cells(i,j) = Cell();
+                      end
+                  end
+              end
+              
+          end
+          
+          function coords(obj)
+              dbArray = [obj.DB];
+              dbFolderArray = {dbArray.folder_};
+              [~,ia,ic] = unique(dbFolderArray);
+              flags = [];
+              for i=1:length(ia)
+                  pixelListArray{i} = dbArray(ia(i)).bond_pixel_lists;
+              end
+              for i=1:size(obj,2)
+                  if mod(i,100) ==0
+                      sprintf(['Finding coordinates for bond # ',num2str(i)])
+                  end
+                  thisID = obj(i).bond_id;
+                  bondIDArray = [pixelListArray{ic(i)}.pixel_bondID];
+                  flags = (bondIDArray == thisID);
+                  obj(i).pixel_list = pixelListArray{ic(i)}(flags);
+              end
+          end
+
         
     end
     
