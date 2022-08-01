@@ -1,10 +1,10 @@
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
 
 import re
 
 import numpy as np
-import scipy.io
+import pandas
 import torch
 import yaml
 import torch.nn
@@ -38,7 +38,7 @@ def main():
     model = model_loader.load(cfg.model_path).to(device)
     model.eval()
 
-    loaded_tables: Dict[str, Dict[str, np.ndarray]] = {}
+    loaded_tables: Dict[str, pandas.DataFrame] = {}
     cells_correct: int = 0
     false_pos: int = 0
     false_neg: int = 0
@@ -50,7 +50,7 @@ def main():
             pred_confidence = torch.sigmoid(valid_outputs).item()
 
             df, cell_id = get_table(cfg, loaded_tables, dataset, i)
-            df['fullCellData']['confidence'][0, cell_id] = pred_confidence
+            df['confidence'][cell_id] = pred_confidence
 
             # statistical analysis
             # noinspection PyUnresolvedReferences
@@ -66,10 +66,10 @@ def main():
 
     print("saving files...")
     for file in loaded_tables:
-        scipy.io.savemat(file, loaded_tables[file])
+        loaded_tables[file].to_csv(file)
 
 
-def get_table(cfg: SmartConfig, table_db: Dict[str, Dict[str, np.ndarray]], ds: ScorerDataset, index: int) -> \
+def get_table(cfg: SmartConfig, table_db: Dict[str, pandas.DataFrame], ds: ScorerDataset, index: int) -> \
         Tuple[Dict[str, np.ndarray], int]:
     path = ds.get_path(index)
     for source in cfg.sources:
@@ -78,16 +78,18 @@ def get_table(cfg: SmartConfig, table_db: Dict[str, Dict[str, np.ndarray]], ds: 
             if key in table_db:
                 df = table_db[key]
             else:
-                df = scipy.io.loadmat(key)
-                if 'confidence' not in df['fullCellData'].dtype.names:
-                    merged = np.full(df['fullCellData'].shape, -1,
-                                     dtype=df['fullCellData'].dtype.descr + [('confidence', 'O')])
-                    for name in df['fullCellData'].dtype.names:
-                        merged[name] = df['fullCellData'][name]
-                    df['fullCellData'] = merged
+                df = pandas.read_csv(key)
+                if 'confidence' not in df:
+                    df['confidence'] = -1
                 table_db[key] = df
-            cell_id = re.findall(r'[^.\\]+', path)[-2]
-            cell_index = np.where(df['fullCellData']['uniqueID'] == cell_id)[1][0]
+            id_split: List[str] = re.findall(r'[^.\\]+', path)[-2].split("_")
+            frame_name = '_'.join(id_split[0:-2])
+            # could be generalized into config.yml, but im lazy
+            frame_df = pandas.read_csv(re.sub(r'cells\\.csv', 'frames.csv', path))
+            frame_id = frame_df['frame'].where(frame_df['frame_name'] == frame_name)
+            cell_in_frame = id_split[-1]
+            cell_id = int((frame_id+cell_in_frame)*(frame_id+cell_in_frame+1)/2+frame_id)
+            cell_index = df[df['cell_id'] == cell_id].index[0]
             return df, cell_index
 
 

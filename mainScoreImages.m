@@ -13,7 +13,7 @@ erodeCells = true; % whether there should be a buffer space between the indicato
 showBorders = false; % whether the automatic segmentatio borders should be shown (in yellow)
 
 cd(cellDir);
-load('fullCellData');
+fullCellData = DB(cellDir).cells;
 
 subDirs = dir(segDir);
 subDirs = subDirs([subDirs.isdir] & ~strcmp({subDirs.name},'.') & ~strcmp({subDirs.name},'..'));
@@ -64,7 +64,7 @@ for imgIdx = 1:length(subDirs)
 end
 
 function [fakeImg, cellImg] = fillScore(cellData, segImg)
-    rawMask = 255 * uint8(imfill(imbinarize(segImg(:,:,1)), double(cellData.outline(1,:))) - imbinarize(segImg(:,:,1)));
+    rawMask = 255 * uint8(imfill(imbinarize(segImg(:,:,1)), double(cellData.outline.orig(1))) - imbinarize(segImg(:,:,1)));
     if cellData.confidence >= 0.5
         cellImg = rawMask;
         fakeImg = uint8(zeros(size(segImg)));

@@ -19,7 +19,11 @@ classdef Cell
         fibre_orientation
         fibre_localOP
         fibre_coherence
-        score
+        confidence
+        bb_xStart
+        bb_yStart
+        bb_xEnd
+        bb_yEnd
         DB
     end
     
@@ -48,6 +52,16 @@ classdef Cell
                 flags(i,:) = (cellIDArray == thisID(i));
             end
             dBonds = dbArray.dBonds(flags);
+        end
+
+        function id_in_frame = idInFrame(obj)
+            w = floor((sqrt(8 * obj.cell_id + 1) - 1) / 2);
+            t = (w .^ 2 + w) / 2;
+            id_in_frame = obj.cell_id - t;
+        end
+
+        function strID = strID(obj)
+            strID = obj.DB.frames(obj.DB.frames.frame == obj.frame) + "_" + obj.idInFrame;
         end
         
         
