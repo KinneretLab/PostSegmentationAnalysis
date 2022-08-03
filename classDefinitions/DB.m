@@ -69,13 +69,22 @@ classdef DB
             end
         end
             
-        function frame_arr = frames(obj)
-            frame_table = readtable(obj.frame_file_);
+        function frame_arr = frames(obj,flags)
             frame_arr = Frame();
-            for row = 1:height(frame_table)
-                frame_arr(row) = Cell(frame_table(row,:));
+            count = 0;
+            for row=1:size(obj,2)
+                frame_table = readtable(obj(row).frame_file_,'Delimiter',',');
+                if nargin < 2
+                    flags = logical(ones(size(obj,2),height(frame_table)));
+                end
+                columns = find(flags(row,:));
+                for column = 1:length(columns)
+                    count = count+1;
+                    frame_arr(count) = Frame(obj(row),frame_table(columns(column),:));
+                end
             end
         end
+
                
         
         

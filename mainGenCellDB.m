@@ -1,5 +1,11 @@
 clear all; close all;
-addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\GroupCodes\July2021'));
+addpath('classDefinitions');
+% generic global search for a particular folder; works independent of user
+search_path = '../*/natsortfiles';
+while isempty(dir(search_path))
+    search_path = ['../', search_path];
+end
+addpath(dir(search_path).folder)
 
 mainDir='\\phhydra\phhydraB\Analysis\users\Liora\Movie_Analysis\2021_07_26\2021_07_26_pos2\'; % Main directory for movie you are analysing.
 cellDir = [mainDir,'\Cells\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
@@ -8,7 +14,6 @@ infDir = [cellDir,'\Inference\2022_04_26_CEE3_CEE5_CEE1E_CEE1E_CEE6\']; % Infere
 
 training = false;
 
-cd(cellDir);
 fullCellData = DB(cellDir).cells;
 
 subDirs = dir(segDir);
@@ -89,7 +94,7 @@ if training
 end
 
 function crop = getCrop(cell, buffer)
-    minPos = [cell.bb_xStart, cell.bb_yStart]
+    minPos = [cell.bb_xStart, cell.bb_yStart];
     maxPos = [cell.bb_xEnd, cell.bb_yEnd];
     crop = [minPos - 1 - buffer maxPos - minPos + 2 + 2 * buffer];
 end

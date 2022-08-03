@@ -57,11 +57,11 @@ classdef Cell
         function id_in_frame = idInFrame(obj)
             w = floor((sqrt(8 * obj.cell_id + 1) - 1) / 2);
             t = (w .^ 2 + w) / 2;
-            id_in_frame = obj.cell_id - t;
+            id_in_frame = w - obj.cell_id + t;
         end
 
         function strID = strID(obj)
-            strID = obj.DB.frames(obj.DB.frames.frame == obj.frame) + "_" + obj.idInFrame;
+            strID = obj.DB.frames([obj.DB.frames.frame] == obj.frame).frame_name + "_" + obj.idInFrame;
         end
         
         
