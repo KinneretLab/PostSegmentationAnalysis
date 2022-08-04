@@ -9,11 +9,10 @@ datasets = dir('*Cell*');
 sortedDatasets = natsortfiles({datasets.name});
 
 for i = 1:length(sortedDatasets)
-    i
     name_end = find(sortedDatasets{i} == '_');
     thisFileName = [sortedDatasets{i}(1:(name_end(end)-1))];
     display(['Reading data for ',thisFileName])
-    cd(rawDatasetsDir);
+    cd(rawDatasetsDir); 
     thisCellData = importdata([thisFileName,'_CellData.mat']);
     thisVertexData = importdata([thisFileName,'_VertexData.mat']);
     thisBondData = importdata([thisFileName,'_BondData.mat']);

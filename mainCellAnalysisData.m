@@ -5,19 +5,20 @@ addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\GroupCodes\
 %% 0.1 Define mainDirList
 
 % Locations of original data - needed only for timestamps
-topMainDir = '\\phhydra\phhydraB\SD2\Users\Yonit\2021_05\'; % main folder of original files
+topMainDir = 'z:\SD2\Users\Liora\2021\2021_07\'; % main folder of original files
 rawMainAnalysisDirList= { ... % enter in the following line all sub-directories for movie analysis.
 
-'\2021_05_06\', ...
+'\2021_07_26\', ...
+
 
 };
 for i=1:length(rawMainAnalysisDirList),rawMainDirList{i}=[topMainDir,rawMainAnalysisDirList{i}];end
 
 
-topAnalysisDir='\\PHHYDRA\phhydraB\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\'; % main folder for movie analysis
+topAnalysisDir='Z:\Analysis\users\Liora\Movie_Analysis\2021_07_26\'; % main folder for movie analysis
 mainAnalysisDirList= { ... % enter in the following line all sub-directories for movie analysis.
 
-'2021_05_06_pos6\', ...
+'2021_07_26_pos1\', ...
 
 
 };
@@ -27,15 +28,17 @@ for i=1:length(mainAnalysisDirList),mainDirList{i}=[topAnalysisDir,mainAnalysisD
 %% 0.2 Define parameters per movie
 
 % Comment out the following irrelevant choice for framelist:
-% frameList = cell(1,length(mainAnalysisDirList));
- frameList = {[1:89,90:5:230,235:275,280:5:305],[1:8,10:121,123:143,145:157,159,161:181,183:1140],[]}; % Enter specific frame ranges in this format if you
+ frameList = cell(1,length(mainAnalysisDirList));
+% frameList = {[1:89,90:5:230,235:275,280:5:305],[1:8,10:121,123:143,145:157,159,161:181,183:1140],[]}; % Enter specific frame ranges in this format if you
+% frameList = {[1:10]}; % Enter specific frame ranges in this format if you
+
 % want to run on particular frames (in this example, 1:6 is for the first
 % movie, 1:9 is for the second). If left empty, runs on all frames.
 
 calibrationXY_list = [0.52]; % um per pixel in XY plane (can be a single value or vector of length of movie list if different for each movie).
 calibrationZ_list = [3]; % um per pixel in Z direction(can be a single value or vector of length of movie list if different for each movie).
    
-useDefects_list = 1; % Set to 1 if you are using manually marked defects, and 0 if not. (can be a single value or vector of length of movie list if different for each movie).
+useDefects_list = 0; % Set to 1 if you are using manually marked defects, and 0 if not. (can be a single value or vector of length of movie list if different for each movie).
 disp('Please make sure you have run the orientation analysis on these movies/datasets')
 %% 0.3 Define general parameters for analysis
 
@@ -47,9 +50,11 @@ for n=1:length(mainDirList)
     disp(['Analyzing movie/dataset ',num2str(n)])
     mainDir = mainDirList{n};
     cellDir = [mainDir,'\Cells\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
-    segDir = [cellDir,'AllSegmented']; % Segmentation folder.
+    segDir = [cellDir,'AllSegmented\']; % Segmentation folder.
     maskDir =  [mainDir,'\Display\Masks'];
+    outlineDir = [cellDir,'\Outlines'];
     rawDatasetsDir = [cellDir,'\Datasets'];
+    mkdir(outlineDir);
     mkdir(rawDatasetsDir);
     
     if length(calibrationXY_list)==1, calibrationXY = calibrationXY_list; else calibrationXY = calibrationXY_list(n); end % um per pixel in XY plane
@@ -66,7 +71,7 @@ for n=1:length(mainDirList)
     
     %% 3. Apply geometric correction to cell outlines in "fullCellData", and calculate area, orientation, and aspect ratio. Save back into struct.
     disp('Applying geometric correction')
-    cells3DCorrectionTMformat(mainDir,rawDatasetsDir,segDir, calibrationXY, calibrationZ,umCurvWindow,cellHMnum,frameList{n});
+    cells3DCorrectionTMformat(mainDir,rawDatasetsDir,outlineDir,segDir, calibrationXY, calibrationZ,umCurvWindow,cellHMnum,frameList{n});
     
     
     %% 4. Load order parameter, orientation and coherence
@@ -119,11 +124,16 @@ for n=1:length(mainDirList)
     frame = num2cell(thisFrameList)';
     frame_name = ([sortedFolderNames(thisFrameList)])';
     timeStampDir = [rawMainDirList{n},'\TimeStamps'];
-    movieName = mainAnalysisDirList{n}(1:end-1);
-    time_sec = getTimeStamps(timeStampDir,movieName,frameArr);
-    
-    frames = table(frame,frame_name, time_sec);
-    clear('frame','frame_name','time_sec');
+    if exist(timeStampDir)==7
+        movieName = mainAnalysisDirList{n}(1:end-1);
+        time_sec = getTimeStamps(timeStampDir,movieName,frameArr);
+        frames = table(frame,frame_name, time_sec);
+        clear('frame','frame_name','time_sec');
+        
+    else
+        frames = table(frame,frame_name);
+        clear('frame','frame_name');
+    end
     cd(cellDir); writetable(frames,'frames.csv','Delimiter',',')
 
      %% 4. Extract defect data

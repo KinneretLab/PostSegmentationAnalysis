@@ -139,6 +139,56 @@ classdef Cell
             
         end
         
+        function outline = outline(obj) % Currently runs on a 1-dimensional list because of dBonds function.
+            theseDBonds = dBonds(obj); % Currently runs on a 1-dimensional list
+            dbArray = [obj.DB];
+            dbFolderArray = {dbArray.folder_};
+            [~,ia,ic] = unique(dbFolderArray);
+            for i=1:length(ia)
+                bondArray{i} = dbArray(ia(i)).bonds;
+                pixelListArray{i} = dbArray(ia(i)).bond_pixel_lists;
+            end
+            flags = [];
+            for i=1:length(obj)
+                if isempty(obj(i).outline)
+                    if mod(i,10) ==0
+                        sprintf(['Finding outline for cell # ',num2str(i)])
+                    end
+                    orderedDBonds = DBond();
+                    orderedDBonds(1) = theseDBonds(i,1);
+                    orderedBonds = Bond();
+                    % Order cell's dbonds
+                    for j=1:(length(theseDBonds(i,:))-1)
+                        nextDBond = orderedDBonds(j).left_dbond_id;
+                        cellDBondIDs = [theseDBonds(i,:).dbond_id];
+                        flag = (cellDBondIDs == nextDBond);
+                        orderedDBonds(j+1) = theseDBonds(i,flag);
+                    end
+                    % Get ordered vertices
+                    orderedVertices = [orderedDBonds.vertex_id];
+                    % Get bonds for ordered dbonds:
+                    for j=1:length(orderedDBonds)
+                        bondIDArray = [bondArray{ic(i)}.bond_id];
+                        thisID = orderedDBonds(j).bond_id;
+                        flag = (bondIDArray == thisID);
+                        orderedBonds(j) = bondArray{ic(i)}(flag);
+                    end
+                    % Get coordinates for each of the bonds:
+                    for k=1:length(orderedBonds)
+                        thisID = orderedBonds(k).bond_id;
+                        bondIDArray = [pixelListArray{ic(i)}.pixel_bondID];
+                        flags = (bondIDArray == thisID);
+                        orderedBonds(k).pixel_list = pixelListArray{ic(i)}(flags);
+                    end
+                     
+                    
+                    
+                end
+            end
+            
+        end
         
     end
+        
+    
 end

@@ -42,7 +42,12 @@ for k = frames
     SE = strel("disk",15);
     thisMaskBW = imdilate(thisMaskBW,SE);
     
-    thisImGray = rgb2gray(thisIm);
+    if size(thisIm,3)>1
+        thisImGray = rgb2gray(thisIm);
+    else
+        thisImGray = thisIm;
+    end
+
     thisImGray(1,:) = 0; thisImGray(end,:) = 0; thisImGray(:,1) = 0; thisImGray(:,end) = 0;
     thisImBW = imbinarize(thisImGray);
     thisImBW = thisImBW.*thisMaskBW;
@@ -120,7 +125,11 @@ for k = frames
     
     % Get vertices
     
-    vertexImGray = rgb2gray(vertexIm);
+    if size(vertexIm,3)>1
+        vertexImGray = rgb2gray(vertexIm);
+    else
+        vertexImGray = vertexIm;
+    end
     vertexImBW = imbinarize(vertexImGray);
     vertexImBW = vertexImBW.*thisMaskBW;
     
@@ -230,8 +239,15 @@ for k = frames
             cIndex(l) = find([frameCellData.cell_id]== cellID);
         end
         frameBondData(r).cells = idList;
+        % Make sure bond vertices are connected to these cells:
+        bond_Verts =  frameBondData(r).vertices;
+        for bv = 1:length(bond_Verts)
+            bv_ind = [frameVertexData.vertex_id] == bond_Verts(bv);
+            frameVertexData(bv_ind).cells = unique([frameVertexData(bv_ind).cells,idList]);
+        end
         for c = 1:length(cIndex)
             frameCellData(cIndex(c)).bonds = unique([frameCellData(cIndex(c)).bonds,frameBondData(r).bond_id]);
+            frameCellData(cIndex(c)).vertices = unique([frameCellData(cIndex(c)).vertices, bond_Verts]);
         end
     end
     
@@ -470,9 +486,12 @@ for k = frames
   save([thisFolder,'_VertexData'],'frameVertexData');
   save([thisFolder,'_BondData'],'frameBondData');
   save([thisFolder,'_DBondData'],'frame_dBonds');
-
-    disp(['Done with frame ',num2str(k)])
+  
+  disp(['Done with frame ',num2str(k)])
     catch
+        
+        disp(['Skipped frame ',num2str(k)])
+        
     end
 end
 
