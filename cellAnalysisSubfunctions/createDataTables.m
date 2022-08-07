@@ -9,6 +9,7 @@ datasets = dir('*Cell*');
 sortedDatasets = natsortfiles({datasets.name});
 
 for i = 1:length(sortedDatasets)
+    try
     name_end = find(sortedDatasets{i} == '_');
     thisFileName = [sortedDatasets{i}(1:(name_end(end)-1))];
     display(['Reading data for ',thisFileName])
@@ -122,6 +123,10 @@ for i = 1:length(sortedDatasets)
         vertices = [ vertices; frame_vertices];
         directed_bonds = [ directed_bonds; frame_directed_bonds];
 
+    end
+    
+    catch
+        sprintf(['Skipping ',thisFileName])
     end
 end
 

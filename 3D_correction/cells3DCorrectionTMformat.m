@@ -238,12 +238,12 @@ for n = frames
               display(['Skipping frame ',num2str(n)])
               cd(rawDatasetsDir)
               upDir = cd('..\');
-              failedDatasetsDir = [upDir,'\failedDatasets'];
+              failedDatasetsDir = [upDir,'\failedDatasets\'];
               mkdir(failedDatasetsDir);
-              movefile ([rawDatasetsDir,thisFileName,'_CellData.mat'],[failedDatasetsDir,thisFileName,'_CellData.mat']);
-              movefile ([rawDatasetsDir,thisFileName,'_BondData.mat'],[failedDatasetsDir,thisFileName,'_BondData.mat']);
-               movefile ([rawDatasetsDir,thisFileName,'_VertexData.mat'],[failedDatasetsDir,thisFileName,'_VertexData.mat']);
-              movefile ([rawDatasetsDir,thisFileName,'_DBondData.mat'],[failedDatasetsDir,thisFileName,'_DBondData.mat']);
+              movefile ([rawDatasetsDir,'\',thisFileName,'_CellData.mat'],[failedDatasetsDir,thisFileName,'_CellData.mat']);
+              movefile ([rawDatasetsDir,'\',thisFileName,'_BondData.mat'],[failedDatasetsDir,thisFileName,'_BondData.mat']);
+              movefile ([rawDatasetsDir,'\',thisFileName,'_VertexData.mat'],[failedDatasetsDir,thisFileName,'_VertexData.mat']);
+              movefile ([rawDatasetsDir,'\',thisFileName,'_DBondData.mat'],[failedDatasetsDir,thisFileName,'_DBondData.mat']);
 
         end
         
