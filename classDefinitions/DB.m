@@ -1,4 +1,4 @@
-classdef DB
+classdef DB < handle
     properties
         cell_file_
         vertex_file_
@@ -171,8 +171,8 @@ classdef DB
             bond_pixels_arr = BondPixelList();
             count = 0;
             for row=1:size(obj,2)
-                if ~isempty(obj(row).bond_pixel_lists(1).pixel_bondID) % If there are no flags specified, and the full array of the database has already been created, return it.
-                    bond_pixels_arr = [frame_arr,obj(row).bond_pixel_lists];
+                if ~isempty(obj(row).bond_pixel_lists_(1).pixel_bondID) % If there are no flags specified, and the full array of the database has already been created, return it.
+                    bond_pixels_arr = [bond_pixels_arr,obj(row).bond_pixel_lists_];
                     count = size(bond_pixels_arr,2);
                 else
                     bond_pixel_table = readtable(obj(row).bond_pixel_file_);
@@ -186,7 +186,7 @@ classdef DB
                         table_rows = bond_pixel_table(rowNums,:);
                         bond_pixels_arr(count) = BondPixelList(obj(row),table_rows);
                     end
-                    obj(row).bond_pixel_lists = bond_pixels_arr((1+count-row_count):count);
+                    obj(row).bond_pixel_lists_ = bond_pixels_arr((1+count-row_count):count);
                 end
             end
         end

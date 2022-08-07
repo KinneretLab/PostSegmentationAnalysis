@@ -10,27 +10,27 @@ cellIMDir = 'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos
 db_arr = [DB(dir1),DB(dir2)];
 [cell_arr,db_arr] = db_arr.cells;
 [bond_arr,db_arr] = db_arr.bonds;
+[frame_arr,db_arr] = db_arr.frames;
+
 
 %% Time plots
 
-% this_arr = cell_arr;
-% this_field = 'area';
-% 
-% calibration = 0.52^2;
-% 
-% f3 = timePlot(this_arr,this_field,calibration)
-% figure(f3)
-% 
-% title('{\bf\fontsize{16} Mean cell area as function of time}')
-% xlabel('{\bf\fontsize{16} Time (minutes)}')
-% ylabel('{\bf\fontsize{16} Cell area (um^2)}')
-% set(gca,'fontsize',12)
-% 
-% [f1,f2] = distPlot(cell_arr,'area',calibration)
+this_arr = cell_arr;
+this_field = 'area';
+
+calibration = 0.52^2;
+
+f3 = timePlot(this_arr,this_field,calibration)
+figure(f3)
+
+title('{\bf\fontsize{16} Mean cell area as function of time}')
+xlabel('{\bf\fontsize{16} Time (minutes)}')
+ylabel('{\bf\fontsize{16} Cell area (um^2)}')
+set(gca,'fontsize',12)
+
+[f1,f2] = distPlot(cell_arr,'area',calibration)
 
 [f1,f2] = cdfPlot(bond_arr,'bond_length',calibration)
-
-
 
 
 [f1,f2] = distPlot(this_arr,this_field,calibration)
@@ -119,8 +119,6 @@ function plotMeasureOnCells(frame_arr,cellIMDir,this_field,calibration)
 
 frameCells = frame_arr.cells;
 % Add function to get all cell outline
-
-
 for m = 1:length(frame_arr)
     outline = {};
     in = {};
