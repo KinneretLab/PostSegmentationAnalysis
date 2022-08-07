@@ -53,7 +53,7 @@ classdef Cell
             flags = [];
             for i=1:length(thisID)
                 if mod(i,100) ==0
-                    sprintf(['Finding directed bonds for cell # ',num2str(i)]);
+                    disp(sprintf(['Finding directed bonds for cell # ',num2str(i)]));
                 end
                 cellIDArray = [dBondArray{ic(i)}.cell_id];
                 flags = (cellIDArray == thisID(i));
@@ -88,7 +88,7 @@ classdef Cell
             frames = Frame();
             for i=1:length(frameList)
                 if mod(i,100) ==0
-                    sprintf(['Returning frame for cell # ',num2str(i)]);
+                    disp(sprintf(['Returning frame for cell # ',num2str(i)]));
                 end
                 frameNumArray = [frameArray{ic(i),:}.frame];
                 flags = (frameNumArray == frameList(i));
@@ -108,7 +108,7 @@ classdef Cell
             flags = [];
             for i=1:size(obj,2)
                 if mod(i,100) ==0
-                    sprintf(['Finding bonds for cell # ',num2str(i)])
+                    disp(sprintf(['Finding bonds for cell # ',num2str(i)]));
                 end
                 for j=1:length(theseDBonds(i,:))
                     bondIDArray = [bondArray{ic(i)}.bond_id];
@@ -135,7 +135,7 @@ classdef Cell
             flags = [];
             for i=1:size(obj,2)
                 if mod(i,100) ==0
-                    sprintf(['Finding vertices for cell # ',num2str(i)])
+                    disp(sprintf(['Finding vertices for cell # ',num2str(i)]));
                 end
                 for j=1:length(theseDBonds(i,:))
                     vertexIDArray = [vertexArray{ic(i)}.vertex_id];
@@ -152,24 +152,24 @@ classdef Cell
         end
 
         function obj = outline(obj) % Currently runs on a 1-dimensional list because of dBonds function.
-            sprintf('Getting directed bonds')
+            disp(sprintf('Getting directed bonds'));
             theseDBonds = dBonds(obj); % Currently runs on a 1-dimensional list
             dbArray = [obj.DB];
             dbFolderArray = {dbArray.folder_};
             [~,ia,ic] = unique(dbFolderArray);
             for i=1:length(ia)
-                sprintf('Creating bond array')
+                disp(sprintf('Creating bond array'));
                 bondArray{i} = dbArray(ia(i)).bonds;
-                sprintf('Creating bond pixel list array')
+                disp(sprintf('Creating bond pixel list array'));
                 pixelListArray{i} = dbArray(ia(i)).bond_pixel_lists;
-                sprintf('Creating vertex array')
+                disp(sprintf('Creating vertex array'));
                 vertexArray{i} = dbArray(ia(i)).vertices;
 
             end
             flags = [];
             for i=1:length(obj)
                 if mod(i,50) == 0
-                    sprintf(['Finding outline for cell # ',num2str(i)])
+                    disp(sprintf(['Finding outline for cell # ',num2str(i)]));
                 end
                 orderedDBonds = DBond();
                 orderedDBonds(1) = theseDBonds(i,1);
