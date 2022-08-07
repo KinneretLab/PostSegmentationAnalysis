@@ -17,7 +17,6 @@ db_arr = [DB(dir1),DB(dir2)];
 
 this_arr = cell_arr;
 this_field = 'area';
-
 calibration = 0.52^2;
 
 f3 = timePlot(this_arr,this_field,calibration)
@@ -30,7 +29,7 @@ set(gca,'fontsize',12)
 
 [f1,f2] = distPlot(cell_arr,'area',calibration)
 
-[f1,f2] = cdfPlot(bond_arr,'bond_length',calibration)
+[f1,f2] = cdfPlot(cell_arr,'area',calibration)
 
 
 [f1,f2] = distPlot(this_arr,this_field,calibration)

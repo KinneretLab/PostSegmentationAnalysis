@@ -40,7 +40,7 @@ classdef DB < handle
             count = 0;
             for row=1:size(obj,2)
                 if nargin < 2 && ~isempty(obj(row).cells_(1).cell_id) % If there are no flags specified, and the full array of the database has already been created, return it.
-                    cell_arr = [cell_arr,obj(row).cells_];
+                    cell_arr((count+1):(count+length(obj(row).cells_))) = obj(row).cells_;
                     count = size(cell_arr,2);
                 else
                     cell_table = readtable(obj(row).cell_file_);
@@ -67,7 +67,7 @@ classdef DB < handle
             count = 0;
             for row=1:size(obj,2)
                 if nargin < 2 && ~isempty(obj(row).dBonds_(1).dbond_id) % If there are no flags specified, and the full array of the database has already been created, return it.
-                    dbond_arr = [dbond_arr,obj(row).dBonds_];
+                    dbond_arr((count+1):(count+length(obj(row).dBonds_))) = obj(row).dBonds_;
                     count = size(dbond_arr,2);
                 else
                     dbond_table = readtable(obj(row).d_bond_file_);
@@ -93,7 +93,7 @@ classdef DB < handle
             count = 0;
             for row=1:size(obj,2)
                 if nargin < 2 && ~isempty(obj(row).bonds_(1).bond_id) % If there are no flags specified, and the full array of the database has already been created, return it.
-                    bond_arr = [bond_arr,obj(row).bonds_];
+                    bond_arr((count+1):(count+length(obj(row).bonds_))) = obj(row).bonds_;
                     count = size(bond_arr,2);
                 else
                     bond_table = readtable(obj(row).bond_file_);
@@ -119,7 +119,7 @@ classdef DB < handle
             count = 0;
             for row=1:size(obj,2)
                 if nargin < 2 && ~isempty(obj(row).vertices_(1).vertex_id) % If there are no flags specified, and the full array of the database has already been created, return it.
-                    vertex_arr = [vertex_arr,obj(row).vertices_];
+                    vertex_arr((count+1):(count+length(obj(row).vertices_))) = obj(row).vertices_;
                     count = size(vertex_arr,2);
                 else
                     vertex_table = readtable(obj(row).vertex_file_);
@@ -145,7 +145,7 @@ classdef DB < handle
             count = 0;
             for row=1:size(obj,2)
                 if nargin < 2 && ~isempty(obj(row).frames_(1).frame) % If there are no flags specified, and the full  array of the database has already been created, return it.
-                    frame_arr = [frame_arr,obj(row).frames_];
+                    frame_arr((count+1):(count+length(obj(row).frames_))) = obj(row).frame_;
                     count = size(frame_arr,2);
                 else
                     frame_table = readtable(obj(row).frame_file_,'Delimiter',',');
@@ -172,7 +172,7 @@ classdef DB < handle
             count = 0;
             for row=1:size(obj,2)
                 if ~isempty(obj(row).bond_pixel_lists_(1).pixel_bondID) % If there are no flags specified, and the full array of the database has already been created, return it.
-                    bond_pixels_arr = [bond_pixels_arr,obj(row).bond_pixel_lists_];
+                    bond_pixels_arr((count+1):(count+length(obj(row).bond_pixel_lists_))) = obj(row).bond_pixel_lists_;
                     count = size(bond_pixels_arr,2);
                 else
                     bond_pixel_table = readtable(obj(row).bond_pixel_file_);
