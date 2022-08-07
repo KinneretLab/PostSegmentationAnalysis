@@ -5,7 +5,7 @@ addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\GroupCodes\
 %% 0.1 Define mainDirList
 
 % Locations of original data - needed only for timestamps
-topMainDir = 'z:\SD2\Users\Yonit\2021\2021_05\'; % main folder of original files
+topMainDir = 'z:\SD\Yonit\2021\2021_05\'; % main folder of original files
 rawMainAnalysisDirList= { ... % enter in the following line all sub-directories for movie analysis.
 
 '\2021_05_06\', ...
@@ -18,7 +18,7 @@ for i=1:length(rawMainAnalysisDirList),rawMainDirList{i}=[topMainDir,rawMainAnal
 topAnalysisDir='Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\'; % main folder for movie analysis
 mainAnalysisDirList= { ... % enter in the following line all sub-directories for movie analysis.
 
-'2021_05_06_pos6\', ...
+'SD1_2021_05_06_pos6\', ...
 
 
 
@@ -37,7 +37,7 @@ for i=1:length(mainAnalysisDirList),mainDirList{i}=[topAnalysisDir,mainAnalysisD
 % want to run on particular frames (in this example, 1:6 is for the first
 % movie, 1:9 is for the second). If left empty, runs on all frames.
 
-calibrationXY_list = [0.52]; % um per pixel in XY plane (can be a single value or vector of length of movie list if different for each movie).
+calibrationXY_list = [0.65]; % um per pixel in XY plane (can be a single value or vector of length of movie list if different for each movie).
 calibrationZ_list = [3]; % um per pixel in Z direction(can be a single value or vector of length of movie list if different for each movie).
    
 useDefects_list = 0; % Set to 1 if you are using manually marked defects, and 0 if not. (can be a single value or vector of length of movie list if different for each movie).
@@ -51,7 +51,7 @@ for n=1:length(mainDirList)
    %% 1. Initialize parameters for each movie
     disp(['Analyzing movie/dataset ',num2str(n)])
     mainDir = mainDirList{n};
-    cellDir = [mainDir,'\Cells_auto\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
+    cellDir = [mainDir,'\Cells\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
     segDir = [cellDir,'AllSegmented\']; % Segmentation folder.
     maskDir =  [mainDir,'\Display\Masks'];
     outlineDir = [cellDir,'\Outlines'];
@@ -75,7 +75,7 @@ for n=1:length(mainDirList)
     disp('Applying geometric correction')
     cells3DCorrectionTMformat(mainDir,rawDatasetsDir,outlineDir,segDir, calibrationXY, calibrationZ,umCurvWindow,cellHMnum,frameList{n});
     
-    
+
     %% 4. Load order parameter, orientation and coherence
     disp('Preparing fibre data')
     dirOrientation=[mainDir,'\Orientation_Analysis\Orientation']; % masked orientation field
@@ -101,11 +101,11 @@ for n=1:length(mainDirList)
     end
     
     %% 5. Extract local fibre orientaion, local OP and coherence for every cell
-  
+
     disp('Analyzing relation to fibres')
     extractFibreDataAllFrames(rawDatasetsDir,allOrientation,allLocalOP, allCoherence, orientWindow, OPWindow, cohWindow);
     clear('allOrientation','allCoherence','allLocalOP');
-    
+
     %% 6. Produce tables from structures to be saved accorting to Tissue Miner format.
 
     % Save only data required for TM format to tables:
@@ -131,7 +131,7 @@ for n=1:length(mainDirList)
         time_sec = getTimeStamps(timeStampDir,movieName,frameArr);
         frames = table(frame,frame_name, time_sec);
         clear('frame','frame_name','time_sec');
-        
+
     else
         frames = table(frame,frame_name);
         clear('frame','frame_name');
@@ -145,9 +145,9 @@ for n=1:length(mainDirList)
           createDefectTable(mainDir,segDir,cellDir,frameList{n});
      end
     
-% 
+%
 %     %% 5. Calculate info in relation to defects
-%     
+%
 %     if useDefects==1
 %         for i = 1:size(fullCellData,2)
 %             thisFrame = str2double(fullCellData(i).frame)+1;
@@ -160,9 +160,9 @@ for n=1:length(mainDirList)
 %             end
 %             fullCellData(i).defectDist = defectDist;
 %             fullCellData(i).defectType = defectType;
-%             
+%
 %         end
-%         
+%
 %         for i = 1:size(fullVertexData,2)
 %             thisFrame = fullVertexData(i).frame+1;
 %             frameDefects = allDefects(thisFrame).defect;
@@ -174,19 +174,19 @@ for n=1:length(mainDirList)
 %             end
 %             fullVertexData(i).defectDist = defectDistV;
 %             fullVertexData(i).defectType = defectTypeV;
-%             
+%
 %         end
-%         
+%
 %     end
-% %     
+% %
 % %     cd(cellDir); save('fullVertexData','fullVertexData');
 % %     cd(cellDir); save('fullCellDataMod','fullCellDataMod');
-%     
-%     
-% 
-%     
+%
+%
+%
+%
 % %     cd(cellDir); save('fullCellDataMod','fullCellDataMod');
-%     
+%
 %     %% 8. Calcualte number of neighbours per cell, and number of cells per vertex. Write vertex data to vertex csv file.
 %     neighInd={};
 %     disp('Analyzing cell neighbour relations')
@@ -197,7 +197,7 @@ for n=1:length(mainDirList)
 %         neighInd{i}=[];
 %         theseVertices = fullCellData(i).vertices;
 %         for j = 1:size(fullCellData,2)
-%             
+%
 %             vertInd = ismember(fullCellData(j).vertices, theseVertices);
 %             if sum(vertInd)>=2
 %                 neighInd{i} = [neighInd{i},j];
@@ -208,8 +208,8 @@ for n=1:length(mainDirList)
 %     end
 % %     cd(cellDir); save('fullCellDataMod','fullCellDataMod');
 %     cellsPerVertex =  cell2mat(arrayfun(@(x) size(x.cells,2),fullVertexData,'UniformOutput',false));
-%     
-%     
+%
+%
 %     %% 9. Calculate thickness of each cell according to heightmaps of cell and fibre layers.
 %     % for i = 1:size(fullCellDataMod,2)
 %     %     thisCentre_x = round(fullCellDataMod(i).centre_x);
@@ -225,18 +225,18 @@ for n=1:length(mainDirList)
 %     % end
 %     %
 %     %% 10. Save all data, and merge with existing cell and vertex data for movie/dataset if exists.
-%     
+%
 %     % Check whether analysis has already been performed for this
 %     % movie/dataset, and if so load the fullCellDataMod file, and add new
 %     % frames and cells to it. If frames already exist in file, they
 %     % will be overwritten to allow for corrections.
-%     
+%
 %     cd(cellDir);
 %     if exist([cellDir,'fullCellData.mat'], 'file') == 2
 %         disp('Comparing and merging with existing cell analysis data')
 %         fullCellDataOld = load('fullCellData'); fullCellDataOld = fullCellDataOld.fullCellDataMod ;
 %         fullVertexDataOld = load('fullVertexData'); fullVertexDataOld = fullVertexDataOld.fullVertexData;
-% 
+%
 %         newFrames = unique(str2double(extractfield(fullCellData,'frame')));
 %         cCount = 0;
 %         vCount = 0;
@@ -246,19 +246,19 @@ for n=1:length(mainDirList)
 %         for m = 1:size(fullCellDataOld,2)
 %             thisFrame = str2double(fullCellDataOld(m).frame);
 %             if ~ismember (thisFrame,newFrames)
-%                 cCount = cCount+1; 
+%                 cCount = cCount+1;
 %                 fullCellDataTemp(cCount)= fullCellDataOld(m);
 %             end
 %         end
-%         
+%
 %         for m = 1:size(fullVertexDataOld,2)
 %             thisFrame = fullVertexDataOld(m).frame;
 %             if ~ismember (thisFrame,newFrames)
-%                 vCount = vCount+1; 
+%                 vCount = vCount+1;
 %                 fullVertexDataTemp(vCount)= fullVertexDataOld(m);
 %             end
 %         end
-%         
+%
 %         % Once objects belonging to repeated frames are deleted,concatenate
 %         % old and new cell and vertex data structures.
 %         if exist('fullCellDataTemp','var')
@@ -266,25 +266,25 @@ for n=1:length(mainDirList)
 %         fullVertexData = [fullVertexDataTemp,fullVertexData];
 %         end
 %     end
-%     disp(['Saving data for movie/dataset ',num2str(n)]);    
+%     disp(['Saving data for movie/dataset ',num2str(n)]);
 %     cd(cellDir); save('fullVertexData','fullVertexData');
 %     cd(cellDir); save('fullCellData','fullCellData');
-%     
+%
 %     %% 11. Check whether VMSI has been performed, and add stress information to cell database
 %     if exist([cellDir,'\VMSI.mat'])
 %         disp(['found stress inference for movie/dataset ',num2str(n)])
 %         % If database exists, perform the following steps:
 %         % 1. Ask the user to confirm that frame numbers match between databases.
-%         
+%
 %         disp('Warning: Please make sure that the total frame number and order for VMSI match those for geometrical analysis.');
-%         
+%
 %         % 2. For every cell in fullCellData.m, find the correct frame in the
 %         % VMSI struct, and find Struct(frame).labelMat(centre_y,centre_x)
 %         % (centroids from geometrical analysis. According to this, recognise the
 %         % corresponding cell in the VMSI struct.
 %         cd(cellDir); load ('VMSI');
 %         for i = 1:size(fullCellData,2)
-%                 
+%
 %         thisFrame =  str2double(fullCellData(i).frame)+1;
 %         frameSize = size(Struct(thisFrame).labelMat);
 %         cellRegion = poly2mask(fullCellData(i).outline(:,1),fullCellData(i).outline(:,2),frameSize(1),frameSize(2));
@@ -293,29 +293,29 @@ for n=1:length(mainDirList)
 %         [inX,inY]=find(cellRegion==1);
 % %         thisCentre_x = round(fullCellData(i).centre_x);
 % %         thisCentre_y = round(fullCellData(i).centre_y);
-%          
+%
 %         thisCell = Struct(thisFrame).labelMat(inY(round(length(inY/2))),inX(round(length(inX/2))));
-%         
+%
 %         % 3. Save unique cell ID from geometrical analysis as a field in
 %         % Struct(frame).cdat(cellNum).
 %         Struct(thisFrame).Cdat(thisCell).uniqueID = fullCellData(i).uniqueID;
-%         
+%
 %         % 4. Copy all cell mechanics data from Struct(frame).cdat(cellNum) to
 %         % fullCellDataMod.mat.
-%         
+%
 %         fullCellData(i).pressure = Struct(thisFrame).Cdat(thisCell).pressure;
 %         fullCellData(i).stress = Struct(thisFrame).Cdat(thisCell).stress;
-%          
+%
 %         end
-%         
+%
 %         cd(cellDir);
 %         outfn = [ cellDir,'\VMSI'] ;
 %         save(outfn, 'Struct', 'ERes', 'PN','-v7.3');
 %         save('fullCellData','fullCellData');
-%     
+%
 %     else
-%         disp ('cannot find stress inference')        
-%         
+%         disp ('cannot find stress inference')
+%
 %     end
 
-end 
+end
