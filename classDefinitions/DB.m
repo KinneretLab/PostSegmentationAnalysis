@@ -53,6 +53,9 @@ classdef DB < handle
                         row_count = row_count+1;
                         count = count+1;
                         cell_arr(count) = Cell(obj(row),cell_table(columns(column),:));
+                        if mod(column,50)==0
+                           sprintf(['Creating cell ',num2str(column),'/',num2str(length(columns)),' of DB ',num2str(row),'/',num2str(size(obj,2))])
+                        end
                     end
                     if nargin < 2 % If no flags were specified in creating this array, save it as a property of DB.
                         obj(row).cells_ = cell_arr((1+count-row_count):count);
@@ -80,6 +83,9 @@ classdef DB < handle
                         row_count = row_count+1;
                         count = count+1;
                         dbond_arr(count) = DBond(obj(row),dbond_table(columns(column),:));
+                        if mod(column,50)==0
+                            sprintf(['Creating directed bond ',num2str(column),'/',num2str(length(columns)),' of DB ',num2str(row),'/',num2str(size(obj,2))])
+                        end
                     end
                     if nargin < 2 % If no flags were specified in creating this array, save it as a property of DB.
                         obj(row).dBonds_ = dbond_arr((1+count-row_count):count);
@@ -106,6 +112,9 @@ classdef DB < handle
                         row_count = row_count+1;
                         count = count+1;
                         bond_arr(count) = Bond(obj(row),bond_table(columns(column),:));
+                        if mod(column,50)==0
+                            sprintf(['Creating bond ',num2str(column),'/',num2str(length(columns)),' of DB ',num2str(row),'/',num2str(size(obj,2))])
+                        end
                     end
                     if nargin < 2 % If no flags were specified in creating this array, save it as a property of DB.
                         obj(row).bonds_ = bond_arr((1+count-row_count):count);
@@ -132,6 +141,9 @@ classdef DB < handle
                         row_count = row_count+1;
                         count = count+1;
                         vertex_arr(count) = Vertex(obj(row),vertex_table(columns(column),:));
+                        if mod(column,50)==0
+                            sprintf(['Creating vertex ',num2str(column),'/',num2str(length(columns)),' of DB ',num2str(row),'/',num2str(size(obj,2))])
+                        end
                     end
                     if nargin < 2 % If no flags were specified in creating this array, save it as a property of DB.
                         obj(row).vertices_ = vertex_arr((1+count-row_count):count);
@@ -158,6 +170,9 @@ classdef DB < handle
                         row_count = row_count+1;
                         count = count+1;
                         frame_arr(count) = Frame(obj(row),frame_table(columns(column),:));
+                        if mod(column,50)==0
+                            sprintf(['Creating frame ',num2str(column),'/',num2str(length(columns)),' of DB ',num2str(row),'/',num2str(size(obj,2))])
+                        end
                     end
                     if nargin < 2 % If no flags were specified in creating this array, save it as a property of DB.
                         obj(row).frames_ = frame_arr((1+count-row_count):count);
@@ -185,6 +200,9 @@ classdef DB < handle
                         rowNums = (ic == i);
                         table_rows = bond_pixel_table(rowNums,:);
                         bond_pixels_arr(count) = BondPixelList(obj(row),table_rows);
+                        if mod(column,50)==0
+                            sprintf(['Creating pixel list ',num2str(i),'/',num2str(length(ia)),' of DB ',num2str(row),'/',num2str(size(obj,2))])
+                        end
                     end
                     obj(row).bond_pixel_lists_ = bond_pixels_arr((1+count-row_count):count);
                 end

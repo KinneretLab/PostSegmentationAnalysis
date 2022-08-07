@@ -115,7 +115,7 @@ end
 %%
 
 function plotMeasureOnCells(frame_arr,cellIMDir,this_field,calibration)
-
+% Make the function have the option to 
 frameCells = frame_arr.cells;
 % Add function to get all cell outline
 for m = 1:length(frame_arr)
