@@ -7,6 +7,10 @@ dir3 = 'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\Cel
 
 cellIMDir = 'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\Cells\AllSegmented';
 
+db_arr = [DB(dir1),DB(dir2)];
+[cell_arr,db_arr] = db_arr.cells;
+[bond_arr,db_arr] = db_arr.bonds;
+
 %% Time plots
 
 % this_arr = cell_arr;
