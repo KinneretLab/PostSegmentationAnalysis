@@ -1,19 +1,22 @@
 clear all; close all;
-addpath(genpath('\\phhydra\data-new\phkinnerets\home\lab\CODE\Hydra\'));
-addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\GroupCodes'));
+addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\GroupCodes\July2021'));
 %% Define mainDirList
-topAnalysisDir='\\PHHYDRA\phhydraB\Analysis\users\Yonit\Movie_Analysis\'; % main folder for layer separation results
+topAnalysisDir='\\PHHYDRA\phhydraB\Analysis\users\Yonit\Movie_Analysis\Labeled_cells'; % main folder for layer separation results
 mainAnalysisDirList= { ... % enter in the following line all the output dirs for cost calculation.
     
-'DefectLibrary\test1\', ...
-'DefectLibrary\test2\', ...
+'\2021_05_06_pos6\', ...
+% '\SD1_2021_05_06_pos6\', ...
+% '\SD1_2021_05_06_pos9\', ...
+
 
 };
 for i=1:length(mainAnalysisDirList),mainDirList{i}=[topAnalysisDir,mainAnalysisDirList{i}];end
 %% Define parameters per movie
 
-calibrationXY_list = [0.65,0.52]; % um per pixel in XY plane (can be a single value or vector of length of movie list if different for each movie).
-calibrationZ_list = [3,3]; % um per pixel in Z direction(can be a single value or vector of length of movie list if different for each movie).
+calibrationXY_list = [0.52]; % um per pixel in XY plane (can be a single value or vector of length of movie list if different for each movie).
+calibrationZ_list = [3,3,3]; % um per pixel in Z direction(can be a single value or vector of length of movie list if different for each movie).
+useOrientation_list = [0];
+useDefects_list = [0];
 
 %% Run over list of movies
 for n=1:length(mainDirList)
@@ -33,7 +36,9 @@ for n=1:length(mainDirList)
         
     if length(calibrationXY_list)==1, calibrationXY = calibrationXY_list; else calibrationXY = calibrationXY_list(n); end % um per pixel in XY plane
     if length(calibrationZ_list)==1, calibrationZ = calibrationZ_list; else calibrationZ = calibrationZ_list(n); end % um per pixel in Z direction
-    
+    if length(useOrientation_list)==1, useOrientation = useOrientation_list; else useOrientation = useOrientation_list(n); end % um per pixel in Z direction
+    if length(useDefects_list)==1, useDefects = useDefects_list; else useDefects = useDefects_list(n); end % um per pixel in Z direction
+
     % Window for orientation, local OP and coherence
     orientWindow = 20/calibrationXY; % Average cell radius in um, divided by calibrationXY
     cohWindow = 40/calibrationXY;
@@ -48,11 +53,16 @@ for n=1:length(mainDirList)
     
     for i = 1:size(fullCellData,2)
         i
-        if isempty (fullCellData(i).defectDist)
-            minDist(i)=NaN;
+        if useDefects ==1
+            if isempty (fullCellData(i).defectDist)
+                minDist(i)=NaN;
+            else
+                minDist(i) = min(fullCellData(i).defectDist);
+            end
         else
-            minDist(i) = min(fullCellData(i).defectDist);
+            minDist(i)=NaN;
         end
+        
         if isempty (fullCellData(i).area)
             areaVec(i) = NaN;
         else
@@ -71,24 +81,30 @@ for n=1:length(mainDirList)
             perimeterVec(i)= fullCellData(i).perimeter;
         end
         
-        if isempty (fullCellData(i).localOP)
+        if useOrientation ==1
+            if isempty (fullCellData(i).localOP)
+                localOPVec(i) = NaN;
+            else
+                localOPVec(i)= fullCellData(i).localOP;
+            end
+            
+            if isempty (fullCellData(i).fibreCoherence)
+                cohVec(i) = NaN;
+            else
+                cohVec(i)= fullCellData(i).fibreCoherence;
+            end
+            
+            if isempty (fullCellData(i).fibreOrientation)
+                ForientVec(i) = NaN;
+            else
+                ForientVec(i)= fullCellData(i).fibreOrientation;
+            end
+        else
             localOPVec(i) = NaN;
-        else
-            localOPVec(i)= fullCellData(i).localOP;
-        end
-        
-        if isempty (fullCellData(i).fibreCoherence)
             cohVec(i) = NaN;
-        else
-            cohVec(i)= fullCellData(i).fibreCoherence;
-        end
-        
-        if isempty (fullCellData(i).fibreOrientation)
             ForientVec(i) = NaN;
-        else
-            ForientVec(i)= fullCellData(i).fibreOrientation;
+
         end
-        
         if isempty(fullCellData(i).orientation)
             orientVec2D(i,1)= NaN;
             orientVec2D(i,2)= NaN;
@@ -102,6 +118,7 @@ for n=1:length(mainDirList)
             orientAngleVec(i) = mod(atan(orientVec2D(i,1)/orientVec2D(i,2))+pi,pi);
             
         end
+        
         if ~isempty(fullCellData(i).isEdge)
             edgeFlag(i)=1;
         else
@@ -462,8 +479,7 @@ for n=1:length(mainDirList)
     for m = 0:length(fileNames)-1
         
         thisFrame=m;
-        fIndex = find(strcmp({fullCellData.frame}, num2str(thisFrame))==1);
-        orient2D = [];
+         orient2D = [];
         xVal = [];
         yVal = [];
         Dx = [];

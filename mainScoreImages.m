@@ -1,6 +1,11 @@
 clear all; close all;
-addpath(genpath('\\phhydra\data-new\phkinnerets\home\lab\CODE\Hydra\'));
-addpath(genpath('\\phhydra\phhydraB\Analysis\users\Projects\Noam'));
+addpath('classDefinitions');
+% generic global search for a particular folder; works independent of user
+search_path = '../*/natsortfiles';
+while isempty(dir(search_path))
+    search_path = ['../', search_path];
+end
+addpath(dir(search_path).folder)
 
 mainDir='Z:\Analysis\users\Projects\Noam\Workshop\\timepoints'; % Main directory for movie you are analysing.
 cellDir = [mainDir,'\Cells\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
@@ -14,7 +19,7 @@ showBorders = false; % whether the automatic segmentatio borders should be shown
 rawInWhite = true; % show the raw image in white instead of blue (channel-wise)
 
 cd(cellDir);
-load('fullCellData');
+fullCellData = DB(cellDir).cells;
 
 subDirs = dir(segDir);
 subDirs = subDirs([subDirs.isdir] & ~strcmp({subDirs.name},'.') & ~strcmp({subDirs.name},'..'));
@@ -44,10 +49,10 @@ end
 disp('Creating composite images...');
 for cellIdx = 1:length(fullCellData)
     cellData = fullCellData(cellIdx);
-    images = loadedFrames(str2double(cellData.frame) + 1, :);
+    images = loadedFrames(cellData.frame, :);
 
     [fakeImg, cellImg] = fillScore(cellData, images{1});
-    summaryImages{str2double(cellData.frame) + 1} = summaryImages{str2double(cellData.frame) + 1} + ...
+    summaryImages{cellData.frame} = summaryImages{cellData.frame} + ...
        getWeight(isBinary, cellData.confidence, darken) * 255 * cat(3, tryErode(fakeImg, erodeCells), ...
        tryErode(cellImg, erodeCells), zeros(imgSize));
 
@@ -69,7 +74,7 @@ for imgIdx = 1:length(subDirs)
 end
 
 function [fakeImg, cellImg] = fillScore(cellData, segImg)
-    rawMask = 255 * uint8(imfill(imbinarize(segImg(:,:,1)), double(cellData.outline(1,:))) - imbinarize(segImg(:,:,1)));
+    rawMask = 255 * uint8(imfill(imbinarize(segImg(:,:,1)), double(cellData.outline.orig(1))) - imbinarize(segImg(:,:,1)));
     if cellData.confidence >= 0.5
         cellImg = rawMask;
         fakeImg = uint8(zeros(size(segImg)));

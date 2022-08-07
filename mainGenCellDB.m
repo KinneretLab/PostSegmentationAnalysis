@@ -1,16 +1,20 @@
 clear all; close all;
-addpath(genpath('\\phhydra\data-new\phkinnerets\home\lab\CODE\Hydra\'));
-addpath(genpath('\\phhydra\phhydraB\Analysis\users\Projects\Noam'));
+addpath('classDefinitions');
+% generic global search for a particular folder; works independent of user
+search_path = '../*/natsortfiles';
+while isempty(dir(search_path))
+    search_path = ['../', search_path];
+end
+addpath(dir(search_path).folder)
 
-mainDir='Z:\Analysis\users\Projects\Noam\Workshop\\timepoints'; % Main directory for movie you are analysing.
+mainDir='\\phhydra\phhydraB\Analysis\users\Liora\Movie_Analysis\2021_07_26\2021_07_26_pos2\'; % Main directory for movie you are analysing.
 cellDir = [mainDir,'\Cells\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
-segDir = [cellDir,'Inference\2021_10_12_CEE3_CEE5_CEE1E_CEE1E_CEE6']; % Segmentation folder.
+segDir = [cellDir,'AllSegmented\']; % Segmentation folder.
+infDir = [cellDir,'\Inference\2022_04_26_CEE3_CEE5_CEE1E_CEE1E_CEE6\']; % Inference images folder.
 
 training = false;
 
-cd(cellDir);
-load('fullCellData');
-load('fullVertexData');
+fullCellData = DB(cellDir).cells;
 
 subDirs = dir(segDir);
 subDirs = subDirs([subDirs.isdir] & ~strcmp({subDirs.name},'.') & ~strcmp({subDirs.name},'..'));
@@ -23,8 +27,8 @@ for i = 1:length(subDirNames)
     dirName = subDirNames{i};
     % get all the images
     loadedFrames{i, 1} = imread(fullfile(segDir, dirName, 'handCorrection.tif'));
-    loadedFrames{i, 2} = imread(fullfile(segDir, dirName + ".tif"));
-    loadedFrames{i, 3} = imread(fullfile(cellDir, 'Raw Cortices', dirName + ".tiff"));
+    loadedFrames{i, 2} = imread(fullfile(infDir, dirName + ".tif"));
+    loadedFrames{i, 3} = imread(fullfile(cellDir, 'Adjusted_cortices', dirName + ".tiff"));
     if training
         loadedFrames{i, 4} = imread(fullfile(segDir, dirName, 'groundTruth.tif'));
     end
@@ -40,13 +44,13 @@ disp('Creating composites & categorizing...');
 for cellIdx = 1:length(fullCellData)
     cellData = fullCellData(cellIdx);
     % iterate over each cell in the data to get its dimensions by min/max x/y coords or vertices
-    images = loadedFrames(str2num(cellData.frame) + 1, :);
+    images = loadedFrames(cellData.frame, :);
 
     if training
         [status, pixelDiff, maskedRaw] = compareImages(cellData, images{1}, images{4});
     end
 
-    crop = getCrop(cellData.outline, 2);
+    crop = getCrop(cellData, 2);
     for i = 1:lenImages
         cropped{i} = imcrop(images{i}, crop);
     end
@@ -56,13 +60,13 @@ for cellIdx = 1:length(fullCellData)
             status = displayImageDiff(cropped{1}, cropped{4}, status, pixelDiff);
         end
 
-        saveToFolder(cellDir, cropped, status, cellData.uniqueID);
-        summaryImages{str2num(cellData.frame) + 1}(:,:,statusToChannel(status)) = summaryImages{str2num(cellData.frame) + 1}(:,:,statusToChannel(status)) + uint8(maskedRaw * 255);
+        saveToFolder(cellDir, cropped, status, cellData.strID);
+        summaryImages{cellData.frame}(:,:,statusToChannel(status)) = summaryImages{cellData.frame}(:,:,statusToChannel(status)) + uint8(maskedRaw * 255);
 
         stat{status + 1}(statIdx(status + 1)) = pixelDiff;
         statIdx(status + 1) = statIdx(status + 1) + 1;
     else
-        saveToFolder(cellDir, cropped, 0, cellData.uniqueID);
+        saveToFolder(cellDir, cropped, 0, cellData.strID);
     end
 
     if rem(cellIdx, 1000) == 0
@@ -89,9 +93,9 @@ if training
     end
 end
 
-function crop = getCrop(outline, buffer)
-    minPos = flip(min(outline));
-    maxPos = flip(max(outline));
+function crop = getCrop(cell, buffer)
+    minPos = [cell.bb_xStart, cell.bb_yStart];
+    maxPos = [cell.bb_xEnd, cell.bb_yEnd];
     crop = [minPos - 1 - buffer maxPos - minPos + 2 + 2 * buffer];
 end
 

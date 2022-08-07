@@ -34,6 +34,7 @@ for k = frames
     end
     
     thisImGray = rgb2gray(thisIm);
+    thisImGray(1,:) = 0; thisImGray(end,:) = 0; thisImGray(:,1) = 0; thisImGray(:,end) = 0;
     thisImBW = imbinarize(thisImGray);
     thisImBW = thisImBW.*thisMaskBW;
     thisImWB = imcomplement(thisImBW);
@@ -87,9 +88,11 @@ for k = frames
         cIndex =[];
         for l = 1:length(Lvals)
             cellID = [thisFolder,'_',num2str(Lvals(l))];
+            idList{l} = [thisFolder,'_',num2str(Lvals(l))];
             cIndex(l) = find(strcmp({fullCellData.uniqueID}, cellID)==1);
         end
         fullVertexData(j+lastVInd).cells = cIndex;
+        fullVertexData(j+lastVInd).cellIDs = idList;
         for m=1:length(cIndex)
             fullCellData(cIndex(m)).vertices = [fullCellData(cIndex(m)).vertices,j+lastVInd];
             if fullVertexData(j+lastVInd).isEdge == 1
