@@ -3,7 +3,6 @@ from typing import Dict, Tuple, List
 
 import re
 
-import numpy as np
 import pandas
 import torch
 import yaml
@@ -66,7 +65,7 @@ def main():
 
     print("saving files...")
     for file in loaded_tables:
-        loaded_tables[file].to_csv(file)
+        loaded_tables[file].to_csv(file, index=False)
 
 
 def get_table(cfg: SmartConfig, table_db: Dict[str, pandas.DataFrame], ds: ScorerDataset, index: int) -> \
