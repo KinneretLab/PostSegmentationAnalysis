@@ -4,6 +4,7 @@ classdef PlotBuilder < FigureBuilder
     %   This is not meant to be put in an array.
     properties (Access = protected)
         x_function_       % double(object)
+        x_err_function_   % double(object array)
         x_log_scale_      % bool
         x_label_          % string
         x_label_size_     % int
@@ -11,6 +12,7 @@ classdef PlotBuilder < FigureBuilder
         x_label_italic_   % bool
         x_calibration_    % double
         y_function_       % double(object array)
+        y_err_function_   % double(object array)
         y_log_scale_      % bool
         y_label_          % string
         y_label_size_     % int
@@ -46,6 +48,7 @@ classdef PlotBuilder < FigureBuilder
         function obj = PlotBuilder()
             obj@FigureBuilder()
             obj.x_function_       = PlotBuilder.property("frame");
+            obj.x_err_function_   = @(obj_arr) (0);
             obj.x_log_scale_      = false;
             obj.x_label_          = "";
             obj.x_label_size_     = 12;
@@ -53,6 +56,7 @@ classdef PlotBuilder < FigureBuilder
             obj.x_label_italic_   = 'normal';
             obj.x_calibration_    = 1;
             obj.y_function_       = PlotBuilder.count;
+            obj.y_err_function_   = @(obj_arr) (0);
             obj.y_log_scale_      = false;
             obj.y_label_          = "";
             obj.y_label_size_     = 12;
@@ -67,10 +71,13 @@ classdef PlotBuilder < FigureBuilder
             obj.reference_slopes_ = [];
         end
 
-        function data_arrays = calculate(obj)
+        function [data_arrays, err_arrays] = calculate(obj)
             data_arrays = {};
+            err_arrays = {};
             for list = obj.data_
                 data_sorted = containers.Map('KeyType','double','ValueType','any');
+                x_err_sorted = containers.Map('KeyType','double','ValueType','any');
+                y_err_sorted = containers.Map('KeyType','double','ValueType','any');
                 for entity = list{1}
                     x_value = obj.x_function_(entity);
                     if data_sorted.isKey(x_value)
@@ -80,19 +87,25 @@ classdef PlotBuilder < FigureBuilder
                     end
                 end
                 for key = data_sorted.keys
+                    x_err_sorted(key{1}) = obj.x_err_function_(data_sorted(key{1}));
+                    y_err_sorted(key{1}) = obj.y_err_function_(data_sorted(key{1}));
                     data_sorted(key{1}) = obj.y_function_(data_sorted(key{1}));
                 end
                 x_result = data_sorted.keys;
                 y_result = data_sorted.values;
+                x_err_result = x_err_sorted.values;
+                y_err_result = y_err_sorted.values;
                 data_arrays{end+1} = [x_result{:}] .* obj.x_calibration_;
                 data_arrays{end+1} = [y_result{:}] .* obj.y_calibration_;
+                err_arrays{end+1} = [x_err_result{:}] .* obj.x_calibration_;
+                err_arrays{end+1} = [y_err_result{:}] .* obj.y_calibration_;
             end
         end
 
         function fig_handle = draw(obj)
-            raw_data = obj.calculate;
+            [raw_data, err_data] = obj.calculate;
             if obj.cumulative_ % cumulative mode
-                for i=2:2:size(raw_data)
+                for i=2:2:length(raw_data)
                     raw_data{i} = cumsum(raw_data{i});
                 end
             end
@@ -112,6 +125,16 @@ classdef PlotBuilder < FigureBuilder
                         y_data = y_data ./ sum(y_data, 2);
                     end
                     bar(vertcat(raw_data{1:2:end}), y_data);
+            end
+            if any([err_data{1:2:end}])
+                for i=1:2:length(raw_data)
+                    errorbar(raw_data{i:i+1},err_data{i},'horizontal','.');
+                end
+            end
+            if any([err_data{2:2:end}])
+                for i=1:2:length(raw_data)
+                    errorbar(raw_data{i-1:i},err_data{i},'.');
+                end
             end
             x_min = min([raw_data{1:2:end}]); % add reference slopes
             x_max = max([raw_data{1:2:end}]);
@@ -229,13 +252,37 @@ classdef PlotBuilder < FigureBuilder
         
         function obj = yFunction(obj, func)
             if isa(func, 'char') || isa(func, 'string')
-                obj.x_function_ = PlotBuilder.mean(func);
+                obj.y_function_ = PlotBuilder.mean(func);
             end
             if isa(func, 'double')
-                obj.x_function_ = @(obj) (func);
+                obj.y_function_ = @(obj) (func);
             end 
             if isa(func, 'function_handle')
-                obj.x_function_ = func;
+                obj.y_function_ = func;
+            end
+        end
+        
+        function obj = xErrFunction(obj, func)
+            if isa(func, 'char') || isa(func, 'string')
+                obj.x_err_function_ = PlotBuilder.std(func);
+            end
+            if isa(func, 'double')
+                obj.x_err_function_ = @(obj) (func);
+            end 
+            if isa(func, 'function_handle')
+                obj.x_err_function_ = func;
+            end
+        end
+        
+        function obj = yErrFunction(obj, func)
+            if isa(func, 'char') || isa(func, 'string')
+                obj.y_err_function_ = PlotBuilder.std(func);
+            end
+            if isa(func, 'double')
+                obj.y_err_function_ = @(obj) (func);
+            end 
+            if isa(func, 'function_handle')
+                obj.y_err_function_ = func;
             end
         end
     end

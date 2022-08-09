@@ -115,7 +115,7 @@ classdef DB < handle
                         row_count = row_count+1;
                         count = count+1;
                         bond_arr(count) = Bond(obj(row),bond_table(columns(column),:));
-                        if mod(column,50)==0
+                        if mod(column,500)==0
                             disp(sprintf(['Indexing bond ',num2str(column),'/',num2str(length(columns)),' of DB ',num2str(row),'/',num2str(size(obj,2))]));
                         end
                     end
@@ -206,7 +206,7 @@ classdef DB < handle
                         rowNums = (ic == i);
                         table_rows = bond_pixel_table(rowNums,:);
                         bond_pixels_arr(count) = BondPixelList(obj(row),table_rows);
-                        if mod(column,2000)==0
+                        if mod(i,2000)==0
                             disp(sprintf(['Indexing pixel list ',num2str(i),'/',num2str(length(ia)),' of DB ',num2str(row),'/',num2str(size(obj,2))]));
                         end
                     end
