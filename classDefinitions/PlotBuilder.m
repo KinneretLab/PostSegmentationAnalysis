@@ -36,11 +36,11 @@ classdef PlotBuilder < FigureBuilder
         end
 
         function func = mean(prop_name)
-            func = @(obj_arr) (mean(obj_arr.(prop_name)));
+            func = @(obj_arr) (mean([obj_arr.(prop_name)]));
         end
 
         function func = std(prop_name)
-            func = @(obj_arr) (std(obj_arr.(prop_name)));
+            func = @(obj_arr) (std([obj_arr.(prop_name)]));
         end
     end
     
@@ -235,6 +235,14 @@ classdef PlotBuilder < FigureBuilder
                 obj.y_log_scale_ = true;
             else
                 obj.y_log_scale_ = state;
+            end
+        end
+
+        function obj = cumulative(obj, state)
+            if nargin == 0
+                obj.cumulative_ = true;
+            else
+                obj.cumulative_ = state;
             end
         end
         
