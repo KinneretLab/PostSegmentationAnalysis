@@ -32,7 +32,7 @@ classdef Frame
             flags = [];
             for i=1:length(thisFrame)
                 if mod(i,10) ==0
-                    sprintf(['Finding cells for frame # ',num2str(i)])
+                    disp(sprintf(['Finding cells for frame # ',num2str(i)]));
                 end
                 frameArray = [cellArray{ic(i)}.frame];
                 flags = (frameArray == thisFrame(i));
@@ -59,7 +59,7 @@ classdef Frame
             flags = [];
             for i=1:length(thisFrame)
                 if mod(i,10) ==0
-                    sprintf(['Finding vertices for frame # ',num2str(i)])
+                    disp(sprintf(['Finding vertices for frame # ',num2str(i)]));
                 end
                 frameArray = [vertexArray{ic(i)}.frame];
                 flags = (frameArray == thisFrame(i));
@@ -86,7 +86,7 @@ classdef Frame
             flags = [];
             for i=1:length(thisFrame)
                 if mod(i,10) ==0
-                    sprintf(['Finding bonds for frame # ',num2str(i)])
+                    disp(sprintf(['Finding bonds for frame # ',num2str(i)]));
                     frameArray = [bondArray{ic(i)}.frame];
                     flags = (frameArray == thisFrame(i));
                     thisLength = sum(flags);

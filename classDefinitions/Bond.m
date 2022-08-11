@@ -35,7 +35,7 @@ classdef Bond
             flags = [];
             for i=1:length(thisID)
                 if mod(i,100) ==0
-                    sprintf(['Finding directed bonds for bond # ',num2str(i)])
+                    disp(sprintf(['Finding directed bonds for bond # ',num2str(i)]));
                 end
                 bondIDArray = [dBondArray{ic(i)}.bond_id];
                 flags = (bondIDArray == thisID(i));
@@ -61,7 +61,7 @@ classdef Bond
               frames = Frame();
               for i=1:length(frameList)
                   if mod(i,100) ==0
-                      sprintf(['Returning frame for cell # ',num2str(i)])
+                      disp(sprintf(['Returning frame for cell # ',num2str(i)]));
                   end
                   frameNumArray = [frameArray{ic(i),:}.frame];
                   flags = (frameNumArray == frameList(i));
@@ -81,7 +81,7 @@ classdef Bond
               flags = [];
               for i=1:size(obj,2)
                   if mod(i,100) ==0
-                      sprintf(['Finding vertices for bond # ',num2str(i)])
+                      disp(sprintf(['Finding vertices for bond # ',num2str(i)]));
                   end
                   for j=1:length(theseDBonds(i,:))
                       vertexIDArray = [vertexArray{ic(i)}.vertex_id];
@@ -108,7 +108,7 @@ classdef Bond
               flags = [];
               for i=1:size(obj,2)
                   if mod(i,100) ==0
-                      sprintf(['Finding cells for bond # ',num2str(i)])
+                      disp(sprintf(['Finding cells for bond # ',num2str(i)]));
                   end
                   for j=1:length(theseDBonds(i,:))
                       cellIDArray = [cellArray{ic(i)}.cell_id];
@@ -134,7 +134,7 @@ classdef Bond
               end
               for i=1:size(obj,2)
                   if mod(i,100) ==0
-                      sprintf(['Finding coordinates for bond # ',num2str(i)])
+                      disp(sprintf(['Finding coordinates for bond # ',num2str(i)]));
                   end
                   thisID = obj(i).bond_id;
                   bondIDArray = [pixelListArray{ic(i)}.pixel_bondID];

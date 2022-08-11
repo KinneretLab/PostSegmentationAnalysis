@@ -42,7 +42,7 @@ classdef Vertex
             flags = [];
             for i=1:length(thisID)
                 if mod(i,100) ==0
-                    sprintf(['Finding directed bonds for vertex # ',num2str(i)])
+                    disp(sprintf(['Finding directed bonds for vertex # ',num2str(i)]));
                 end
                 vertexIDArray = [dBondArray{ic(i)}.vertex_id];
                 flags = (vertexIDArray == thisID(i));
@@ -68,7 +68,7 @@ classdef Vertex
             frames = Frame();
             for i=1:length(frameList)
                 if mod(i,100) ==0
-                    sprintf(['Returning frame for vertex # ',num2str(i)])
+                    disp(sprintf(['Returning frame for vertex # ',num2str(i)]));
                 end
                 frameNumArray = [frameArray{ic(i),:}.frame];
                 flags = (frameNumArray == frameList(i));
@@ -88,7 +88,7 @@ classdef Vertex
             flags = [];
             for i=1:size(obj,2)
                 if mod(i,100) ==0
-                    sprintf(['Finding bonds for vertex # ',num2str(i)])
+                    disp(sprintf(['Finding bonds for vertex # ',num2str(i)]));
                 end
                 for j=1:length(theseDBonds(i,:))
                     bondIDArray = [bondArray{ic(i)}.bond_id];
@@ -115,7 +115,7 @@ classdef Vertex
             flags = [];
             for i=1:size(obj,2)
                 if mod(i,100) ==0
-                    sprintf(['Finding cells for vertex # ',num2str(i)])
+                    disp(sprintf(['Finding cells for vertex # ',num2str(i)]));
                 end
                 for j=1:length(theseDBonds(i,:))
                     cellIDArray = [cellArray{ic(i)}.cell_id];
