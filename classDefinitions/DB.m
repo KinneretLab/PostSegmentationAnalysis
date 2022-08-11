@@ -163,6 +163,12 @@ classdef DB < handle
                     frame_table = readtable(obj(row).frame_file_,'Delimiter',',');
                     if nargin < 2
                         flags = logical(ones(size(obj,2),height(frame_table)));
+                    else
+                        if isa(flags,'double')
+                        new_flags = logical(zeros(size(obj,2),height(frame_table)));
+                        new_flags(flags)=1;
+                        flags=new_flags;
+                        end
                     end
                     columns = find(flags(row,:));
                     row_count = 0;
@@ -200,7 +206,7 @@ classdef DB < handle
                         rowNums = (ic == i);
                         table_rows = bond_pixel_table(rowNums,:);
                         bond_pixels_arr(count) = BondPixelList(obj(row),table_rows);
-                        if mod(column,50)==0
+                        if mod(i,50)==0
                             sprintf(['Creating pixel list ',num2str(i),'/',num2str(length(ia)),' of DB ',num2str(row),'/',num2str(size(obj,2))])
                         end
                     end
