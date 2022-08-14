@@ -11,15 +11,15 @@ classdef (Abstract) Entity < handle
     end
     
     methods
-        function obj = Entity(varargin)
+        function obj = Entity(args)
             %ENTITY Construct an entity
             %   note that this can work well with a single row as well
-            if nargin > 1
-                table_rows = varargin{2};
+            if length(args) > 1
+                table_rows = args{2};
                 for name = table_rows(1,:).Properties.VariableNames
                     obj.(name{1}) = table_rows{1:end, name}; %% be careful with variable refactoring
                 end
-                obj.experiment = varargin{1};
+                obj.experiment = args{1};
             else
                 obj.(obj.uniqueID) = nan;
                 obj.experiment = nan;

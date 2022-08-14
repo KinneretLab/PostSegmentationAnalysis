@@ -19,7 +19,7 @@ showBorders = false; % whether the automatic segmentatio borders should be shown
 rawInWhite = true; % show the raw image in white instead of blue (channel-wise)
 
 cd(cellDir);
-fullCellData = DB(cellDir).cells;
+fullCellData = Experiment(cellDir).cells;
 
 subDirs = dir(segDir);
 subDirs = subDirs([subDirs.isdir] & ~strcmp({subDirs.name},'.') & ~strcmp({subDirs.name},'..'));

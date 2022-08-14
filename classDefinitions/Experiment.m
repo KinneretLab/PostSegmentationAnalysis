@@ -1,4 +1,4 @@
-classdef DB < handle
+classdef Experiment < handle
     properties
         cell_file_
         vertex_file_
@@ -18,7 +18,7 @@ classdef DB < handle
     end
     
     methods
-        function obj = DB(folder)
+        function obj = Experiment(folder)
             obj.cell_file_ = [folder, '\cells.csv'];
             obj.vertex_file_ = [folder, '\vertices.csv'];
             obj.bond_file_ = [folder, '\bonds.csv'];
@@ -36,7 +36,7 @@ classdef DB < handle
         end
         
         function tf = eq(lhs, rhs)
-            tf = [lhs.folder] == [rhs.folder];
+            tf = [lhs.folder_] == [rhs.folder_];
         end
         
         function [cell_arr,obj] = cells(obj,flags)
@@ -201,7 +201,7 @@ classdef DB < handle
             bond_pixels_arr = BondPixelList();
             count = 0;
             for row=1:size(obj,2)
-                if ~isempty(obj(row).bond_pixel_lists_(1).pixel_bondID) % If there are no flags specified, and the full array of the database has already been created, return it.
+                if ~isempty(obj(row).bond_pixel_lists_(1)) % If there are no flags specified, and the full array of the database has already been created, return it.
                     bond_pixels_arr((count+1):(count+length(obj(row).bond_pixel_lists_))) = obj(row).bond_pixel_lists_;
                     count = size(bond_pixels_arr,2);
                 else

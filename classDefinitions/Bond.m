@@ -20,7 +20,7 @@ classdef Bond < Entity
         
           function dBonds = dBonds(obj)
             thisID = [obj.bond_id];
-            dbArray = [obj.DB];
+            dbArray = [obj.experiment];
             dbFolderArray = {dbArray.folder_};
             [~,ia,ic] = unique(dbFolderArray);
             dBonds = DBond();
@@ -47,7 +47,7 @@ classdef Bond < Entity
           
           function frames = frames(obj)
               frameList = [obj.frame];
-              dbArray = [obj.DB];
+              dbArray = [obj.experiment];
               dbFolderArray = {dbArray.folder_};
               [~,ia,ic] = unique(dbFolderArray);
               for i=1:length(ia)
@@ -68,7 +68,7 @@ classdef Bond < Entity
           
           function vertices = vertices(obj)
               theseDBonds = dBonds(obj);
-              dbArray = [obj.DB];
+              dbArray = [obj.experiment];
               dbFolderArray = {dbArray.folder_};
               [~,ia,ic] = unique(dbFolderArray);
               for i=1:length(ia)
@@ -95,7 +95,7 @@ classdef Bond < Entity
           
           function cells = cells(obj)
               theseDBonds = dBonds(obj);
-              dbArray = [obj.DB];
+              dbArray = [obj.experiment];
               dbFolderArray = {dbArray.folder_};
               [~,ia,ic] = unique(dbFolderArray);
               for i=1:length(ia)
@@ -121,7 +121,7 @@ classdef Bond < Entity
           end
           
           function coords(obj)
-              dbArray = [obj.DB];
+              dbArray = [obj.experiment];
               dbFolderArray = {dbArray.folder_};
               [~,ia,ic] = unique(dbFolderArray);
               flags = [];

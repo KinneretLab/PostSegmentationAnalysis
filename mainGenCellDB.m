@@ -14,7 +14,7 @@ infDir = [cellDir,'\Inference\2022_04_26_CEE3_CEE5_CEE1E_CEE1E_CEE6\']; % Infere
 
 training = false;
 
-fullCellData = DB(cellDir).cells;
+fullCellData = Experiment(cellDir).cells;
 
 subDirs = dir(segDir);
 subDirs = subDirs([subDirs.isdir] & ~strcmp({subDirs.name},'.') & ~strcmp({subDirs.name},'..'));

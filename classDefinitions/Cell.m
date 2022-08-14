@@ -40,7 +40,7 @@ classdef Cell < Entity
         
         function dBonds = dBonds(obj)
             thisID = [obj.cell_id];
-            dbArray = [obj.DB];
+            dbArray = [obj.experiment];
             dbFolderArray = {dbArray.folder_};
             [~,ia,ic] = unique(dbFolderArray);
             dBonds = DBond();
@@ -71,12 +71,12 @@ classdef Cell < Entity
         end
 
         function strID = strID(obj)
-            strID = obj.DB.frames([obj.DB.frames.frame] == obj.frame).frame_name + "_" + obj.idInFrame;
+            strID = obj.experiment.frames([obj.experiment.frames.frame] == obj.frame).frame_name + "_" + obj.idInFrame;
         end
 
         function frames = frames(obj)
             frameList = [obj.frame];
-            dbArray = [obj.DB];
+            dbArray = [obj.experiment];
             dbFolderArray = {dbArray.folder_};
             [~,ia,ic] = unique(dbFolderArray);
             for i=1:length(ia)
@@ -97,7 +97,7 @@ classdef Cell < Entity
         
         function bonds = bonds(obj)
             theseDBonds = dBonds(obj);
-            dbArray = [obj.DB];
+            dbArray = [obj.experiment];
             dbFolderArray = {dbArray.folder_};
             [~,ia,ic] = unique(dbFolderArray);
             for i=1:length(ia)
@@ -124,7 +124,7 @@ classdef Cell < Entity
 
         function vertices = vertices(obj)
             theseDBonds = dBonds(obj);
-            dbArray = [obj.DB];
+            dbArray = [obj.experiment];
             dbFolderArray = {dbArray.folder_};
             [~,ia,ic] = unique(dbFolderArray);
             for i=1:length(ia)
@@ -152,7 +152,7 @@ classdef Cell < Entity
         function obj = outline(obj) % Currently runs on a 1-dimensional list because of dBonds function.
             disp(sprintf('Getting directed bonds'));
             theseDBonds = dBonds(obj); % Currently runs on a 1-dimensional list
-            dbArray = [obj.DB];
+            dbArray = [obj.experiment];
             dbFolderArray = {dbArray.folder_};
             [~,ia,ic] = unique(dbFolderArray);
             for i=1:length(ia)

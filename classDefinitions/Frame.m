@@ -17,7 +17,7 @@ classdef Frame < Entity
 
         function cells = cells(obj)
             thisFrame = [obj.frame];
-            dbArray = [obj.DB];
+            dbArray = [obj.experiment];
             dbFolderArray = {dbArray.folder_};
             [~,ia,ic] = unique(dbFolderArray);
             cells = Cell();
@@ -44,7 +44,7 @@ classdef Frame < Entity
 
         function vertices = vertices(obj)
             thisFrame = [obj.frame];
-            dbArray = [obj.DB];
+            dbArray = [obj.experiment];
             dbFolderArray = {dbArray.folder_};
             [~,ia,ic] = unique(dbFolderArray);
             vertices = Vertex();
@@ -71,7 +71,7 @@ classdef Frame < Entity
 
         function bonds = bonds(obj)
             thisFrame = [obj.frame];
-            dbArray = [obj.DB];
+            dbArray = [obj.experiment];
             dbFolderArray = {dbArray.folder_};
             [~,ia,ic] = unique(dbFolderArray);
             bonds = Bond();

@@ -7,7 +7,7 @@ dir3 = 'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\Cel
 
 cellIMDir = 'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\Cells\AllSegmented';
 
-db_arr = [DB(dir1),DB(dir2)];
+db_arr = [Experiment(dir1),Experiment(dir2)];
 [cell_arr,db_arr] = db_arr.cells;
 [bond_arr,db_arr] = db_arr.bonds;
 [frame_arr,db_arr] = db_arr.frames;
