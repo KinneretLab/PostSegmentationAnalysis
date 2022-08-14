@@ -1,37 +1,24 @@
-classdef Vertex
+classdef Vertex < Entity
     properties
         frame
         vertex_id
         x_pos
         y_pos
-        DB
     end
     
     methods
         
-        %         function obj = Vertex(vertices,ID)
-        %
-        %             vertex_ind = (vertices{:,'vertex_id'} == ID);
-        %             obj.frame = vertices{vertex_ind,'frame'};
-        %             obj.vertex_id = ID;
-        %             obj.x_pos = vertices{vertex_ind,'x_pos'};
-        %             obj.y_pos = vertices{vertex_ind,'y_pos'};
-        %
-        %         end
-        
-        function obj = Vertex(db,vertex_table_row)
-            if nargin > 0
-                for name = vertex_table_row.Properties.VariableNames
-                    obj.(name{1}) = vertex_table_row{1, name}; %% be careful with variable refactoring
-                end
-                obj.DB = db;
+        function obj = Vertex(varargin)
+            obj@Entity(varargin)
+        end
 
-            end
+        function id = uniqueID(obj)
+            id = "vertex_id";
         end
       
         function dBonds = dBonds(obj)
             thisID = [obj.vertex_id];
-            dbArray = [obj.DB];
+            dbArray = [obj.experiment];
             dbFolderArray = {dbArray.folder_};
             [~,ia,ic] = unique(dbFolderArray);
             dBonds = DBond();
@@ -58,7 +45,7 @@ classdef Vertex
         
         function frames = frames(obj)
             frameList = [obj.frame];
-            dbArray = [obj.DB];
+            dbArray = [obj.experiment];
             dbFolderArray = {dbArray.folder_};
             [~,ia,ic] = unique(dbFolderArray);
             for i=1:length(ia)
@@ -79,7 +66,7 @@ classdef Vertex
         
         function bonds = bonds(obj)
             theseDBonds = dBonds(obj);
-            dbArray = [obj.DB];
+            dbArray = [obj.experiment];
             dbFolderArray = {dbArray.folder_};
             [~,ia,ic] = unique(dbFolderArray);
             for i=1:length(ia)
@@ -106,7 +93,7 @@ classdef Vertex
         
         function cells = cells(obj)
             theseDBonds = dBonds(obj);
-            dbArray = [obj.DB];
+            dbArray = [obj.experiment];
             dbFolderArray = {dbArray.folder_};
             [~,ia,ic] = unique(dbFolderArray);
             for i=1:length(ia)

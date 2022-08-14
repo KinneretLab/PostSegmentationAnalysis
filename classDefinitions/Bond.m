@@ -1,25 +1,21 @@
-classdef Bond
+classdef Bond < Entity
     properties
         frame
         bond_id
         bond_length
         pixel_list
-        DB
-
     end
     
     methods
         
         
-        function obj = Bond(db,bond_table_row)
-            if nargin > 0
-                for name = bond_table_row.Properties.VariableNames
-                    obj.(name{1}) = bond_table_row{1, name}; %% be careful with variable refactoring
-                end
-                obj.pixel_list = [];
-                obj.DB = db;
+        function obj = Bond(varargin)
+            obj@Entity(varargin)
+            obj.pixel_list = [];
+        end
 
-            end
+        function id = uniqueID(obj)
+            id = "bond_id";
         end
         
           function dBonds = dBonds(obj)

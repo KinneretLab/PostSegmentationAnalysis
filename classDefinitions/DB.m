@@ -35,11 +35,15 @@ classdef DB < handle
             obj.bond_pixel_lists_ = BondPixelList();
         end
         
+        function tf = eq(lhs, rhs)
+            tf = [lhs.folder] == [rhs.folder];
+        end
+        
         function [cell_arr,obj] = cells(obj,flags)
             cell_arr = Cell();
             count = 0;
             for row=1:size(obj,2)
-                if nargin < 2 && ~isempty(obj(row).cells_(1).cell_id) % If there are no flags specified, and the full array of the database has already been created, return it.
+                if nargin < 2 && ~isempty(obj(row).cells_(1)) % If there are no flags specified, and the full array of the database has already been created, return it.
                     cell_arr((count+1):(count+length(obj(row).cells_))) = obj(row).cells_;
                     count = size(cell_arr,2);
                 else
@@ -70,7 +74,7 @@ classdef DB < handle
             dbond_arr = DBond();
             count = 0;
             for row=1:size(obj,2)
-                if nargin < 2 && ~isempty(obj(row).dBonds_(1).dbond_id) % If there are no flags specified, and the full array of the database has already been created, return it.
+                if nargin < 2 && ~isempty(obj(row).dBonds_(1)) % If there are no flags specified, and the full array of the database has already been created, return it.
                     dbond_arr((count+1):(count+length(obj(row).dBonds_))) = obj(row).dBonds_;
                     count = size(dbond_arr,2);
                 else
@@ -100,7 +104,7 @@ classdef DB < handle
             bond_arr = Bond();
             count = 0;
             for row=1:size(obj,2)
-                if nargin < 2 && ~isempty(obj(row).bonds_(1).bond_id) % If there are no flags specified, and the full array of the database has already been created, return it.
+                if nargin < 2 && ~isempty(obj(row).bonds_(1)) % If there are no flags specified, and the full array of the database has already been created, return it.
                     bond_arr((count+1):(count+length(obj(row).bonds_))) = obj(row).bonds_;
                     count = size(bond_arr,2);
                 else
@@ -130,7 +134,7 @@ classdef DB < handle
             vertex_arr = Vertex();
             count = 0;
             for row=1:size(obj,2)
-                if nargin < 2 && ~isempty(obj(row).vertices_(1).vertex_id) % If there are no flags specified, and the full array of the database has already been created, return it.
+                if nargin < 2 && ~isempty(obj(row).vertices_(1)) % If there are no flags specified, and the full array of the database has already been created, return it.
                     vertex_arr((count+1):(count+length(obj(row).vertices_))) = obj(row).vertices_;
                     count = size(vertex_arr,2);
                 else
@@ -160,7 +164,7 @@ classdef DB < handle
             frame_arr = Frame();
             count = 0;
             for row=1:size(obj,2)
-                if nargin < 2 && ~isempty(obj(row).frames_(1).frame) % If there are no flags specified, and the full  array of the database has already been created, return it.
+                if nargin < 2 && ~isempty(obj(row).frames_(1)) % If there are no flags specified, and the full  array of the database has already been created, return it.
                     frame_arr((count+1):(count+length(obj(row).frames_))) = obj(row).frames_;
                     count = size(frame_arr,2);
                 else

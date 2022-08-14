@@ -1,4 +1,4 @@
-classdef BondPixelList
+classdef BondPixelList < Entity
     properties
         orig_x_coord
         orig_y_coord
@@ -7,22 +7,21 @@ classdef BondPixelList
         smooth_z_coord
         pixel_bondID
         pixel_frame
-        DB
-
     end
     
     methods
         
-        function obj = BondPixelList(db,pixel_table_rows)
-            if nargin > 0
-                for name = pixel_table_rows(1,:).Properties.VariableNames
-                    obj.(name{1}) = pixel_table_rows{1:end, name}; %% be careful with variable refactoring
-                end
-                obj.DB = db;
+        function obj = BondPixelList(varargin)
+            obj@Entity(varargin)
+            if nargin > 1
+                pixel_table_rows = varargin{2};
                 obj.pixel_bondID = pixel_table_rows{1, 'pixel_bondID'};
                 obj.pixel_frame = pixel_table_rows{1, 'pixel_frame'};
-
             end
+        end
+
+        function id = uniqueID(obj)
+            id = "pixel_bondID";
         end
         
         function pixels = orig(obj, idx)

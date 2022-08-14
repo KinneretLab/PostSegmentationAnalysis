@@ -1,4 +1,4 @@
-classdef DBond
+classdef DBond < Entity
     properties
         frame
         dbond_id
@@ -8,19 +8,16 @@ classdef DBond
         vertex_id
         vertex2_id
         left_dbond_id
-        DB
     end
     
     methods
         
-        function obj = DBond(db,d_bond_table_row)
-            if nargin > 0
-                for name = d_bond_table_row.Properties.VariableNames
-                    obj.(name{1}) = d_bond_table_row{1, name}; %% be careful with variable refactoring
-                end
-                obj.DB = db;
+        function obj = DBond(varargin)
+            obj@Entity(varargin)
+        end
 
-            end
+        function id = uniqueID(obj)
+            id = "dbond_id";
         end
     end
     

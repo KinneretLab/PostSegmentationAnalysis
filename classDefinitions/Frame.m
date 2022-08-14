@@ -1,22 +1,18 @@
-classdef Frame
+classdef Frame < Entity
     properties
         frame
         frame_name
         time_sec
-        DB
-
     end
     
     methods
 
-        function obj = Frame(db,frame_table_row)
-            if nargin > 0
-                for name = frame_table_row.Properties.VariableNames
-                    obj.(name{1}) = frame_table_row{1, name}; %% be careful with variable refactoring
-                end
-                obj.DB = db;
+        function obj = Frame(varargin)
+            obj@Entity(varargin)
+        end
 
-            end
+        function id = uniqueID(obj)
+            id = "frame";
         end
 
         function cells = cells(obj)

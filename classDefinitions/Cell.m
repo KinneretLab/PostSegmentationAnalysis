@@ -1,4 +1,4 @@
-classdef Cell
+classdef Cell < Entity
     properties
         cell_id
         frame
@@ -24,20 +24,18 @@ classdef Cell
         bb_yStart
         bb_xEnd
         bb_yEnd
-        DB
         outline_
     end
     
     methods
         
-        function obj = Cell(db,cell_table_row)
-            if nargin > 0
-                for name = cell_table_row.Properties.VariableNames
-                    obj.(name{1}) = cell_table_row{1, name}; %% be careful with variable refactoring
-                end
-                obj.DB = db;
-                obj.outline_ = [];
-            end
+        function obj = Cell(varargin)
+            obj@Entity(varargin)
+            obj.outline_ = [];
+        end
+
+        function id = uniqueID(obj)
+            id = "cell_id";
         end
         
         function dBonds = dBonds(obj)
