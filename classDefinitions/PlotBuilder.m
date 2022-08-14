@@ -103,13 +103,14 @@ classdef PlotBuilder < FigureBuilder
         end
 
         function fig_handle = draw(obj)
+            fig_handle = figure;
+            hold on;
             [raw_data, err_data] = obj.calculate;
             if obj.cumulative_ % cumulative mode
                 for i=2:2:length(raw_data)
                     raw_data{i} = cumsum(raw_data{i});
                 end
             end
-            fig_handle = figure;
             switch obj.mode_
                 case "line" % graphing mode
                     plot(raw_data{:});
@@ -132,7 +133,7 @@ classdef PlotBuilder < FigureBuilder
                 end
             end
             if any([err_data{2:2:end}])
-                for i=1:2:length(raw_data)
+                for i=2:2:length(raw_data)
                     errorbar(raw_data{i-1:i},err_data{i},'.');
                 end
             end
@@ -155,7 +156,8 @@ classdef PlotBuilder < FigureBuilder
             if obj.y_log_scale_ % y log scale
                 set(gca, 'yscale','log')
             end
-            grid (obj.grid_); % grid mode            
+            grid (obj.grid_); % grid mode    
+            hold off;
         end
         
         function obj = addData(obj, entity_arr)
