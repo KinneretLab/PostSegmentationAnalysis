@@ -14,7 +14,7 @@ classdef Bond < Entity
             obj.pixel_list = [];
         end
 
-        function id = uniqueID(obj)
+        function id = uniqueID(~)
             id = "bond_id";
         end
         

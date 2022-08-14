@@ -16,7 +16,7 @@ classdef DBond < Entity
             obj@Entity(varargin)
         end
 
-        function id = uniqueID(obj)
+        function id = uniqueID(~)
             id = "dbond_id";
         end
     end

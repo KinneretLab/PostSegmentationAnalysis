@@ -24,6 +24,8 @@ classdef PlotBuilder < FigureBuilder
         mode_             % string
         cumulative_       % bool
         reference_slopes_ % double array
+        normalize_       % bool
+        bins_         % int - 0 means no binning, -1 means automatic binning
     end
 
     methods(Static)
@@ -69,6 +71,8 @@ classdef PlotBuilder < FigureBuilder
             obj.mode_             = "line";
             obj.cumulative_       = false;
             obj.reference_slopes_ = [];
+            obj.normalize_        = false;
+            obj.bins_             = 0;
         end
 
         function [data_arrays, err_arrays] = calculate(obj)
@@ -78,12 +82,25 @@ classdef PlotBuilder < FigureBuilder
                 data_sorted = containers.Map('KeyType','double','ValueType','any');
                 x_err_sorted = containers.Map('KeyType','double','ValueType','any');
                 y_err_sorted = containers.Map('KeyType','double','ValueType','any');
-                for entity = list{1}
-                    x_value = obj.x_function_(entity);
-                    if data_sorted.isKey(x_value)
-                        data_sorted(x_value) = [data_sorted(x_value), entity];
+                if obj.bins_ == 0
+                    x_result = arrayfun(obj.x_function_, list{1});
+                    x_values = unique(x_result);
+                    for i=1:length(x_values)
+                        x_value = x_values(i);
+                        data_sorted(x_value) = list{1}(x_result == x_value);
+                    end
+                else
+                    x_result = arrayfun(obj.x_function_, list{1});
+                    if obj.bins_ == -1
+                        [~, edges] = histcounts(x_result);
                     else
-                        data_sorted(x_value) = entity;
+                        [~, edges] = histcounts(x_result, obj.bins_);
+                    end
+                    bin_indices = discretize(x_result, edges);
+                    x_values = movmean(edges, 2);
+                    for i=1:length(x_values)-1
+                        x_value = x_values(i + 1);
+                        data_sorted(x_value) = list{1}(bin_indices == i);
                     end
                 end
                 for key = data_sorted.keys
@@ -111,21 +128,24 @@ classdef PlotBuilder < FigureBuilder
                     raw_data{i} = cumsum(raw_data{i});
                 end
             end
+            if obj.normalize_
+                if obj.cumulative_
+                    raw_data(2:2:end) = cellfun(@(obj_arr) (obj_arr / obj_arr(end)),raw_data(2:2:end),'UniformOutput',false);
+                else
+                    raw_data(2:2:end) = cellfun(@(obj_arr) (obj_arr / sum(obj_arr)),raw_data(2:2:end),'UniformOutput',false);
+                end
+            end
             switch obj.mode_
                 case "line" % graphing mode
                     plot(raw_data{:});
                 case "scatter"
                     plot(raw_data{:},'LineStyle','none','Marker','.');
                 case "bar"
-                    bar(vertcat(raw_data{1:2:end}),vertcat(raw_data{2:2:end}));
-                case "distribution"
-                    y_data = vertcat(raw_data{2:2:end});
-                    if obj.cumulative_
-                        y_data = y_data ./ y_data(:,end);
-                    else
-                        y_data = y_data ./ sum(y_data, 2);
+                    sizes = cellfun(@(obj_arr) (length(obj_arr)), raw_data);
+                    if max(sizes(1:2:end)) ~= min(sizes(1:2:end))
+                        disp("[ERROR] bar graphs can only be drawn if the data is uniform in size.");
                     end
-                    bar(vertcat(raw_data{1:2:end}), y_data);
+                    bar(vertcat(raw_data{1:2:end})',vertcat(raw_data{2:2:end})');
             end
             if any([err_data{1:2:end}])
                 for i=1:2:length(raw_data)
@@ -140,7 +160,7 @@ classdef PlotBuilder < FigureBuilder
             x_min = min([raw_data{1:2:end}]); % add reference slopes
             x_max = max([raw_data{1:2:end}]);
             x_range = x_min:(x_max-x_min)/100:x_max;
-            for i=1:size(obj.reference_slopes_)
+            for i=1:length(obj.reference_slopes_)
                 plot(x_range, obj.reference_slopes_(i) * x_range);
             end
             title(obj.title_, 'FontSize', obj.title_size_, 'FontWeight', obj.title_bold_, 'FontAngle', obj.title_italic_); % title stuff
@@ -169,14 +189,34 @@ classdef PlotBuilder < FigureBuilder
         end
         
         function obj = grid(obj, grid_type)
-            if ismember(grid_type, ["off", "on", "minor"])
-                obj.grid_ = grid_type;
+            if nargin == 1
+                obj.grid_ = "on";
+            else
+                if ismember(grid_type, ["off", "on", "minor"])
+                    obj.grid_ = grid_type;
+                end
             end
         end
 
         function obj = mode(obj, mode_name)
-            if ismember(mode_name, ["distribution", "scatter", "bar", "line"])
+            if ismember(mode_name, ["scatter", "bar", "line"])
                 obj.mode_ = mode_name;
+            end
+        end
+        
+        function obj = distribution(obj, varargin)
+            obj = obj.normalize.binning(varargin{:});
+        end
+        
+        function obj = binning(obj, varargin)
+            if isempty(varargin)
+                obj.bins_ = -1;
+            else
+                if varargin{1} < 0
+                    obj.bins_ = -1;
+                else
+                    obj.bins_ = varargin{1};
+                end
             end
         end
         
@@ -224,28 +264,20 @@ classdef PlotBuilder < FigureBuilder
             obj.y_label_ = text;
         end
 
-        function obj = xLogScale(obj, state)
-            if nargin == 0
-                obj.x_log_scale_ = true;
-            else
-                obj.x_log_scale_ = state;
-            end
+        function obj = xLogScale(obj, varargin)
+            obj.x_log_scale_ = FigureBuilder.optional(true, false, varargin);
         end
 
-        function obj = yLogScale(obj, state)
-            if nargin == 0
-                obj.y_log_scale_ = true;
-            else
-                obj.y_log_scale_ = state;
-            end
+        function obj = yLogScale(obj, varargin)
+            obj.y_log_scale_ = FigureBuilder.optional(true, false, varargin);
         end
 
-        function obj = cumulative(obj, state)
-            if nargin == 0
-                obj.cumulative_ = true;
-            else
-                obj.cumulative_ = state;
-            end
+        function obj = cumulative(obj, varargin)
+            obj.cumulative_ = FigureBuilder.optional(true, false, varargin);
+        end
+
+        function obj = normalize(obj, varargin)
+            obj.normalize_ = FigureBuilder.optional(true, false, varargin);
         end
         
         function obj = xFunction(obj, func)

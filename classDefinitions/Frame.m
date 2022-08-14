@@ -11,7 +11,7 @@ classdef Frame < Entity
             obj@Entity(varargin)
         end
 
-        function id = uniqueID(obj)
+        function id = uniqueID(~)
             id = "frame";
         end
 

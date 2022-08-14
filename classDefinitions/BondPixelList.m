@@ -20,7 +20,7 @@ classdef BondPixelList < Entity
             end
         end
 
-        function id = uniqueID(obj)
+        function id = uniqueID(~)
             id = "pixel_bondID";
         end
         

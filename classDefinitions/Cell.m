@@ -34,7 +34,7 @@ classdef Cell < Entity
             obj.outline_ = [];
         end
 
-        function id = uniqueID(obj)
+        function id = uniqueID(~)
             id = "cell_id";
         end
         
