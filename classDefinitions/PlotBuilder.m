@@ -161,7 +161,8 @@ classdef PlotBuilder < FigureBuilder
             x_max = max([raw_data{1:2:end}]);
             x_range = x_min:(x_max-x_min)/100:x_max;
             for i=1:length(obj.reference_slopes_)
-                plot(x_range, obj.reference_slopes_(i) * x_range);
+                x_scaled = obj.reference_slopes_(i) * FigureBuilder.optional(log(x_range), x_range, {obj.x_log_scale_});
+                plot(x_range, FigureBuilder.optional(exp(x_scaled), x_scaled, {obj.y_log_scale_}));
             end
             title(obj.title_, 'FontSize', obj.title_size_, 'FontWeight', obj.title_bold_, 'FontAngle', obj.title_italic_); % title stuff
             if "" ~= obj.x_label_
