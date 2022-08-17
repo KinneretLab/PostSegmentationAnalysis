@@ -43,6 +43,10 @@ classdef (Abstract) Entity < handle
         function tf = ne(lhs, rhs)
             tf = ~(lhs == rhs);
         end
+        
+        function id = frameID(~)
+            id = "frame";
+        end
     end
 end
 

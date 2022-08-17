@@ -24,8 +24,12 @@ classdef PlotBuilder < FigureBuilder
         mode_             % string
         cumulative_       % bool
         reference_slopes_ % double array
-        normalize_       % bool
-        bins_         % int - 0 means no binning, -1 means automatic binning
+        normalize_        % bool
+        bins_             % int - 0 means no binning, -1 means automatic binning
+        outliers_         % string
+        x_lim_            % [double,double]
+        y_lim_            % [double,double]
+        sequence_         % bool
     end
 
     methods(Static)
@@ -38,11 +42,15 @@ classdef PlotBuilder < FigureBuilder
         end
 
         function func = mean(prop_name)
-            func = @(obj_arr) (mean([obj_arr.(prop_name)]));
+            func = @(obj_arr, plotter) (mean(plotter.filter([obj_arr.(prop_name)])));
         end
 
         function func = std(prop_name)
-            func = @(obj_arr) (std([obj_arr.(prop_name)]));
+            func = @(obj_arr, plotter) (std(plotter.filter([obj_arr.(prop_name)])));
+        end
+        
+        function ret = smart_apply(func, varargin)
+            ret = func(varargin{1:nargin(func)});
         end
     end
     
@@ -73,112 +81,188 @@ classdef PlotBuilder < FigureBuilder
             obj.reference_slopes_ = [];
             obj.normalize_        = false;
             obj.bins_             = 0;
+            obj.outliers_         = "none";
+            obj.x_lim_            = [];
+            obj.y_lim_            = [];
+            obj.sequence_         = false;
+        end
+        
+        function filtered_arr = filter(obj, raw_arr)
+            if obj.outliers_ ~= "none"
+                filtered_arr = raw_arr(~isoutlier(raw_arr, obj.outliers_));
+            else
+                filtered_arr = raw_arr;
+            end
         end
 
-        function [data_arrays, err_arrays] = calculate(obj)
-            data_arrays = {};
-            err_arrays = {};
-            for list = obj.data_
-                data_sorted = containers.Map('KeyType','double','ValueType','any');
-                x_err_sorted = containers.Map('KeyType','double','ValueType','any');
-                y_err_sorted = containers.Map('KeyType','double','ValueType','any');
-                if obj.bins_ == 0
-                    x_result = arrayfun(obj.x_function_, list{1});
-                    x_values = unique(x_result);
-                    for i=1:length(x_values)
-                        x_value = x_values(i);
-                        data_sorted(x_value) = list{1}(x_result == x_value);
-                    end
+        function [data_arrays, err_arrays, frame_data] = calculate(obj)
+            x_data = cellfun(@(obj_arr) (arrayfun(obj.x_function_, obj_arr)), obj.data_, 'UniformOutput', false);
+            if obj.outliers_ ~= "none"
+                x_data = cellfun(@(obj_arr) (obj_arr(~isoutlier(obj_arr, obj.outliers_))), x_data, 'UniformOutput', false);
+            end
+            if obj.bins_ ~= 0
+                if obj.bins_ == -1
+                    [~, edges] = histcounts([x_data{:}]);
                 else
-                    x_result = arrayfun(obj.x_function_, list{1});
-                    if obj.bins_ == -1
-                        [~, edges] = histcounts(x_result);
+                    [~, edges] = histcounts([x_data{:}], obj.bins_);
+                end
+            end
+            if obj.sequence_
+                % get all frames in the data
+                frame_data = unique(arrayfun(@(obj) ([obj.(obj.frameID)]), [obj.data_{:}]));
+            else
+                frame_data = -1;
+            end
+            data_arrays = cell(length(frame_data), 2 * length(obj.data_));
+            err_arrays = cell(length(frame_data), 2 * length(obj.data_));
+            for frame_idx = 1:length(frame_data)
+                if obj.sequence_
+                    f_filter = cellfun(@(obj_arr) ([obj_arr.(obj_arr.frameID)] == frame_data(frame_idx)), obj.data_, 'UniformOutput', false);
+                end
+                for data_idx = 1:length(obj.data_)
+                    data_sorted = containers.Map('KeyType','double','ValueType','any');
+                    x_err_sorted = containers.Map('KeyType','double','ValueType','any');
+                    y_err_sorted = containers.Map('KeyType','double','ValueType','any');
+                    x_entry = x_data{data_idx};
+                    data_entry = obj.data_{data_idx};
+                    if obj.sequence_
+                        x_entry = x_entry(f_filter{data_idx});
+                        data_entry = data_entry(f_filter{data_idx});
+                    end
+                    if obj.bins_ == 0
+                        x_values = unique(x_entry);
+                        for bin_idx=1:length(x_values)
+                            x_value = x_values(bin_idx);
+                            data_sorted(x_value) = data_entry(x_entry == x_value);
+                        end
                     else
-                        [~, edges] = histcounts(x_result, obj.bins_);
+                        bin_indices = discretize(x_entry, edges);
+                        x_values = movmean(edges, 2);
+                        for bin_idx=1:length(x_values)-1
+                            x_value = x_values(bin_idx + 1);
+                            data_sorted(x_value) = data_entry(bin_indices == bin_idx);
+                        end
                     end
-                    bin_indices = discretize(x_result, edges);
-                    x_values = movmean(edges, 2);
-                    for i=1:length(x_values)-1
-                        x_value = x_values(i + 1);
-                        data_sorted(x_value) = list{1}(bin_indices == i);
+                    for key = data_sorted.keys
+                        x_err_sorted(key{1}) = obj.smart_apply(obj.x_err_function_, data_sorted(key{1}), obj);
+                        y_err_sorted(key{1}) = obj.smart_apply(obj.y_err_function_, data_sorted(key{1}), obj);
+                        data_sorted(key{1}) = obj.smart_apply(obj.y_function_, data_sorted(key{1}), obj);
                     end
+                    x_result = data_sorted.keys;
+                    y_result = data_sorted.values;
+                    x_err_result = x_err_sorted.values;
+                    y_err_result = y_err_sorted.values;
+                    data_arrays{frame_idx, 2 * data_idx - 1} = [x_result{:}] .* obj.x_calibration_;
+                    data_arrays{frame_idx, 2 * data_idx} = [y_result{:}] .* obj.y_calibration_;
+                    err_arrays{frame_idx, 2 * data_idx - 1} = [x_err_result{:}] .* obj.x_calibration_;
+                    err_arrays{frame_idx, 2 * data_idx} = [y_err_result{:}] .* obj.y_calibration_;
                 end
-                for key = data_sorted.keys
-                    x_err_sorted(key{1}) = obj.x_err_function_(data_sorted(key{1}));
-                    y_err_sorted(key{1}) = obj.y_err_function_(data_sorted(key{1}));
-                    data_sorted(key{1}) = obj.y_function_(data_sorted(key{1}));
-                end
-                x_result = data_sorted.keys;
-                y_result = data_sorted.values;
-                x_err_result = x_err_sorted.values;
-                y_err_result = y_err_sorted.values;
-                data_arrays{end+1} = [x_result{:}] .* obj.x_calibration_;
-                data_arrays{end+1} = [y_result{:}] .* obj.y_calibration_;
-                err_arrays{end+1} = [x_err_result{:}] .* obj.x_calibration_;
-                err_arrays{end+1} = [y_err_result{:}] .* obj.y_calibration_;
             end
         end
 
         function fig_handle = draw(obj)
-            fig_handle = figure;
-            hold on;
-            [raw_data, err_data] = obj.calculate;
-            if obj.cumulative_ % cumulative mode
-                for i=2:2:length(raw_data)
-                    raw_data{i} = cumsum(raw_data{i});
-                end
-            end
-            if obj.normalize_
-                if obj.cumulative_
-                    raw_data(2:2:end) = cellfun(@(obj_arr) (obj_arr / obj_arr(end)),raw_data(2:2:end),'UniformOutput',false);
-                else
-                    raw_data(2:2:end) = cellfun(@(obj_arr) (obj_arr / sum(obj_arr)),raw_data(2:2:end),'UniformOutput',false);
-                end
-            end
-            switch obj.mode_
-                case "line" % graphing mode
-                    plot(raw_data{:});
-                case "scatter"
-                    plot(raw_data{:},'LineStyle','none','Marker','.');
-                case "bar"
-                    sizes = cellfun(@(obj_arr) (length(obj_arr)), raw_data);
-                    if max(sizes(1:2:end)) ~= min(sizes(1:2:end))
-                        disp("[ERROR] bar graphs can only be drawn if the data is uniform in size.");
+            [raw_data, err_data, frame_data] = obj.calculate;
+            fig_handle = gobjects(1, size(raw_data, 1));
+            x_limits = [];
+            y_limits = [];
+            for figure_idx = 1:size(raw_data, 1)
+                fig_handle(figure_idx) = figure;
+                hold on;
+                if obj.cumulative_ % cumulative mode
+                    for i=2:2:size(raw_data, 2)
+                        raw_data{figure_idx, i} = cumsum(raw_data{figure_idx, i});
                     end
-                    bar(vertcat(raw_data{1:2:end})',vertcat(raw_data{2:2:end})');
+                end
+                if obj.normalize_
+                    if obj.cumulative_
+                        raw_data(figure_idx, 2:2:end) = cellfun(@(obj_arr) (obj_arr / obj_arr(end)),raw_data(figure_idx, 2:2:end), 'UniformOutput', false);
+                    else
+                        if obj.bins_ ~= 0
+                            bin_size = mean(diff(raw_data{figure_idx, 1}));
+                        else
+                            bin_size = 1; % arbitrary
+                        end
+                        raw_data(figure_idx, 2:2:end) = cellfun(@(obj_arr) (obj_arr / sum(obj_arr) / bin_size),raw_data(figure_idx, 2:2:end), 'UniformOutput', false);
+                    end
+                end
+                switch obj.mode_
+                    case "line" % graphing mode
+                        plot(raw_data{figure_idx, :});
+                    case "scatter"
+                        plot(raw_data{figure_idx, :},'LineStyle','none','Marker','.');
+                    case "bar"
+                        sizes = cellfun(@(obj_arr) (length(obj_arr)), raw_data(figure_idx, :));
+                        if max(sizes(1:2:end)) ~= min(sizes(1:2:end))
+                            disp("[ERROR] bar graphs can only be drawn if the data is uniform in size.");
+                        end
+                        bar(vertcat(raw_data{figure_idx, 1:2:end})',vertcat(raw_data{figure_idx, 2:2:end})');
+                end
+                if any([err_data{1:2:end}])
+                    for i=1:2:size(raw_data, 2)
+                        errorbar(raw_data{figure_idx, i:i+1},err_data{i},'horizontal','.');
+                    end
+                end
+                if any([err_data{2:2:end}])
+                    for i=2:2:size(raw_data, 2)
+                        errorbar(raw_data{figure_idx, i-1:i},err_data{i},'.');
+                    end
+                end
+                x_min = min([raw_data{figure_idx, 1:2:end}]); % add reference slopes
+                x_max = max([raw_data{figure_idx, 1:2:end}]);
+                x_range = x_min:(x_max-x_min)/100:x_max;
+                for i=1:length(obj.reference_slopes_)
+                    x_scaled = obj.reference_slopes_(i) * FigureBuilder.optional(log(x_range), x_range, {obj.x_log_scale_});
+                    plot(x_range, FigureBuilder.optional(exp(x_scaled), x_scaled, {obj.y_log_scale_}),'--');
+                end
+                if any(frame_data == -1)
+                    plot_title = obj.title_;
+                else
+                    plot_title = sprintf(obj.title_, frame_data(figure_idx));
+                end
+                title(plot_title, 'FontSize', obj.title_size_, 'FontWeight', obj.title_bold_, 'FontAngle', obj.title_italic_); % title stuff
+                if "" ~= obj.x_label_
+                    xlabel(obj.x_label_, 'FontSize', obj.x_label_size_, 'FontWeight', obj.x_label_bold_, 'FontAngle', obj.x_label_italic_); % x axis stuff
+                end
+                if "" ~= obj.y_label_
+                    ylabel(obj.y_label_, 'FontSize', obj.y_label_size_, 'FontWeight', obj.y_label_bold_, 'FontAngle', obj.y_label_italic_); % y axis stuff
+                end
+                if obj.x_log_scale_ % x log scale
+                    set(gca, 'xscale','log')
+                end
+                if obj.y_log_scale_ % y log scale
+                    set(gca, 'yscale','log')
+                end
+                grid (obj.grid_); % grid mode
+                % get automatic limits
+                if isempty(x_limits)
+                    x_limits = xlim;
+                else
+                    cur_x_limits = xlim;
+                    x_limits(1) = min([x_limits(1), cur_x_limits(1)]);
+                    x_limits(2) = max([x_limits(2), cur_x_limits(2)]);
+                end
+                if isempty(y_limits)
+                    y_limits = ylim;
+                else
+                    cur_y_limits = ylim;
+                    y_limits(1) = min([y_limits(1), cur_y_limits(1)]);
+                    y_limits(2) = max([y_limits(2), cur_y_limits(2)]);
+                end
+                hold off;
             end
-            if any([err_data{1:2:end}])
-                for i=1:2:length(raw_data)
-                    errorbar(raw_data{i:i+1},err_data{i},'horizontal','.');
+            for fig = fig_handle
+                figure(fig)
+                if length(obj.x_lim_) == 2
+                    xlim(obj.x_lim_)
+                else
+                    xlim(x_limits)
+                end
+                if length(obj.y_lim_) == 2
+                    ylim(obj.y_lim_)
+                else
+                    ylim(y_limits)
                 end
             end
-            if any([err_data{2:2:end}])
-                for i=2:2:length(raw_data)
-                    errorbar(raw_data{i-1:i},err_data{i},'.');
-                end
-            end
-            x_min = min([raw_data{1:2:end}]); % add reference slopes
-            x_max = max([raw_data{1:2:end}]);
-            x_range = x_min:(x_max-x_min)/100:x_max;
-            for i=1:length(obj.reference_slopes_)
-                x_scaled = obj.reference_slopes_(i) * FigureBuilder.optional(log(x_range), x_range, {obj.x_log_scale_});
-                plot(x_range, FigureBuilder.optional(exp(x_scaled), x_scaled, {obj.y_log_scale_}));
-            end
-            title(obj.title_, 'FontSize', obj.title_size_, 'FontWeight', obj.title_bold_, 'FontAngle', obj.title_italic_); % title stuff
-            if "" ~= obj.x_label_
-                xlabel(obj.x_label_, 'FontSize', obj.x_label_size_, 'FontWeight', obj.x_label_bold_, 'FontAngle', obj.x_label_italic_); % x axis stuff
-            end
-            if "" ~= obj.y_label_
-                ylabel(obj.y_label_, 'FontSize', obj.y_label_size_, 'FontWeight', obj.y_label_bold_, 'FontAngle', obj.y_label_italic_); % y axis stuff
-            end
-            if obj.x_log_scale_ % x log scale
-                set(gca, 'xscale','log')
-            end
-            if obj.y_log_scale_ % y log scale
-                set(gca, 'yscale','log')
-            end
-            grid (obj.grid_); % grid mode    
-            hold off;
         end
         
         function obj = addData(obj, entity_arr)
@@ -280,6 +364,10 @@ classdef PlotBuilder < FigureBuilder
         function obj = normalize(obj, varargin)
             obj.normalize_ = FigureBuilder.optional(true, false, varargin);
         end
+
+        function obj = sequence(obj, varargin)
+            obj.sequence_ = FigureBuilder.optional(true, false, varargin);
+        end
         
         function obj = xFunction(obj, func)
             if isa(func, 'char') || isa(func, 'string')
@@ -326,6 +414,30 @@ classdef PlotBuilder < FigureBuilder
             end 
             if isa(func, 'function_handle')
                 obj.y_err_function_ = func;
+            end
+        end
+        
+        function obj = outliers(obj, algorithm)
+            if nargin == 1
+                obj.outliers_ = "median";
+            else
+                obj.outliers_ = algorithm;
+            end
+        end
+        
+        function obj = xLim(obj, limits)
+            if nargin == 1
+                obj.x_lim_ = [];
+            else
+                obj.x_lim_ = limits;
+            end
+        end
+        
+        function obj = yLim(obj, limits)
+            if nargin == 1
+                obj.y_lim_ = [];
+            else
+                obj.y_lim_ = limits;
             end
         end
     end

@@ -83,15 +83,15 @@ classdef Frame < Entity
             for i=1:length(thisFrame)
                 if mod(i,10) ==0
                     disp(sprintf(['Finding bonds for frame # ',num2str(i)]));
-                    frameArray = [bondArray{ic(i)}.frame];
-                    flags = (frameArray == thisFrame(i));
-                    thisLength = sum(flags);
-                    if thisLength > maxLength
-                        bonds(:,(maxLength+1):thisLength) = Bond();
-                        maxLength = thisLength;
-                    end
-                    bonds(i,1:thisLength) = bondArray{ic(i)}(flags);
                 end
+                frameArray = [bondArray{ic(i)}.frame];
+                flags = (frameArray == thisFrame(i));
+                thisLength = sum(flags);
+                if thisLength > maxLength
+                    bonds(:,(maxLength+1):thisLength) = Bond();
+                    maxLength = thisLength;
+                end
+                bonds(i,1:thisLength) = bondArray{ic(i)}(flags);
             end
         end
 

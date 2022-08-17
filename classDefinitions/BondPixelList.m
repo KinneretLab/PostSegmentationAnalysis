@@ -24,6 +24,10 @@ classdef BondPixelList < Entity
             id = "pixel_bondID";
         end
         
+        function id = frameID(~)
+            id = "pixel_frame";
+        end
+        
         function pixels = orig(obj, idx)
             % gets the full coordinates of a particular pixel
             % input - idx: the indices to fetch
