@@ -39,6 +39,50 @@ classdef Experiment < handle
             tf = [lhs.folder_] == [rhs.folder_];
         end
         
+        function [phys_arr,obj] = lookup(obj, clazz, flags)
+            % this is a bad implementation. The code should instead be
+            % formatted as cells/dBonds/bonds/... -> lookup_(file, index_name, flags)
+            %              lookup(clazz, flags) -> lookup(file, index_name, flags)
+            switch (clazz)
+                case class(Bond)
+                    if nargin == 2
+                        phys_arr = obj.bonds;
+                    else
+                        phys_arr = obj.bonds(flags);
+                    end
+                case class(BondPixelList)
+                    if nargin == 2
+                        phys_arr = obj.bond_pixel_lists;
+                    else
+                        phys_arr = obj.bond_pixel_lists(flags);
+                    end
+                case class(Cell)
+                    if nargin == 2
+                        phys_arr = obj.cells;
+                    else
+                        phys_arr = obj.cells(flags);
+                    end
+                case class(DBond)
+                    if nargin == 2
+                        phys_arr = obj.dBonds;
+                    else
+                        phys_arr = obj.dBonds(flags);
+                    end
+                case class(Frame)
+                    if nargin == 2
+                        phys_arr = obj.frames;
+                    else
+                        phys_arr = obj.frames(flags);
+                    end
+                case class(Vertex)
+                    if nargin == 2
+                        phys_arr = obj.vertices;
+                    else
+                        phys_arr = obj.vertices(flags);
+                    end
+            end
+        end
+        
         function [cell_arr,obj] = cells(obj,flags)
             cell_arr = Cell();
             count = 0;

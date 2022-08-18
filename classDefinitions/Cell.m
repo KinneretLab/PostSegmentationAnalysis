@@ -1,4 +1,4 @@
-classdef Cell < Entity
+classdef Cell < PhysicalEntity
     properties
         cell_id
         frame
@@ -30,7 +30,7 @@ classdef Cell < Entity
     methods
         
         function obj = Cell(varargin)
-            obj@Entity(varargin)
+            obj@PhysicalEntity(varargin)
             obj.outline_ = [];
         end
 

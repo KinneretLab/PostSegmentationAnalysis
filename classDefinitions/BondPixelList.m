@@ -1,4 +1,4 @@
-classdef BondPixelList < Entity
+classdef BondPixelList < PhysicalEntity
     properties
         orig_x_coord
         orig_y_coord
@@ -12,7 +12,7 @@ classdef BondPixelList < Entity
     methods
         
         function obj = BondPixelList(varargin)
-            obj@Entity(varargin)
+            obj@PhysicalEntity(varargin)
             if nargin > 1
                 pixel_table_rows = varargin{2};
                 obj.pixel_bondID = pixel_table_rows{1, 'pixel_bondID'};

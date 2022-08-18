@@ -1,4 +1,4 @@
-classdef DBond < Entity
+classdef DBond < PhysicalEntity
     properties
         frame
         dbond_id
@@ -13,7 +13,7 @@ classdef DBond < Entity
     methods
         
         function obj = DBond(varargin)
-            obj@Entity(varargin)
+            obj@PhysicalEntity(varargin)
         end
 
         function id = uniqueID(~)

@@ -1,4 +1,4 @@
-classdef (Abstract) Entity < handle
+classdef (Abstract) PhysicalEntity < handle
     %Entity the general object representing an indexed entity in the database
     %   Detailed explanation goes here
     
@@ -11,7 +11,7 @@ classdef (Abstract) Entity < handle
     end
     
     methods
-        function obj = Entity(args)
+        function obj = PhysicalEntity(args)
             %ENTITY Construct an entity
             %   note that this can work well with a single row as well
             if length(args) > 1
@@ -46,6 +46,28 @@ classdef (Abstract) Entity < handle
         
         function id = frameID(~)
             id = "frame";
+        end
+        
+        function ret_arr = siblings(obj_arr, prequisite)
+            % property is either a bool_arr(obj_arr, obj) or string.
+            % convert strign to bool arr
+            if isa(prequisite, 'char') || isa(prequisite, 'string')
+                prequisite = @(exp_lookup, ref_obj) ...
+                    ([exp_lookup.(prequisite)] == ref_obj.(prequisite));
+            end
+            % get relevant databases
+            exp_arr = {obj_arr.experiment};
+            clazz = class(obj_arr(1));
+            % turn obj array to cell array for non-uniform result
+            obj_cell = num2cell(obj_arr);
+            lookup_result = cellfun(@(obj, exp) (exp.lookup(clazz, ...
+                prequisite(exp.lookup(clazz), obj))), obj_cell, exp_arr, ...
+                'UniformOutput', false);
+            sizes = cellfun(@(result) (length(result)), lookup_result);
+            ret_arr = repmat(feval(clazz), length(obj_cell), max(sizes));
+            for i=1:length(obj_cell)
+                ret_arr(i, 1:sizes(i)) = lookup_result{i};
+            end
         end
     end
 end

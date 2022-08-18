@@ -1,4 +1,4 @@
-classdef Frame < Entity
+classdef Frame < PhysicalEntity
     properties
         frame
         frame_name
@@ -8,7 +8,7 @@ classdef Frame < Entity
     methods
 
         function obj = Frame(varargin)
-            obj@Entity(varargin)
+            obj@PhysicalEntity(varargin)
         end
 
         function id = uniqueID(~)

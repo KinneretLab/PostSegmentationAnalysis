@@ -1,4 +1,4 @@
-classdef Bond < Entity
+classdef Bond < PhysicalEntity
     properties
         frame
         bond_id
@@ -10,7 +10,7 @@ classdef Bond < Entity
         
         
         function obj = Bond(varargin)
-            obj@Entity(varargin)
+            obj@PhysicalEntity(varargin)
             obj.pixel_list = [];
         end
 

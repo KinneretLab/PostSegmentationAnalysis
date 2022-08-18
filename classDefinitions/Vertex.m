@@ -1,4 +1,4 @@
-classdef Vertex < Entity
+classdef Vertex < PhysicalEntity
     properties
         frame
         vertex_id
@@ -9,7 +9,7 @@ classdef Vertex < Entity
     methods
         
         function obj = Vertex(varargin)
-            obj@Entity(varargin)
+            obj@PhysicalEntity(varargin)
         end
 
         function id = uniqueID(~)
