@@ -9,15 +9,35 @@ classdef BondPixelList < PhysicalEntity
         pixel_frame
     end
     
+    properties (Access = private)
+        names_ % internal, ignore
+    end
+    
     methods
         
         function obj = BondPixelList(varargin)
-            obj@PhysicalEntity(varargin)
+            % Construct a BondPixelList. This has slightly different stuff,
+            % since it is combining a bunch of rows together, instead of
+            % each row being an entry
+            % this does not improve speeds significantly from prev. model
+            obj@PhysicalEntity({});
             if nargin > 1
-                pixel_table_rows = varargin{2};
-                obj.pixel_bondID = pixel_table_rows{1, 'pixel_bondID'};
-                obj.pixel_frame = pixel_table_rows{1, 'pixel_frame'};
+                obj.experiment = varargin{1};
+                table = varargin{2};
+                obj.names_ = table(1,:).Properties.VariableNames;
+                obj = splitapply(@obj.init, table, findgroups(table.pixel_bondID))';
             end
+        end
+        
+        function new_obj = init(template_obj, varargin)
+            new_obj = BondPixelList;
+            new_obj.experiment = template_obj.experiment;
+            for i = 1:length(template_obj.names_)
+                new_obj.(template_obj.names_{i}) = varargin{:, i}; %% be careful with variable refactoring
+            end
+            % flatten
+            new_obj.pixel_bondID = new_obj.pixel_bondID(1);
+            new_obj.pixel_frame = new_obj.pixel_frame(1);
         end
 
         function id = uniqueID(~)

@@ -11,11 +11,16 @@ classdef Bond < PhysicalEntity
         
         function obj = Bond(varargin)
             obj@PhysicalEntity(varargin)
-            obj.pixel_list = [];
+            % no need to set pixel list since it is [] by default
         end
 
         function id = uniqueID(~)
             id = "bond_id";
+        end
+        
+        function conf = confidence(obj)
+            c = obj.cells;
+            conf = geomean(reshape([c.confidence], size(c)), 2, 'omitnan');
         end
         
           function dBonds = dBonds(obj)

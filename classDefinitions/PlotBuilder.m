@@ -34,7 +34,7 @@ classdef PlotBuilder < FigureBuilder
 
     methods(Static)
         function func = property(prop_name)
-            func = @(obj) (obj.(prop_name));
+            func = @(obj) ([obj.(prop_name)]);
         end
 
         function func = count()
@@ -96,38 +96,49 @@ classdef PlotBuilder < FigureBuilder
         end
 
         function [data_arrays, err_arrays, frame_data] = calculate(obj)
-            x_data = cellfun(@(obj_arr) (arrayfun(obj.x_function_, obj_arr)), obj.data_, 'UniformOutput', false);
+            x_data = cellfun(@(obj_arr) (arrayfun(@(o) obj.smart_apply(obj.x_function_, o, obj, obj_arr), obj_arr)), obj.data_, 'UniformOutput', false);
+            full_data = obj.data_;
             if obj.outliers_ ~= "none"
-                x_data = cellfun(@(obj_arr) (obj_arr(~isoutlier(obj_arr, obj.outliers_))), x_data, 'UniformOutput', false);
-            end
-            if obj.bins_ ~= 0
-                if obj.bins_ == -1
-                    [~, edges] = histcounts([x_data{:}]);
-                else
-                    [~, edges] = histcounts([x_data{:}], obj.bins_);
-                end
+                out_filter = cellfun(@(obj_arr) (~isoutlier(obj_arr, obj.outliers_)), x_data, 'UniformOutput', false);
+                x_data = cellfun(@(obj_arr, filter) (obj_arr(filter)), x_data, out_filter, 'UniformOutput', false);
+                full_data = cellfun(@(obj_arr, filter) (obj_arr(filter)), full_data, out_filter, 'UniformOutput', false);
             end
             if obj.sequence_
                 % get all frames in the data
-                frame_data = unique(arrayfun(@(obj) ([obj.(obj.frameID)]), [obj.data_{:}]));
+                frame_data = unique(arrayfun(@(obj) ([obj.(obj.frameID)]), [full_data{:}]));
             else
                 frame_data = -1;
             end
-            data_arrays = cell(length(frame_data), 2 * length(obj.data_));
-            err_arrays = cell(length(frame_data), 2 * length(obj.data_));
+            data_arrays = cell(length(frame_data), 2 * length(full_data));
+            err_arrays = cell(length(frame_data), 2 * length(full_data));
             for frame_idx = 1:length(frame_data)
                 if obj.sequence_
-                    f_filter = cellfun(@(obj_arr) ([obj_arr.(obj_arr.frameID)] == frame_data(frame_idx)), obj.data_, 'UniformOutput', false);
+                    f_filter = cellfun(@(obj_arr) ([obj_arr.(obj_arr.frameID)] == frame_data(frame_idx)), full_data, 'UniformOutput', false);
                 end
-                for data_idx = 1:length(obj.data_)
+                if obj.bins_ ~= 0 && obj.mode_ == "bar"
+                    if obj.sequence_
+                        hist_data = cellfun(@(x, filter) (x(filter)), x_data, filter);
+                    else
+                        hist_data = x_data;
+                    end
+                    if obj.bins_ == -1
+                        [~, edges] = histcounts([hist_data{:}]);
+                    else
+                        [~, edges] = histcounts([hist_data{:}], obj.bins_);
+                    end
+                end
+                for data_idx = 1:length(full_data)
                     data_sorted = containers.Map('KeyType','double','ValueType','any');
                     x_err_sorted = containers.Map('KeyType','double','ValueType','any');
                     y_err_sorted = containers.Map('KeyType','double','ValueType','any');
                     x_entry = x_data{data_idx};
-                    data_entry = obj.data_{data_idx};
+                    data_entry = full_data{data_idx};
                     if obj.sequence_
                         x_entry = x_entry(f_filter{data_idx});
                         data_entry = data_entry(f_filter{data_idx});
+                    end
+                    if isempty(x_entry)
+                        continue
                     end
                     if obj.bins_ == 0
                         x_values = unique(x_entry);
@@ -136,6 +147,13 @@ classdef PlotBuilder < FigureBuilder
                             data_sorted(x_value) = data_entry(x_entry == x_value);
                         end
                     else
+                        if obj.mode_ ~= "bar"
+                            if obj.bins_ == -1
+                                [~, edges] = histcounts(x_entry);
+                            else
+                                [~, edges] = histcounts(x_entry, obj.bins_);
+                            end
+                        end
                         bin_indices = discretize(x_entry, edges);
                         x_values = movmean(edges, 2);
                         for bin_idx=1:length(x_values)-1
@@ -144,9 +162,9 @@ classdef PlotBuilder < FigureBuilder
                         end
                     end
                     for key = data_sorted.keys
-                        x_err_sorted(key{1}) = obj.smart_apply(obj.x_err_function_, data_sorted(key{1}), obj);
-                        y_err_sorted(key{1}) = obj.smart_apply(obj.y_err_function_, data_sorted(key{1}), obj);
-                        data_sorted(key{1}) = obj.smart_apply(obj.y_function_, data_sorted(key{1}), obj);
+                        x_err_sorted(key{1}) = obj.smart_apply(obj.x_err_function_, data_sorted(key{1}), obj, data_entry);
+                        y_err_sorted(key{1}) = obj.smart_apply(obj.y_err_function_, data_sorted(key{1}), obj, data_entry);
+                        data_sorted(key{1}) = obj.smart_apply(obj.y_function_, data_sorted(key{1}), obj, data_entry);
                     end
                     x_result = data_sorted.keys;
                     y_result = data_sorted.values;
@@ -175,14 +193,14 @@ classdef PlotBuilder < FigureBuilder
                 end
                 if obj.normalize_
                     if obj.cumulative_
-                        raw_data(figure_idx, 2:2:end) = cellfun(@(obj_arr) (obj_arr / obj_arr(end)),raw_data(figure_idx, 2:2:end), 'UniformOutput', false);
+                        raw_data(figure_idx, 2:2:end) = cellfun(@(obj_arr) (PlotBuilder.c_div(obj_arr)),raw_data(figure_idx, 2:2:end), 'UniformOutput', false);
                     else
                         if obj.bins_ ~= 0
-                            bin_size = mean(diff(raw_data{figure_idx, 1}));
+                            bin_cell = cellfun(@(data_arr) mean(diff(data_arr)), raw_data(figure_idx, 1:2:end), 'UniformOutput', false);
                         else
-                            bin_size = 1; % arbitrary
+                            bin_cell = num2cell(ones(size(raw_data(figure_idx, 1:2:end)))); % arbitrary
                         end
-                        raw_data(figure_idx, 2:2:end) = cellfun(@(obj_arr) (obj_arr / sum(obj_arr) / bin_size),raw_data(figure_idx, 2:2:end), 'UniformOutput', false);
+                        raw_data(figure_idx, 2:2:end) = cellfun(@(obj_arr, bin_size) (PlotBuilder.p_div(obj_arr,bin_size)),raw_data(figure_idx, 2:2:end),bin_cell, 'UniformOutput', false);
                     end
                 end
                 switch obj.mode_
@@ -297,7 +315,7 @@ classdef PlotBuilder < FigureBuilder
             if isempty(varargin)
                 obj.bins_ = -1;
             else
-                if varargin{1} < 0
+                if length(varargin{1}) == 1 && varargin{1} < 0
                     obj.bins_ = -1;
                 else
                     obj.bins_ = varargin{1};
@@ -438,6 +456,20 @@ classdef PlotBuilder < FigureBuilder
                 obj.y_lim_ = [];
             else
                 obj.y_lim_ = limits;
+            end
+        end
+    end
+    
+    methods (Static, Access = private)
+        function arr = c_div(arr)
+            if ~isempty(arr)
+                arr = arr / arr(end);
+            end
+        end
+        
+        function arr = p_div(arr, binning)
+            if ~isempty(arr)
+                arr = arr / sum(arr) / binning;
             end
         end
     end

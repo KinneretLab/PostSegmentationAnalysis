@@ -29,7 +29,48 @@ classdef PlotUtils
             if isa(x_function, 'char') || isa(x_function, 'string')
                 x_function = PlotBuilder.property(x_function);
             end
-            func = @(obj) (x_function(obj) / x_function(obj.siblings(t_prequisite)));
+            map = containers.Map;
+            mean_function = @(obj_arr)(mean(x_function(obj_arr)));
+            func = @(obj, ~, obj_arr) (x_function(obj) / PlotUtils.getOrStore(obj, obj_arr, map, t_prequisite, mean_function));
+        end
+        
+        function [result, map] = getOrStore(obj, obj_arr, map, t_prequisite, mean_function)
+            map_key = [obj.experiment.folder_, '_', class(obj), '_', length(obj_arr)];
+            if isa(t_prequisite, 'char') || isa(t_prequisite, 'string')
+                % property algorithm - very fast
+                if map.isKey(map_key)
+                    value_map = map(map_key);
+                else
+                    t_entry = [obj_arr.(t_prequisite)];
+                    t_values = unique(t_entry);
+                    value_map = containers.Map('KeyType','double','ValueType','any');
+                    for bin_idx=1:length(t_values)
+                        t_value = t_values(bin_idx);
+                        value_map(t_value) = obj_arr(t_entry == t_value);
+                    end
+                    for key = value_map.keys
+                        value_map(key{1}) = mean_function(value_map(key{1}));
+                    end
+                    map(map_key) = value_map;
+                end
+                result = value_map(obj.(t_prequisite));
+            else
+                % boolean algorithm - slow
+                if map.isKey(map_key)
+                    candidates = map(map_key);
+                    for candidate = candidates
+                        if ismember(obj, candidate{1})
+                            result = mean_function(candidate{1});
+                            return
+                        end
+                    end
+                    result = obj_arr(t_prequisite(obj_arr, obj));
+                    map(map_key) = [candidates(:)', {result}];
+                else
+                    result = obj_arr(t_prequisite(obj_arr, obj));
+                    map(map_key) = {result};
+                end
+            end
         end
         
         function func = divide(arr, idx_function, x_function, axis)
@@ -48,7 +89,9 @@ classdef PlotUtils
         function fig_handles = sequenceWithTotal(plotter)
             fig_handles = plotter.sequence.draw;
             total_handle = plotter.sequence(false).draw;
-            total_handle.Children.Children.LineStyle = '--';
+            for i = 1:size(total_handle.Children.Children)
+                total_handle.Children.Children(i).LineStyle = '--';
+            end
             for fig = fig_handles
                 copyobj(total_handle.Children.Children, fig.Children);
                 fig.Children.XLim(1) = min([fig.Children.XLim(1), total_handle.Children.XLim(1)]);

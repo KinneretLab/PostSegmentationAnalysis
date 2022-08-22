@@ -12,21 +12,27 @@ classdef (Abstract) PhysicalEntity < handle
     
     methods
         function obj = PhysicalEntity(args)
-            %ENTITY Construct an entity
-            %   note that this can work well with a single row as well
+            %ENTITY Construct an entity. This method can convert entire
+            % tables to object arrays.
             if length(args) > 1
-                table_rows = args{2};
-                for name = table_rows(1,:).Properties.VariableNames
-                    obj.(name{1}) = table_rows{1:end, name}; %% be careful with variable refactoring
+                table = args{2};
+                obj(1, size(table, 1)) = feval(class(obj)); % create obj array
+                [obj.experiment] = deal(args{1});
+                for i=3:2:length(args) % custom default values
+                    [obj.(args{i})] = deal(args{i+1});
                 end
-                obj.experiment = args{1};
+                names = table(1,:).Properties.VariableNames;
+                values = table2cell(table);
+                for i = 1:size(table, 2)
+                    [obj.(names{i})] = values{:, i}; %% be careful with variable refactoring
+                end
             else
                 obj.(obj.uniqueID) = nan;
                 obj.experiment = nan;
             end
         end
 
-        function tf = isempty(obj)
+        function tf = nan(obj)
             tf = isnan([obj.(obj.uniqueID)]);
         end
 
@@ -34,9 +40,14 @@ classdef (Abstract) PhysicalEntity < handle
             if class(lhs) ~= class(rhs)
                 tf = zeros(size(lhs));
             else
-                tf = (isempty(lhs) & isempty(rhs)) | ...
+                tf = (nan(lhs) & nan(rhs)) | ...
                  ([lhs.(lhs.uniqueID)] == [rhs.(rhs.uniqueID)] & ...
                  [lhs.experiment] == [rhs.experiment]);
+                if length(lhs) == length(tf)
+                    tf = reshape(tf, size(lhs));
+                else
+                    tf = reshape(tf, size(rhs));
+                end
             end
         end
         
@@ -46,6 +57,11 @@ classdef (Abstract) PhysicalEntity < handle
         
         function id = frameID(~)
             id = "frame";
+        end
+        
+        function obj = flatten(obj)
+            obj = reshape(obj, 1, []);
+            obj = obj(~nan(obj));
         end
         
         function ret_arr = siblings(obj_arr, prequisite)

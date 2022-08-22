@@ -30,12 +30,28 @@ classdef Cell < PhysicalEntity
     methods
         
         function obj = Cell(varargin)
+            if ~isempty(varargin)
+                varargin = [varargin(:)', {'confidence'}, {nan}];
+            end
             obj@PhysicalEntity(varargin)
-            obj.outline_ = [];
         end
 
         function id = uniqueID(~)
             id = "cell_id";
+        end
+        
+        function ret_arr = neighbors(obj)
+            % turn obj array to cell array for non-uniform result
+            obj_cell = num2cell(obj);
+            lookup_result = cellfun(@(c) (flatten(c.bonds.cells)), obj_cell, ...
+                'UniformOutput', false);
+            lookup_result = cellfun(@(lookup, c) (unique(lookup(lookup ~= c))), ...
+                lookup_result, obj_cell, 'UniformOutput', false);
+            sizes = cellfun(@(result) (length(result)), lookup_result);
+            ret_arr(length(obj_cell), max(sizes)) = Cell;
+            for i=1:length(obj_cell)
+                ret_arr(i, 1:sizes(i)) = lookup_result{i};
+            end
         end
         
         function dBonds = dBonds(obj)
