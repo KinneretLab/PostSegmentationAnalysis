@@ -30,6 +30,7 @@ classdef PlotBuilder < FigureBuilder
         x_lim_            % [double,double]
         y_lim_            % [double,double]
         sequence_         % bool
+        legend_           % {chararr...}
     end
 
     methods(Static)
@@ -85,6 +86,7 @@ classdef PlotBuilder < FigureBuilder
             obj.x_lim_            = [];
             obj.y_lim_            = [];
             obj.sequence_         = false;
+            obj.legend_           = {};
         end
         
         function filtered_arr = filter(obj, raw_arr)
@@ -251,6 +253,16 @@ classdef PlotBuilder < FigureBuilder
                     set(gca, 'yscale','log')
                 end
                 grid (obj.grid_); % grid mode
+                for line_idx = 1:length(obj.legend_) % ignore empty legend entries
+                    if isempty(obj.legend_{line_idx})
+                        % I have no idea why the line order is flipped...
+                        fig_handle(figure_idx).Children.Children(1 + length(obj.legend_) - line_idx)...
+                            .Annotation.LegendInformation.IconDisplayStyle = 'off';
+                    end
+                end
+                if ~all(cellfun(@isempty, obj.legend_))
+                    legend(obj.legend_{~cellfun(@isempty, obj.legend_)}, 'Location', 'best');
+                end
                 % get automatic limits
                 if isempty(x_limits)
                     x_limits = xlim;
@@ -283,12 +295,18 @@ classdef PlotBuilder < FigureBuilder
             end
         end
         
-        function obj = addData(obj, entity_arr)
+        function obj = addData(obj, entity_arr, name)
             obj.data_{end+1} = entity_arr;
+            if nargin > 2
+                obj.legend_{end+1} = name;
+            else
+                obj.legend_{end+1} = '';
+            end
         end
         
         function obj = clearData(obj)
             obj.data_ = {};
+            obj.legend_ = {};
         end
         
         function obj = grid(obj, grid_type)

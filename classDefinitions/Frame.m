@@ -3,6 +3,7 @@ classdef Frame < PhysicalEntity
         frame
         frame_name
         time_sec
+        mask_
     end
     
     methods
@@ -13,6 +14,15 @@ classdef Frame < PhysicalEntity
 
         function id = uniqueID(~)
             id = "frame";
+        end
+        
+        function masks = mask(obj)
+            % load masks for frames that did not load them
+            frames_to_load = obj(cellfun(@isempty, {obj.mask_}));
+            for entity = frames_to_load
+                entity.mask_ = entity.experiment.imread(['..\Display\Masks\', entity.frame_name, '.tiff']) > 0;
+            end
+            masks = [obj.mask_];
         end
 
         function cells = cells(obj)

@@ -101,7 +101,7 @@ classdef Cell < PhysicalEntity
             flags = [];
             frames = Frame();
             for i=1:length(frameList)
-                if mod(i,100) ==0
+                if mod(i,1000) ==0
                     disp(sprintf(['Returning frame for cell # ',num2str(i)]));
                 end
                 frameNumArray = [frameArray{ic(i),:}.frame];

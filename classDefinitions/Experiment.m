@@ -17,6 +17,17 @@ classdef Experiment < handle
             tf = convertCharsToStrings({lhs.folder_}) == convertCharsToStrings({rhs.folder_});
         end
         
+        function result = imread(obj, path)
+            if isempty(obj)
+                return
+            end
+            if length(obj) ~= 1
+                fprintf("[ERROR] Load function called for an array of experiments. This is an ambiguous call. Plase iterate over the array instead.")
+                return
+            end
+            result = imread([obj.folder_, '\', path]);
+        end
+        
         function [phys_arr, obj] = lookup(obj, clazz, flags)
             % return a flat (1,size) array.
             % iterate over experiments
