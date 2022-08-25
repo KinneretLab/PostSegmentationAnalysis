@@ -9,9 +9,9 @@ classdef PlotUtils
                     case "x"
                         func = base;
                     case "y"
-                        func = @(cell_arr, plotter) (mean(plotter.filter(base(cell_arr))));
+                        func = @(cell_arr, plotter) (nanmean(plotter.filter(base(cell_arr))));
                     case "err"
-                        func = @(cell_arr, plotter) (std(plotter.filter(base(cell_arr))));
+                        func = @(cell_arr, plotter) (nanstd(plotter.filter(base(cell_arr))));
                 end
             else
                 func = base;
@@ -30,7 +30,7 @@ classdef PlotUtils
                 x_function = PlotBuilder.property(x_function);
             end
             map = containers.Map;
-            mean_function = @(obj_arr)(mean(x_function(obj_arr)));
+            mean_function = @(obj_arr)(nanmean(x_function(obj_arr)));
             func = @(obj, ~, obj_arr) (x_function(obj) / PlotUtils.getOrStore(obj, obj_arr, map, t_prequisite, mean_function));
         end
         
@@ -89,15 +89,16 @@ classdef PlotUtils
         function fig_handles = sequenceWithTotal(plotter)
             fig_handles = plotter.sequence.draw;
             total_handle = plotter.sequence(false).draw;
-            for i = 1:size(total_handle.Children.Children)
-                total_handle.Children.Children(i).LineStyle = '--';
+            for i = 1:length(total_handle.CurrentAxes.Children)
+                total_handle.CurrentAxes.Children(i).LineStyle = '--';
+                total_handle.CurrentAxes.Children(i).DisplayName = [total_handle.CurrentAxes.Children(i).DisplayName, ' (all frames)'];
             end
             for fig = fig_handles
-                copyobj(total_handle.Children.Children, fig.Children);
-                fig.Children.XLim(1) = min([fig.Children.XLim(1), total_handle.Children.XLim(1)]);
-                fig.Children.XLim(2) = max([fig.Children.XLim(2), total_handle.Children.XLim(2)]);
-                fig.Children.YLim(1) = min([fig.Children.YLim(1), total_handle.Children.YLim(1)]);
-                fig.Children.YLim(2) = max([fig.Children.YLim(2), total_handle.Children.YLim(2)]);
+                copyobj(total_handle.CurrentAxes.Children, fig.CurrentAxes);
+                fig.CurrentAxes.XLim(1) = min([fig.CurrentAxes.XLim(1), total_handle.CurrentAxes.XLim(1)]);
+                fig.CurrentAxes.XLim(2) = max([fig.CurrentAxes.XLim(2), total_handle.CurrentAxes.XLim(2)]);
+                fig.CurrentAxes.YLim(1) = min([fig.CurrentAxes.YLim(1), total_handle.CurrentAxes.YLim(1)]);
+                fig.CurrentAxes.YLim(2) = max([fig.CurrentAxes.YLim(2), total_handle.CurrentAxes.YLim(2)]);
             end
             close(total_handle)
         end

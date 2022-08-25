@@ -43,11 +43,11 @@ classdef PlotBuilder < FigureBuilder
         end
 
         function func = mean(prop_name)
-            func = @(obj_arr, plotter) (mean(plotter.filter([obj_arr.(prop_name)])));
+            func = @(obj_arr, plotter) (nanmean(plotter.filter([obj_arr.(prop_name)])));
         end
 
         function func = std(prop_name)
-            func = @(obj_arr, plotter) (std(plotter.filter([obj_arr.(prop_name)])));
+            func = @(obj_arr, plotter) (nanstd(plotter.filter([obj_arr.(prop_name)])));
         end
         
         function ret = smart_apply(func, varargin)
@@ -146,6 +146,9 @@ classdef PlotBuilder < FigureBuilder
                         x_values = unique(x_entry);
                         for bin_idx=1:length(x_values)
                             x_value = x_values(bin_idx);
+                            if isnan(x_value) % don't analyze NaNs
+                                continue
+                            end
                             data_sorted(x_value) = data_entry(x_entry == x_value);
                         end
                     else
