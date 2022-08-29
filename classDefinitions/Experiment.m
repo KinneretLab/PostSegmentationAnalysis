@@ -14,7 +14,7 @@ classdef Experiment < handle
         end
         
         function tf = eq(lhs, rhs)
-            tf = convertCharsToStrings({lhs.folder_}) == convertCharsToStrings({rhs.folder_});
+            tf = reshape(strcmp(convertCharsToStrings({lhs.folder_}),convertCharsToStrings({rhs.folder_})), size(lhs));
         end
         
         function result = imread(obj, path)

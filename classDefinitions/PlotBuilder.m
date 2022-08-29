@@ -35,19 +35,23 @@ classdef PlotBuilder < FigureBuilder
 
     methods(Static)
         function func = property(prop_name)
-            func = @(obj) ([obj.(prop_name)]);
+            func = BulkFunc(@(obj) ([obj.(prop_name)]));
         end
 
-        function func = count()
-            func = @(obj_arr) (length(obj_arr));
+        function func = count(include_nan)
+            if nargin == 1 && include_nan
+                func = BulkFunc(@(obj_arr) (length(obj_arr)));
+            else
+                func = BulkFunc(@(obj_arr) (nnz(~isnan(obj_arr))));
+            end
         end
 
         function func = mean(prop_name)
-            func = @(obj_arr, plotter) (nanmean(plotter.filter([obj_arr.(prop_name)])));
+            func = BulkFunc(@(obj_arr, plotter) (nanmean(plotter.filter([obj_arr.(prop_name)]))));
         end
 
         function func = std(prop_name)
-            func = @(obj_arr, plotter) (nanstd(plotter.filter([obj_arr.(prop_name)])));
+            func = BulkFunc(@(obj_arr, plotter) (nanstd(plotter.filter([obj_arr.(prop_name)]))));
         end
         
         function ret = smart_apply(func, varargin)
@@ -98,7 +102,11 @@ classdef PlotBuilder < FigureBuilder
         end
 
         function [data_arrays, err_arrays, frame_data] = calculate(obj)
-            x_data = cellfun(@(obj_arr) (arrayfun(@(o) obj.smart_apply(obj.x_function_, o, obj, obj_arr), obj_arr)), obj.data_, 'UniformOutput', false);
+            if isa(obj.x_function_, 'BulkFunc')
+                x_data = cellfun(@(obj_arr) obj.smart_apply(obj.x_function_, obj_arr, obj, obj_arr), obj.data_, 'UniformOutput', false);
+            else
+                x_data = cellfun(@(obj_arr) (arrayfun(@(o) obj.smart_apply(obj.x_function_, o, obj, obj_arr), obj_arr)), obj.data_, 'UniformOutput', false);
+            end
             full_data = obj.data_;
             if obj.outliers_ ~= "none"
                 out_filter = cellfun(@(obj_arr) (~isoutlier(obj_arr, obj.outliers_)), x_data, 'UniformOutput', false);
@@ -415,7 +423,7 @@ classdef PlotBuilder < FigureBuilder
             if isa(func, 'double')
                 obj.x_function_ = @(obj) (func);
             end 
-            if isa(func, 'function_handle')
+            if isa(func, 'function_handle') || isa(func, 'BulkFunc')
                 obj.x_function_ = func;
             end
         end
@@ -427,7 +435,7 @@ classdef PlotBuilder < FigureBuilder
             if isa(func, 'double')
                 obj.y_function_ = @(obj) (func);
             end 
-            if isa(func, 'function_handle')
+            if isa(func, 'function_handle') || isa(func, 'BulkFunc')
                 obj.y_function_ = func;
             end
         end
@@ -439,7 +447,7 @@ classdef PlotBuilder < FigureBuilder
             if isa(func, 'double')
                 obj.x_err_function_ = @(obj) (func);
             end 
-            if isa(func, 'function_handle')
+            if isa(func, 'function_handle') || isa(func, 'BulkFunc')
                 obj.x_err_function_ = func;
             end
         end
@@ -451,7 +459,7 @@ classdef PlotBuilder < FigureBuilder
             if isa(func, 'double')
                 obj.y_err_function_ = @(obj) (func);
             end 
-            if isa(func, 'function_handle')
+            if isa(func, 'function_handle') || isa(func, 'BulkFunc')
                 obj.y_err_function_ = func;
             end
         end

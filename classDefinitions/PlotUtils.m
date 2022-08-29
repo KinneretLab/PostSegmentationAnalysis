@@ -21,8 +21,9 @@ classdef PlotUtils
         function func = pSqrtA(axis)
             func = @(cell) ([cell.perimeter] / sqrt([cell.area]));
             if nargin == 1
-                func = PlotUtils.axify(axis);
+                func = PlotUtils.axify(func, axis);
             end
+            func = BulkFunc(func);
         end
         
         function func = xNormalize(x_function, t_prequisite)

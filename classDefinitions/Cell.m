@@ -25,6 +25,7 @@ classdef Cell < PhysicalEntity
         bb_xEnd
         bb_yEnd
         outline_
+        neighbors_
     end
     
     methods
@@ -40,43 +41,53 @@ classdef Cell < PhysicalEntity
             id = "cell_id";
         end
         
-        function ret_arr = neighbors(obj)
-            % turn obj array to cell array for non-uniform result
-            obj_cell = num2cell(obj);
-            lookup_result = cellfun(@(c) (flatten(c.bonds.cells)), obj_cell, ...
-                'UniformOutput', false);
-            lookup_result = cellfun(@(lookup, c) (unique(lookup(lookup ~= c))), ...
-                lookup_result, obj_cell, 'UniformOutput', false);
-            sizes = cellfun(@(result) (length(result)), lookup_result);
-            ret_arr(length(obj_cell), max(sizes)) = Cell;
-            for i=1:length(obj_cell)
-                ret_arr(i, 1:sizes(i)) = lookup_result{i};
+        function cells = neighbors(obj, varargin)
+            index_flag = arrayfun(@(entity) isempty(entity.neighbors_), obj);
+            obj_to_index = obj(index_flag);
+            if ~isempty(obj_to_index)
+                fprintf("Indexing neighbors for %d cells\n", length(obj_to_index));
+                index_result = obj(index_flag).dBonds.conjugate.cells;
+                for i=1:size(index_result, 1)
+                    neighbor_row = index_result(i, :);
+                    obj_to_index(i).neighbors_ = unique(neighbor_row(~isnan(neighbor_row)));
+                end
+            end
+            sizes = arrayfun(@(entity) length(entity.neighbors_), obj);
+            cells(length(obj), max(sizes)) = Cell;
+            for i=1:length(obj)
+                cells(i, 1:sizes(i)) = obj(i).neighbors_;
+            end
+            % filter result and put it into result_arr
+            if nargin > 1
+                cells = cells(varargin{:});
             end
         end
         
-        function dBonds = dBonds(obj)
-            thisID = [obj.cell_id];
-            dbArray = [obj.experiment];
-            dbFolderArray = {dbArray.folder_};
-            [~,ia,ic] = unique(dbFolderArray);
-            dBonds = DBond();
-            for i=1:length(ia)
-                dBondArray{i} = dbArray(ia(i)).dBonds;
+        function dbonds = dBonds(obj)
+            index = containers.Map;
+            clazz = class(DBond);
+            lookup_result = cell(size(obj));
+            for lookup_idx = 1:length(obj)
+                entity = obj(lookup_idx);
+                if isnan(entity)
+                    continue;
+                end
+                map_key = [entity.experiment.folder_, '_', clazz];
+                full_map_key = [map_key, '_', entity.frame];
+                if ~index.isKey(full_map_key)
+                    full_dbonds = entity.experiment.lookup(clazz);
+                    frame_num = [full_dbonds.frame];
+                    for frame_id=unique(frame_num)
+                        index([map_key, '_', frame_id]) = full_dbonds(frame_num == frame_id);
+                    end
+                end
+                all_dbonds = index(full_map_key);
+                lookup_result{lookup_idx} = all_dbonds([all_dbonds.cell_id] == entity.cell_id);
             end
-            maxLength = 0;
-            flags = [];
-            for i=1:length(thisID)
-                if mod(i,100) ==0
-                    disp(sprintf(['Finding directed bonds for cell # ',num2str(i)]));
-                end
-                cellIDArray = [dBondArray{ic(i)}.cell_id];
-                flags = (cellIDArray == thisID(i));
-                thisLength = sum(flags);
-                if thisLength > maxLength
-                    dBonds(:,(maxLength+1):thisLength) = DBond();
-                    maxLength = thisLength;
-                end
-                dBonds(i,1:thisLength) = dBondArray{ic(i)}(flags);
+            sizes = cellfun(@(result) (length(result)), lookup_result);
+            dbonds(length(obj), max(sizes)) = DBond;
+            for i=1:length(obj)
+                dbonds(i, 1:sizes(i)) = lookup_result{i};
             end
         end
 

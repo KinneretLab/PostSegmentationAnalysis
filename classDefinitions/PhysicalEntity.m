@@ -32,22 +32,19 @@ classdef (Abstract) PhysicalEntity < handle
             end
         end
 
-        function tf = nan(obj)
-            tf = isnan([obj.(obj.uniqueID)]);
+        function tf = isnan(obj)
+            tf = reshape(isnan([obj.(obj.uniqueID)]), size(obj));
         end
 
         function tf = eq(lhs, rhs)
             if class(lhs) ~= class(rhs)
-                tf = zeros(size(lhs));
+                tf = zeros(size(lhs)) | zeros(size(rhs));
             else
-                tf = (nan(lhs) & nan(rhs)) | ...
-                 ([lhs.(lhs.uniqueID)] == [rhs.(rhs.uniqueID)] & ...
-                 [lhs.experiment] == [rhs.experiment]);
-                if length(lhs) == length(tf)
-                    tf = reshape(tf, size(lhs));
-                else
-                    tf = reshape(tf, size(rhs));
-                end
+                tf = isnan(lhs) | isnan(rhs);
+                lhs = lhs(~tf);
+                rhs = rhs(~tf);
+                tf(~tf) = (reshape([lhs.(lhs.uniqueID)], size(lhs)) == reshape([rhs.(rhs.uniqueID)], size(rhs)) & ...
+                 reshape([lhs.experiment], size(lhs)) == reshape([rhs.experiment], size(rhs)));
             end
         end
         
@@ -61,7 +58,7 @@ classdef (Abstract) PhysicalEntity < handle
         
         function obj = flatten(obj)
             obj = reshape(obj, 1, []);
-            obj = obj(~nan(obj));
+            obj = obj(~isnan(obj));
         end
         
         function ret_arr = siblings(obj_arr, prequisite)
