@@ -31,6 +31,7 @@ classdef PlotBuilder < FigureBuilder
         y_lim_            % [double,double]
         sequence_         % bool
         legend_           % {chararr...}
+        visibility_       % string
     end
 
     methods(Static)
@@ -91,6 +92,7 @@ classdef PlotBuilder < FigureBuilder
             obj.y_lim_            = [];
             obj.sequence_         = false;
             obj.legend_           = {};
+            obj.visibility_       = "on";
         end
         
         function filtered_arr = filter(obj, raw_arr)
@@ -197,7 +199,7 @@ classdef PlotBuilder < FigureBuilder
             x_limits = [];
             y_limits = [];
             for figure_idx = 1:size(raw_data, 1)
-                fig_handle(figure_idx) = figure;
+                fig_handle(figure_idx) = figure('visible',obj.visibility_);
                 hold on;
                 if obj.cumulative_ % cumulative mode
                     for i=2:2:size(raw_data, 2)
@@ -303,6 +305,7 @@ classdef PlotBuilder < FigureBuilder
                 else
                     ylim(y_limits)
                 end
+                set(fig, 'visible', obj.visibility_); 
             end
         end
         
@@ -414,6 +417,10 @@ classdef PlotBuilder < FigureBuilder
 
         function obj = sequence(obj, varargin)
             obj.sequence_ = FigureBuilder.optional(true, false, varargin);
+        end
+
+        function obj = invisible(obj, varargin)
+            obj.visibility_ = FigureBuilder.optional('off', 'on', varargin);
         end
         
         function obj = xFunction(obj, func)

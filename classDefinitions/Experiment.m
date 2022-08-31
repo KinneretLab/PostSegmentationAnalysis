@@ -20,7 +20,7 @@ classdef Experiment < handle
             end
         end
         
-        function delete(key)
+        function remove(key)
             if isa(key, 'Experiment')
                 key = key.folder_;
             end

@@ -168,7 +168,7 @@ classdef (Abstract) PhysicalEntity < handle
             index_flag = arrayfun(@(entity) isempty(entity.(prop)), obj);
             obj_to_index = obj(index_flag);
             if ~isempty(obj_to_index)
-                fprintf("Indexing %s for %d %s\n", prop, length(obj_to_index), class(obj_to_index(1)));
+                fprintf("Indexing %s for %d %ss\n", prop, length(obj_to_index), class(obj_to_index(1)));
                 index_result = lookup_func(obj(index_flag));
                 for i=1:size(index_result, 1)
                     result_row = index_result(i, :);
