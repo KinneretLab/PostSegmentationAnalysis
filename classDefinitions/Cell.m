@@ -42,53 +42,7 @@ classdef Cell < PhysicalEntity
         end
         
         function cells = neighbors(obj, varargin)
-            index_flag = arrayfun(@(entity) isempty(entity.neighbors_), obj);
-            obj_to_index = obj(index_flag);
-            if ~isempty(obj_to_index)
-                fprintf("Indexing neighbors for %d cells\n", length(obj_to_index));
-                index_result = obj(index_flag).dBonds.conjugate.cells;
-                for i=1:size(index_result, 1)
-                    neighbor_row = index_result(i, :);
-                    obj_to_index(i).neighbors_ = unique(neighbor_row(~isnan(neighbor_row)));
-                end
-            end
-            sizes = arrayfun(@(entity) length(entity.neighbors_), obj);
-            cells(length(obj), max(sizes)) = Cell;
-            for i=1:length(obj)
-                cells(i, 1:sizes(i)) = obj(i).neighbors_;
-            end
-            % filter result and put it into result_arr
-            if nargin > 1
-                cells = cells(varargin{:});
-            end
-        end
-        
-        function dbonds = dBonds(obj)
-            index = containers.Map;
-            clazz = class(DBond);
-            lookup_result = cell(size(obj));
-            for lookup_idx = 1:length(obj)
-                entity = obj(lookup_idx);
-                if isnan(entity)
-                    continue;
-                end
-                map_key = [entity.experiment.folder_, '_', clazz];
-                full_map_key = [map_key, '_', entity.frame];
-                if ~index.isKey(full_map_key)
-                    full_dbonds = entity.experiment.lookup(clazz);
-                    frame_num = [full_dbonds.frame];
-                    for frame_id=unique(frame_num)
-                        index([map_key, '_', frame_id]) = full_dbonds(frame_num == frame_id);
-                    end
-                end
-                all_dbonds = index(full_map_key);
-                lookup_result{lookup_idx} = all_dbonds([all_dbonds.cell_id] == entity.cell_id);
-            end
-            sizes = cellfun(@(result) (length(result)), lookup_result);
-            dbonds(length(obj), max(sizes)) = DBond;
-            for i=1:length(obj)
-                dbonds(i, 1:sizes(i)) = lookup_result{i};
-            end
+            cells = obj.getOrCalculate(class(Cell), "neighbors_", @(cell_arr) cell_arr.dBonds.conjugate.cells, varargin{:});
         end
 
         function id_in_frame = idInFrame(obj)
@@ -101,79 +55,16 @@ classdef Cell < PhysicalEntity
             strID = obj.experiment.frames([obj.experiment.frames.frame] == obj.frame).frame_name + "_" + obj.idInFrame;
         end
 
-        function frames = frames(obj)
-            frameList = [obj.frame];
-            dbArray = [obj.experiment];
-            dbFolderArray = {dbArray.folder_};
-            [~,ia,ic] = unique(dbFolderArray);
-            for i=1:length(ia)
-                frameArray{i,:} = dbArray(ia(i)).frames;
-            end
-            flags = [];
-            frames = Frame();
-            for i=1:length(frameList)
-                if mod(i,1000) ==0
-                    disp(sprintf(['Returning frame for cell # ',num2str(i)]));
-                end
-                frameNumArray = [frameArray{ic(i),:}.frame];
-                flags = (frameNumArray == frameList(i));
-                frames(i) = frameArray{ic(i)}(flags);
-            end
+        function bonds = bonds(obj, varargin)
+            bonds = obj.dBonds.bonds(varargin{:});
         end
 
+        function vertices = vertices(obj, varargin)
+            vertices = obj.dBonds.startVertices(varargin{:});
+        end
         
-        function bonds = bonds(obj)
-            theseDBonds = dBonds(obj);
-            dbArray = [obj.experiment];
-            dbFolderArray = {dbArray.folder_};
-            [~,ia,ic] = unique(dbFolderArray);
-            for i=1:length(ia)
-                bondArray{i} = dbArray(ia(i)).bonds;
-            end
-            flags = [];
-            for i=1:size(obj,2)
-                if mod(i,100) ==0
-                    disp(sprintf(['Finding bonds for cell # ',num2str(i)]));
-                end
-                for j=1:length(theseDBonds(i,:))
-                    bondIDArray = [bondArray{ic(i)}.bond_id];
-                    thisID = theseDBonds(i,j).bond_id;
-                    if ~isempty(thisID)
-                        flag = (bondIDArray == thisID);
-                        bonds(i,j) = bondArray{ic(i)}(flag);
-                    else
-                        bonds(i,j) = Bond();
-                    end
-                end
-            end
-
-        end
-
-        function vertices = vertices(obj)
-            theseDBonds = dBonds(obj);
-            dbArray = [obj.experiment];
-            dbFolderArray = {dbArray.folder_};
-            [~,ia,ic] = unique(dbFolderArray);
-            for i=1:length(ia)
-                vertexArray{i} = dbArray(ia(i)).vertices;
-            end
-            flags = [];
-            for i=1:size(obj,2)
-                if mod(i,100) ==0
-                    disp(sprintf(['Finding vertices for cell # ',num2str(i)]));
-                end
-                for j=1:length(theseDBonds(i,:))
-                    vertexIDArray = [vertexArray{ic(i)}.vertex_id];
-                    thisID = theseDBonds(i,j).vertex_id;
-                    if ~isempty(thisID)
-                        flag = (vertexIDArray == thisID);
-                        vertices(i,j) = vertexArray{ic(i)}(flag);
-                    else
-                        vertices(i,j) = Vertex();
-                    end
-                end
-            end
-
+        function cells = cells(obj, varargin)
+            cells = obj(varargin{:});
         end
 
         function obj = outline(obj) % Currently runs on a 1-dimensional list because of dBonds function.

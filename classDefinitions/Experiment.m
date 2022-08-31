@@ -5,12 +5,45 @@ classdef Experiment < handle
         files_
     end
     
+    properties (Constant)
+       loaded_ = containers.Map 
+    end
+    
+    methods (Static)
+        function obj = load(folder)
+            map = Experiment.loaded_;
+            if map.isKey(folder)
+                obj = map(folder);
+            else
+                obj = Experiment(folder);
+                map(folder) = obj;
+            end
+        end
+        
+        function delete(key)
+            if isa(key, 'Experiment')
+                key = key.folder_;
+            end
+            map = Experiment.loaded_;
+            map.remove(key);
+        end
+
+        function clear()
+            map = Experiment.loaded_;
+            map.remove(map.keys);
+        end
+    end
+    
     methods
         function obj = Experiment(folder)
-            obj.folder_ = folder;
-            obj.data_ = containers.Map();
-            obj.files_ = containers.Map(cellfun(@class,{Cell, Bond, Vertex, DBond, Frame, BondPixelList}, 'UniformOutput', false), ...
-                cellfun(@(file) ([folder, '\', file, '.csv']), {'cells', 'bonds', 'vertices', 'directed_bonds', 'frames', 'bond_pixels'}, 'UniformOutput', false));
+            if nargin > 0
+                obj.folder_ = folder;
+                obj.data_ = containers.Map();
+                obj.files_ = containers.Map(cellfun(@class,{Cell, Bond, Vertex, DBond, Frame, BondPixelList}, 'UniformOutput', false), ...
+                    cellfun(@(file) ([folder, '\', file, '.csv']), {'cells', 'bonds', 'vertices', 'directed_bonds', 'frames', 'bond_pixels'}, 'UniformOutput', false));
+            else
+                obj.folder_ = nan;
+            end
         end
         
         function tf = eq(lhs, rhs)

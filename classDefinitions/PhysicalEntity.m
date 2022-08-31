@@ -82,6 +82,109 @@ classdef (Abstract) PhysicalEntity < handle
                 ret_arr(i, 1:sizes(i)) = lookup_result{i};
             end
         end
+        
+        function frames = frames(obj, varargin)
+            clazz = class(Frame);
+            if strcmp(class(obj(1)),clazz)
+                frames = obj(varargin{:});
+            else
+                frames = obj.lookup1(clazz, obj.frameID, Frame().frameID, varargin{:});
+            end
+        end
+        
+        function dbonds = dBonds(obj, varargin)
+            clazz = class(DBond);
+            if strcmp(class(obj(1)),clazz)
+                dbonds = obj(varargin{:});
+            else
+                dbonds = obj.lookupMany(clazz, obj.uniqueID, obj.uniqueID, varargin{:});
+            end
+        end
+    end
+    
+    methods(Access = protected)
+        
+        function phys_arr = lookup1(obj, clazz, requester_prop, target_prop, varargin)
+            index = containers.Map;
+            phys_arr(size(obj, 1), size(obj, 2)) = feval(clazz);
+            for lookup_idx = 1:numel(obj)
+                entity = obj(lookup_idx);
+                if isnan(entity) || isnan(entity.(requester_prop))
+                    continue;
+                end
+                map_key = entity.experiment.folder_;
+                full_map_key = [map_key, '_', entity.frame];
+                if ~index.isKey(full_map_key)
+                    full_phys = entity.experiment.lookup(clazz);
+                    frame_num = [full_phys.(full_phys.frameID)];
+                    for frame_id=unique(frame_num)
+                        index([map_key, '_', frame_id]) = full_phys(frame_num == frame_id);
+                    end
+                end
+                frame_filtered_phys = index(full_map_key);
+                phys_arr(lookup_idx) = frame_filtered_phys([frame_filtered_phys.(target_prop)] == entity.(requester_prop));
+            end
+            % filter result and put it into result_arr
+            if nargin > 4
+                phys_arr = phys_arr(varargin{:});
+            end
+        end
+        
+        function phys_arr = lookupMany(obj, clazz, requester_prop, target_prop, varargin)
+            if length(obj) ~= numel(obj)
+                disp("multi-value lookup applied on a 2D matrix. This is illegal. Please flatten and re-apply.");
+            end
+            index = containers.Map;
+            lookup_result = cell(size(obj));
+            for lookup_idx = 1:numel(obj)
+                entity = obj(lookup_idx);
+                if isnan(entity) || isnan(entity.(requester_prop))
+                    continue;
+                end
+                map_key = entity.experiment.folder_;
+                full_map_key = [map_key, '_', entity.frame];
+                if ~index.isKey(full_map_key)
+                    full_phys = entity.experiment.lookup(clazz);
+                    frame_num = [full_phys.(full_phys.frameID)];
+                    for frame_id=unique(frame_num)
+                        index([map_key, '_', frame_id]) = full_phys(frame_num == frame_id);
+                    end
+                end
+                frame_filtered_phys = index(full_map_key);
+                lookup_result{lookup_idx} = frame_filtered_phys([frame_filtered_phys.(target_prop)] == entity.(requester_prop));
+            end
+            sizes = cellfun(@(result) (length(result)), lookup_result);
+            phys_arr(length(obj), max(sizes)) = feval(clazz);
+            for i=1:length(obj)
+                phys_arr(i, 1:sizes(i)) = lookup_result{i};
+            end
+            % filter result and put it into result_arr
+            if nargin > 4
+                phys_arr = phys_arr(varargin{:});
+            end
+        end
+        
+        function phys_arr = getOrCalculate(obj, clazz, prop, lookup_func, varargin)
+            index_flag = arrayfun(@(entity) isempty(entity.(prop)), obj);
+            obj_to_index = obj(index_flag);
+            if ~isempty(obj_to_index)
+                fprintf("Indexing %s for %d %s\n", prop, length(obj_to_index), class(obj_to_index(1)));
+                index_result = lookup_func(obj(index_flag));
+                for i=1:size(index_result, 1)
+                    result_row = index_result(i, :);
+                    obj_to_index(i).(prop) = unique(result_row(~isnan(result_row)));
+                end
+            end
+            sizes = arrayfun(@(entity) length(entity.(prop)), obj);
+            phys_arr(length(obj), max(sizes)) = feval(clazz);
+            for i=1:length(obj)
+                phys_arr(i, 1:sizes(i)) = obj(i).(prop);
+            end
+            % filter result and put it into result_arr
+            if nargin > 4
+                phys_arr = phys_arr(varargin{:});
+            end
+        end
     end
 end
 

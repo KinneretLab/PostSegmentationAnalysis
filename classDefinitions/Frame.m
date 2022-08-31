@@ -24,87 +24,49 @@ classdef Frame < PhysicalEntity
             end
             masks = [obj.mask_];
         end
-
-        function cells = cells(obj)
-            thisFrame = [obj.frame];
-            dbArray = [obj.experiment];
-            dbFolderArray = {dbArray.folder_};
-            [~,ia,ic] = unique(dbFolderArray);
-            cells = Cell();
-            for i=1:length(ia)
-                cellArray{i} = dbArray(ia(i)).cells;
+        
+        function cells = cells(obj, varargin)
+            cells = obj.lookupByFrame(class(Cell), varargin);
+        end
+        
+        function bonds = bonds(obj, varargin)
+            bonds = obj.lookupByFrame(class(Bond), varargin);
+        end
+        
+        function vertices = vertices(obj, varargin)
+            vertices = obj.lookupByFrame(class(Vertex), varargin);
+        end
+    end
+    
+    methods(Access = protected)
+        function phys_arr = lookupByFrame(obj, clazz, varargin)
+            if length(obj) ~= numel(obj)
+                disp("multi-value lookup applied on a 2D matrix. This is illegal. Please flatten and re-apply.");
             end
-            maxLength = 0;
-            flags = [];
-            for i=1:length(thisFrame)
-                if mod(i,10) ==0
-                    disp(sprintf(['Finding cells for frame # ',num2str(i)]));
+            index = containers.Map;
+            lookup_result = cell(size(obj));
+            for lookup_idx = 1:numel(obj)
+                entity = obj(lookup_idx);
+                if isnan(entity)
+                    continue;
                 end
-                frameArray = [cellArray{ic(i)}.frame];
-                flags = (frameArray == thisFrame(i));
-                thisLength = sum(flags);
-                if thisLength > maxLength
-                    cells(:,(maxLength+1):thisLength) = Cell();
-                    maxLength = thisLength;
+                map_key = entity.experiment.folder_;
+                if ~index.isKey(map_key)
+                    full_phys = entity.experiment.lookup(clazz);
+                    index(map_key) = full_phys;
                 end
-                cells(i,1:thisLength) = cellArray{ic(i)}(flags);
+                lookup_result{lookup_idx} = full_phys([full_phys.(full_phys.frameID)] == entity.frame);
+            end
+            sizes = cellfun(@(result) (length(result)), lookup_result);
+            phys_arr(length(obj), max(sizes)) = feval(clazz);
+            for i=1:length(obj)
+                phys_arr(i, 1:sizes(i)) = lookup_result{i};
+            end
+            % filter result and put it into result_arr
+            if nargin > 4
+                phys_arr = phys_arr(varargin{:});
             end
         end
-
-
-        function vertices = vertices(obj)
-            thisFrame = [obj.frame];
-            dbArray = [obj.experiment];
-            dbFolderArray = {dbArray.folder_};
-            [~,ia,ic] = unique(dbFolderArray);
-            vertices = Vertex();
-            for i=1:length(ia)
-                vertexArray{i} = dbArray(ia(i)).vertices;
-            end
-            maxLength = 0;
-            flags = [];
-            for i=1:length(thisFrame)
-                if mod(i,10) ==0
-                    disp(sprintf(['Finding vertices for frame # ',num2str(i)]));
-                end
-                frameArray = [vertexArray{ic(i)}.frame];
-                flags = (frameArray == thisFrame(i));
-                thisLength = sum(flags);
-                if thisLength > maxLength
-                    vertices(:,(maxLength+1):thisLength) = Vertex();
-                    maxLength = thisLength;
-                end
-                vertices(i,1:thisLength) = vertexArray{ic(i)}(flags);
-            end
-        end
-
-
-        function bonds = bonds(obj)
-            thisFrame = [obj.frame];
-            dbArray = [obj.experiment];
-            dbFolderArray = {dbArray.folder_};
-            [~,ia,ic] = unique(dbFolderArray);
-            bonds = Bond();
-            for i=1:length(ia)
-                bondArray{i} = dbArray(ia(i)).bonds;
-            end
-            maxLength = 0;
-            flags = [];
-            for i=1:length(thisFrame)
-                if mod(i,10) ==0
-                    disp(sprintf(['Finding bonds for frame # ',num2str(i)]));
-                end
-                frameArray = [bondArray{ic(i)}.frame];
-                flags = (frameArray == thisFrame(i));
-                thisLength = sum(flags);
-                if thisLength > maxLength
-                    bonds(:,(maxLength+1):thisLength) = Bond();
-                    maxLength = thisLength;
-                end
-                bonds(i,1:thisLength) = bondArray{ic(i)}(flags);
-            end
-        end
-
     end
     
 end

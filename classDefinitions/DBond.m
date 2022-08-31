@@ -20,51 +20,39 @@ classdef DBond < PhysicalEntity
             id = "dbond_id";
         end
         
-        function dbonds = conjugate(obj)
-            index = containers.Map;
-            clazz = class(DBond);
-            dbonds(size(obj, 1), size(obj, 2)) = DBond;
-            for lookup_idx = 1:numel(obj)
-                entity = obj(lookup_idx);
-                if isnan(entity) || isnan(entity.conj_dbond_id)
-                    continue;
-                end
-                map_key = [entity.experiment.folder_, '_', clazz];
-                full_map_key = [map_key, '_', entity.frame];
-                if ~index.isKey(full_map_key)
-                    full_dbonds = entity.experiment.lookup(clazz);
-                    frame_num = [full_dbonds.frame];
-                    for frame_id=unique(frame_num)
-                        index([map_key, '_', frame_id]) = full_dbonds(frame_num == frame_id);
-                    end
-                end
-                all_dbonds = index(full_map_key);
-                dbonds(lookup_idx) = all_dbonds([all_dbonds.dbond_id] == entity.conj_dbond_id);
-            end
+        function dbonds = conjugate(obj, varargin)
+            dbonds = obj.lookup1(class(DBond), "conj_dbond_id", "dbond_id", varargin{:});
         end
         
-        function cells = cells(obj)
-            index = containers.Map;
-            clazz = class(Cell);
-            cells(size(obj, 1), size(obj, 2)) = Cell;
-            for lookup_idx = 1:numel(obj)
-                entity = obj(lookup_idx);
-                if isnan(entity) || isnan(entity.cell_id)
-                    continue;
-                end
-                map_key = [entity.experiment.folder_, '_', clazz];
-                full_map_key = [map_key, '_', entity.frame];
-                if ~index.isKey(full_map_key)
-                    full_cells = entity.experiment.lookup(clazz);
-                    frame_num = [full_cells.frame];
-                    for frame_id=unique(frame_num)
-                        index([map_key, '_', frame_id]) = full_cells(frame_num == frame_id);
-                    end
-                end
-                all_cells = index(full_map_key);
-                cells(lookup_idx) = all_cells([all_cells.cell_id] == entity.cell_id);
-            end
+        function dbonds = next(obj, varargin)
+            dbonds = obj.lookup1(class(DBond), "left_dbond_id", "dbond_id", varargin{:});
         end
         
+        function cells = cells(obj, varargin)
+            cells = obj.lookup1(class(Cell), "cell_id", "cell_id", varargin{:});
+        end
+        
+        function bonds = bonds(obj, varargin)
+            bonds = obj.lookup1(class(Bond), "bond_id", "bond_id", varargin{:});
+        end
+        
+        function vertices = startVertices(obj, varargin)
+            vertices = obj.lookup1(class(Vertex), "vertex_id", "vertex_id", varargin{:});
+        end
+        
+        function vertices = endVertices(obj, varargin)
+            vertices = obj.lookup1(class(Vertex), "vertex2_id", "vertex_id", varargin{:});
+        end
+        
+        function vertices = vertices(obj, varargin)
+            if length(obj) ~= numel(obj)
+                disp("multi-value lookup applied on a 2D matrix. This is illegal. Please flatten and re-apply.");
+            end
+            vertices = [reshape(obj.startVertices, [], 1), reshape(obj.endVertices, [], 1)];
+        end
+        
+        function coords = coords(obj, varargin)
+            coords = obj.bonds.coords(varargin{:});
+        end
     end
 end

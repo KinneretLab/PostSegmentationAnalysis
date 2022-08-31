@@ -48,6 +48,18 @@ classdef BondPixelList < PhysicalEntity
             id = "pixel_frame";
         end
         
+        function coords = coords(obj, varargin)
+            coords = obj(varargin{:});
+        end
+        
+        function obj = dbonds(obj, varargin)
+            disp("method BondPixelList.dbonds is not supported. Did you mean to use .bonds?");
+        end
+        
+        function bonds = bonds(obj, varargin)
+            bonds = obj.lookup1(class(Bond), "pixel_bondID", "bond_id", varargin{:});
+        end
+        
         function pixels = orig(obj, idx)
             % gets the full coordinates of a particular pixel
             % input - idx: the indices to fetch
