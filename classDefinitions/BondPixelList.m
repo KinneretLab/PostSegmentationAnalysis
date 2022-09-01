@@ -60,35 +60,31 @@ classdef BondPixelList < PhysicalEntity
             bonds = obj.lookup1(class(Bond), "pixel_bondID", "bond_id", varargin{:});
         end
         
-        function pixels = orig(obj, idx)
+        function pixels = orig(obj, varargin)
             % gets the full coordinates of a particular pixel
             % input - idx: the indices to fetch
             if all(size(obj) == [1, 1])
-                if nargin == 1
-                    idx = 1:size(idx);
-                end
-                pixels = zeros(size(idx), 2);
-                pixels(:,1) = obj.orig_x_coord(idx);
-                pixels(:,2) = obj.orig_y_coord(idx);
+                pixels = zeros(length(obj.orig_x_coord), 2);
+                pixels(:,1) = obj.orig_x_coord;
+                pixels(:,2) = obj.orig_y_coord;
+                pixels = pixels(varargin{:});
             else
-                print('[ERROR] Method unavailable for arrays, please iterate');
+                disp('[ERROR] Method unavailable for arrays, please iterate');
             end
         end
         
-        function pixels = smooth(obj, idx)
+        function pixels = smooth(obj, varargin)
             % gets the full coordinates of a particular pixel, in the
             % recreated space
             % input - idx: the indices to fetch
             if all(size(obj) == [1, 1])
-                if nargin == 1
-                    idx = 1:size(idx);
-                end
-                pixels = zeros(size(idx), 3);
-                pixels(:,1) = obj.smooth_x_coord(idx);
-                pixels(:,2) = obj.smooth_y_coord(idx);
-                pixels(:,3) = obj.smooth_z_coord(idx);
+                pixels = zeros(length(obj.smooth_x_coord), 2);
+                pixels(:,1) = obj.smooth_x_coord;
+                pixels(:,2) = obj.smooth_y_coord;
+                pixels(:,3) = obj.smooth_y_coord;
+                pixels = pixels(varargin{:});
             else
-                print('[ERROR] Method unavailable for arrays, please iterate');
+                disp('[ERROR] Method unavailable for arrays, please iterate');
             end
         end
     end

@@ -105,24 +105,31 @@ classdef (Abstract) PhysicalEntity < handle
     methods(Access = protected)
         
         function phys_arr = lookup1(obj, clazz, requester_prop, target_prop, varargin)
-            index = containers.Map;
             phys_arr(size(obj, 1), size(obj, 2)) = feval(clazz);
-            for lookup_idx = 1:numel(obj)
-                entity = obj(lookup_idx);
-                if isnan(entity) || isnan(entity.(requester_prop))
-                    continue;
-                end
-                map_key = entity.experiment.folder_;
-                full_map_key = [map_key, '_', entity.frame];
-                if ~index.isKey(full_map_key)
-                    full_phys = entity.experiment.lookup(clazz);
-                    frame_num = [full_phys.(full_phys.frameID)];
-                    for frame_id=unique(frame_num)
-                        index([map_key, '_', frame_id]) = full_phys(frame_num == frame_id);
+            if numel(obj) > 6
+                index = containers.Map;
+                for lookup_idx = 1:numel(obj)
+                    entity = obj(lookup_idx);
+                    if isnan(entity) || isnan(entity.(requester_prop))
+                        continue;
                     end
+                    map_key = entity.experiment.folder_;
+                    full_map_key = [map_key, '_', entity.frame];
+                    if ~index.isKey(full_map_key)
+                        full_phys = entity.experiment.lookup(clazz);
+                        frame_num = [full_phys.(full_phys.frameID)];
+                        for frame_id=unique(frame_num)
+                            index([map_key, '_', frame_id]) = full_phys(frame_num == frame_id);
+                        end
+                    end
+                    frame_filtered_phys = index(full_map_key);
+                    phys_arr(lookup_idx) = frame_filtered_phys([frame_filtered_phys.(target_prop)] == entity.(requester_prop));
                 end
-                frame_filtered_phys = index(full_map_key);
-                phys_arr(lookup_idx) = frame_filtered_phys([frame_filtered_phys.(target_prop)] == entity.(requester_prop));
+            else
+                for lookup_idx = 1:numel(obj)
+                    target_phys = obj(lookup_index).experiment.lookup(clazz);
+                    phys_arr(lookup_idx) = target_phys([target_phys.(target_prop)] == obj(lookup_index).(requester_prop));
+                end
             end
             % filter result and put it into result_arr
             if nargin > 4
@@ -134,24 +141,31 @@ classdef (Abstract) PhysicalEntity < handle
             if length(obj) ~= numel(obj)
                 disp("multi-value lookup applied on a 2D matrix. This is illegal. Please flatten and re-apply.");
             end
-            index = containers.Map;
             lookup_result = cell(size(obj));
-            for lookup_idx = 1:numel(obj)
-                entity = obj(lookup_idx);
-                if isnan(entity) || isnan(entity.(requester_prop))
-                    continue;
-                end
-                map_key = entity.experiment.folder_;
-                full_map_key = [map_key, '_', entity.frame];
-                if ~index.isKey(full_map_key)
-                    full_phys = entity.experiment.lookup(clazz);
-                    frame_num = [full_phys.(full_phys.frameID)];
-                    for frame_id=unique(frame_num)
-                        index([map_key, '_', frame_id]) = full_phys(frame_num == frame_id);
+            if numel(obj) > 6
+                index = containers.Map;
+                for lookup_idx = 1:numel(obj)
+                    entity = obj(lookup_idx);
+                    if isnan(entity) || isnan(entity.(requester_prop))
+                        continue;
                     end
+                    map_key = entity.experiment.folder_;
+                    full_map_key = [map_key, '_', entity.frame];
+                    if ~index.isKey(full_map_key)
+                        full_phys = entity.experiment.lookup(clazz);
+                        frame_num = [full_phys.(full_phys.frameID)];
+                        for frame_id=unique(frame_num)
+                            index([map_key, '_', frame_id]) = full_phys(frame_num == frame_id);
+                        end
+                    end
+                    frame_filtered_phys = index(full_map_key);
+                    lookup_result{lookup_idx} = frame_filtered_phys([frame_filtered_phys.(target_prop)] == entity.(requester_prop));
                 end
-                frame_filtered_phys = index(full_map_key);
-                lookup_result{lookup_idx} = frame_filtered_phys([frame_filtered_phys.(target_prop)] == entity.(requester_prop));
+            else
+                for lookup_idx = 1:numel(obj)
+                    target_phys = obj(lookup_index).experiment.lookup(clazz);
+                    lookup_result{lookup_idx} = target_phys([target_phys.(target_prop)] == obj(lookup_index).(requester_prop));
+                end
             end
             sizes = cellfun(@(result) (length(result)), lookup_result);
             phys_arr(length(obj), max(sizes)) = feval(clazz);
@@ -169,7 +183,7 @@ classdef (Abstract) PhysicalEntity < handle
             obj_to_index = obj(index_flag);
             if ~isempty(obj_to_index)
                 fprintf("Indexing %s for %d %ss\n", prop, length(obj_to_index), class(obj_to_index(1)));
-                index_result = lookup_func(obj(index_flag));
+                index_result = lookup_func(obj(index_flag)');
                 for i=1:size(index_result, 1)
                     result_row = index_result(i, :);
                     obj_to_index(i).(prop) = unique(result_row(~isnan(result_row)));
@@ -179,6 +193,9 @@ classdef (Abstract) PhysicalEntity < handle
             phys_arr(length(obj), max(sizes)) = feval(clazz);
             for i=1:length(obj)
                 phys_arr(i, 1:sizes(i)) = obj(i).(prop);
+            end
+            if numel(phys_arr) == numel(obj)
+                phys_arr = reshape(phys_arr, size(obj));
             end
             % filter result and put it into result_arr
             if nargin > 4

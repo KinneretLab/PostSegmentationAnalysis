@@ -1,4 +1,3 @@
-clear all; close all;
 addpath('classDefinitions');
 % generic global search for a particular folder; works independent of user
 search_path = '../*/natsortfiles';
@@ -7,33 +6,37 @@ while isempty(dir(search_path))
 end
 addpath(dir(search_path).folder)
 
-mainDir='Z:\Analysis\users\Projects\Noam\Workshop\\timepoints'; % Main directory for movie you are analysing.
+mainDir='Z:\Analysis\users\Liora\Movie_Analysis\2021_07_26\2021_07_26_pos2'; % Main directory for movie you are analysing.
 cellDir = [mainDir,'\Cells\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
-segDir = [cellDir,'Inference\2022_01_11_CEE3_CEE5_CEE1E_CEE1E_CEE6']; % Segmentation folder.
+segDir = [cellDir,'Inference\2022_07_01_CEE3_CEE5_CEE1E_CEE1E_CEE6']; % Segmentation folder.
 
 % various visual configurations for the result images
 isBinary = true; % whether binary score images should be saved or a more continuous variant with a variable color.
 darken = false; % whether the cell coloring should be darked overall so the raw image can be more visible
 erodeCells = true; % whether there should be a buffer space between the indicators of each cell
-showBorders = false; % whether the automatic segmentatio borders should be shown (in yellow)
+showBorders = true; % whether the automatic segmentatio borders should be shown (in yellow)
 rawInWhite = true; % show the raw image in white instead of blue (channel-wise)
 
-cd(cellDir);
-fullCellData = Experiment(cellDir).cells;
+fullCellData = Experiment.load(cellDir).cells;
 
 subDirs = dir(segDir);
 subDirs = subDirs([subDirs.isdir] & ~strcmp({subDirs.name},'.') & ~strcmp({subDirs.name},'..'));
 subDirNames = natsortfiles({subDirs.name});
 
 % load all frames into memory
-loadedFrames = cell(length(subDirs), 2);
-disp('loading frames...');
-for i = 1:length(subDirNames)
-    dirName = subDirNames{i};
-    % get all the images
-    wireframe = imread(fullfile(segDir, dirName, 'handCorrection.tif'));
-    loadedFrames{i, 1} = wireframe(:, :, 1);
-    loadedFrames{i, 2} = imread(fullfile(cellDir, 'Raw Cortices', dirName + ".tiff"));
+if ~exist('loadedFrames', 'var')
+    loadedFrames = cell(length(subDirs), 2);
+    disp('loading frames...');
+    for i = 1:length(subDirNames)
+        dirName = subDirNames{i};
+        % get all the images
+        wireframe = imread(fullfile(segDir, dirName, 'handCorrection.tif'));
+        loadedFrames{i, 1} = wireframe(:, :, 1);
+        loadedFrames{i, 2} = imread(fullfile(cellDir, 'Raw Cortices', dirName + ".tiff"));
+        if mod(i, 50) == 0
+            fprintf("%d/%d images done\n", i, length(subDirNames));
+        end
+    end
 end
 
 imgSize = size(loadedFrames{1, 1});
@@ -74,7 +77,12 @@ for imgIdx = 1:length(subDirs)
 end
 
 function [fakeImg, cellImg] = fillScore(cellData, segImg)
-    rawMask = 255 * uint8(imfill(imbinarize(segImg(:,:,1)), double(cellData.outline.orig(1))) - imbinarize(segImg(:,:,1)));
+    outline = cellData.outline.outline_; % indexes outline
+    rawMask = uint8(zeros(size(segImg)));
+    for i=1:size(outline, 1)
+        rawMask(outline(i,1), outline(i,2)) = 1;
+    end
+    rawMask = 255 * uint8(imfill(rawMask, 'holes'));
     if cellData.confidence >= 0.5
         cellImg = rawMask;
         fakeImg = uint8(zeros(size(segImg)));
