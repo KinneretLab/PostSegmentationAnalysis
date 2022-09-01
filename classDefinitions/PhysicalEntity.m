@@ -127,6 +127,9 @@ classdef (Abstract) PhysicalEntity < handle
                 end
             else
                 for lookup_idx = 1:numel(obj)
+                    if isnan(obj(lookup_idx)) || isnan(obj(lookup_idx).(requester_prop))
+                        continue;
+                    end
                     target_phys = obj(lookup_idx).experiment.lookup(clazz);
                     phys_arr(lookup_idx) = target_phys([target_phys.(target_prop)] == obj(lookup_idx).(requester_prop));
                 end
@@ -163,6 +166,9 @@ classdef (Abstract) PhysicalEntity < handle
                 end
             else
                 for lookup_idx = 1:numel(obj)
+                    if isnan(obj(lookup_idx)) || isnan(obj(lookup_idx).(requester_prop))
+                        continue;
+                    end
                     target_phys = obj(lookup_idx).experiment.lookup(clazz);
                     lookup_result{lookup_idx} = target_phys([target_phys.(target_prop)] == obj(lookup_idx).(requester_prop));
                 end
