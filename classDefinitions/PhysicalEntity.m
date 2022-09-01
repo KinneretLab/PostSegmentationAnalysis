@@ -106,7 +106,7 @@ classdef (Abstract) PhysicalEntity < handle
         
         function phys_arr = lookup1(obj, clazz, requester_prop, target_prop, varargin)
             phys_arr(size(obj, 1), size(obj, 2)) = feval(clazz);
-            if numel(obj) > 6
+            if numel(obj) > 2
                 index = containers.Map;
                 for lookup_idx = 1:numel(obj)
                     entity = obj(lookup_idx);
@@ -127,8 +127,8 @@ classdef (Abstract) PhysicalEntity < handle
                 end
             else
                 for lookup_idx = 1:numel(obj)
-                    target_phys = obj(lookup_index).experiment.lookup(clazz);
-                    phys_arr(lookup_idx) = target_phys([target_phys.(target_prop)] == obj(lookup_index).(requester_prop));
+                    target_phys = obj(lookup_idx).experiment.lookup(clazz);
+                    phys_arr(lookup_idx) = target_phys([target_phys.(target_prop)] == obj(lookup_idx).(requester_prop));
                 end
             end
             % filter result and put it into result_arr
@@ -142,7 +142,7 @@ classdef (Abstract) PhysicalEntity < handle
                 disp("multi-value lookup applied on a 2D matrix. This is illegal. Please flatten and re-apply.");
             end
             lookup_result = cell(size(obj));
-            if numel(obj) > 6
+            if numel(obj) > 2
                 index = containers.Map;
                 for lookup_idx = 1:numel(obj)
                     entity = obj(lookup_idx);
@@ -163,8 +163,8 @@ classdef (Abstract) PhysicalEntity < handle
                 end
             else
                 for lookup_idx = 1:numel(obj)
-                    target_phys = obj(lookup_index).experiment.lookup(clazz);
-                    lookup_result{lookup_idx} = target_phys([target_phys.(target_prop)] == obj(lookup_index).(requester_prop));
+                    target_phys = obj(lookup_idx).experiment.lookup(clazz);
+                    lookup_result{lookup_idx} = target_phys([target_phys.(target_prop)] == obj(lookup_idx).(requester_prop));
                 end
             end
             sizes = cellfun(@(result) (length(result)), lookup_result);
