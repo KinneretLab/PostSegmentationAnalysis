@@ -19,7 +19,7 @@ classdef PlotUtils
         end
         
         function func = pSqrtA(axis)
-            func = @(cell) ([cell.perimeter] / sqrt([cell.area]));
+            func = @(cell) ([cell.perimeter] ./ sqrt([cell.area]));
             if nargin == 1
                 func = PlotUtils.axify(func, axis);
             end

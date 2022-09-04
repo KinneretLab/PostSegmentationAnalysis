@@ -10,11 +10,13 @@ addpath(dir(search_path).folder)
 mainDir='\\phhydra\phhydraB\Analysis\users\Liora\Movie_Analysis\2021_07_26\2021_07_26_pos2\'; % Main directory for movie you are analysing.
 cellDir = [mainDir,'\Cells\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
 segDir = [cellDir,'AllSegmented\']; % Segmentation folder.
-infDir = [cellDir,'\Inference\2022_04_26_CEE3_CEE5_CEE1E_CEE1E_CEE6\']; % Inference images folder.
+
+subDirs = dir([cellDir, '\Inference\']);
+infDir = [cellDir,'\Inference\',subDirs(3).name,'\']; % Inference images folder.
 
 training = false;
 
-fullCellData = Experiment(cellDir).cells;
+fullCellData = Experiment.load(cellDir).cells;
 
 subDirs = dir(segDir);
 subDirs = subDirs([subDirs.isdir] & ~strcmp({subDirs.name},'.') & ~strcmp({subDirs.name},'..'));
