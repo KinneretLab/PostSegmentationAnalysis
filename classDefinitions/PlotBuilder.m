@@ -1,4 +1,4 @@
-classdef PlotBuilder < FigureBuilder
+  classdef PlotBuilder < FigureBuilder
     % PLOTBUILDER A tool used to draw the relationship between one of two
     % variables.
     %   In particular, the plot builder compares two aspects of a set of
@@ -813,7 +813,7 @@ classdef PlotBuilder < FigureBuilder
             %      char[] or string: this is translated into a function
             %      fetching the corresponding property. 
             %      For example, for f = XFUNCTION("frame"):
-            %         f(entity) = entity.frame
+            %         f(entity) = 
             %      function: this is simply set. Function must accept a
             %      PhysicalEntity and return a double.
             %      For example, for f = XFUNCTION(myFunction):
