@@ -1,9 +1,24 @@
 classdef PlotUtils
-    %PlotUtils a collection of utility functions regarding plotting
-    %   Details? what are those?
+    % PLOTUTILS Additional commonly used functions to be used in the PLOTBUILDER
+    %   This is a set of non-base functions that extend the functionality
+    %   available on PlotBuilder
     
     methods (Static)
         function func = axify(base, axis)
+            % AXIFY automatically shift a function for the X axis to work with other axes (or the default treatment of them)
+            % Parameters:
+            %   base: char[], string, double, function, BulkFunc
+            %      The original function (or property name) to axify
+            %      All types will be translated into some form of
+            %      double(PhysicalEntity).
+            %   axis: string
+            %      "x": identity, does nothing
+            %      "y": applies a mean on the result of the function
+            %      "err": find the standard deviation for the result of the
+            %      function.
+            if isa(base, 'char') || isa(base, 'string')
+                base = PlotBuilder.property(base);
+            end
             if nargin == 2
                 switch axis
                     case "x"
@@ -18,7 +33,14 @@ classdef PlotUtils
             end
         end
         
-        function func = pSqrtA(axis)
+        function func = shape(axis)
+            % SHAPE The shape property of the cell
+            % Parameters:
+            %   axis (Optional): string
+            %      "x" (default): gets the function without modifications
+            %      "y": applies a mean on the result of the function
+            %      "err": find the standard deviation for the result of the
+            %      function.
             func = @(cell) ([cell.perimeter] ./ sqrt([cell.area]));
             if nargin == 1
                 func = PlotUtils.axify(func, axis);
@@ -26,7 +48,58 @@ classdef PlotUtils
             func = BulkFunc(func);
         end
         
+        function func = cellFiberAngle(axis)
+            % CELLFIBERANGLE The angle between cell elongation adn fibers
+            % on the tangential plane
+            % Parameters:
+            %   axis (Optional): string
+            %      "x" (default): gets the function without modifications
+            %      "y": applies a mean on the result of the function
+            %      "err": find the standard deviation for the result of the
+            %      function.
+            
+            orientCellAngle =  @(cell)( mod(atan([cell.elong_yy]./[cell.elong_xx])+pi,pi)); % projected cell orientation from the projected elongation vector
+            projDifOrient  =  @(cell)( min(abs([cell.fibre_orientation]-  orientCellAngle(cell) ),pi-abs([cell.fibre_orientation]-orientCellAngle(cell)))); % differnece between fiber angle and cell angle on projected xy plane
+            func =  @(cell) (mod(atan(tan (projDifOrient(cell)).*abs([cell.norm_z])),pi)); % real angle of cell orientation  vs fiber in tangential plane
+
+            if nargin == 1
+                func = PlotUtils.axify(func, axis);
+            end
+            func = BulkFunc(func);
+        end
+        
+        function func = numNeighbors(axis)
+            % NUMNEIGHBORS The number of neighbors the cell has
+            % Parameters:
+            %   axis (Optional): string
+            %      "x" (default): gets the function without modifications
+            %      "y": applies a mean on the result of the function
+            %      "err": find the standard deviation for the result of the
+            %      function.
+            func =  @(cell_arr) sum(~isnan(cell_arr.neighbors), 2)';
+            if nargin == 1
+                func = PlotUtils.axify(func, axis);
+            end
+            func = BulkFunc(func);
+        end
+        
+        
         function func = xNormalize(x_function, t_prequisite)
+            % normalize the result of x_function by the mean of the entities that share a property (sibilings).
+            % This is only really relevant for the xFunction.
+            % Parameters:
+            %   x_function: char[], string, double(PhysicalEntity), or BulkFunc
+            %      this is the aspect of the entity we want to normalize
+            %      and display.
+            %   t_prequisite: char[], string, boolean(PhysicalEntity[], PhysicalEntity)
+            %      the function to use to find the sibilings of the given
+            %      object.
+            %      The choice of function can be very important, as this
+            %      decides how efficient this program will be.
+            %      char[], string (and BulkFunc once that's implemented) yield the fastest methods
+            %      double(PhysicalEntity) is fast, but not optimal
+            %      boolean(PhysicalEntity[], PhysicalEntity) is incredibly
+            %      slow and should be avoided.
             if isa(x_function, 'char') || isa(x_function, 'string')
                 x_function = PlotBuilder.property(x_function);
             end
@@ -36,6 +109,21 @@ classdef PlotUtils
         end
         
         function [result, map] = getOrStore(obj, obj_arr, map, t_prequisite, mean_function)
+            % GETORSTORE a small utility function that gets the property from a map or calculates it.
+            % Parameters:
+            %   obj: PhysicalEntity
+            %      the object to get the sibilings of
+            %   obj_arr: PhysicalEntity[]
+            %      the array of objects to lookup for the shared property
+            %   map: Map
+            %      the map to search for the pre-existing property
+            %   t_prequisite: char[], string, boolean(PhysicalEntity[], PhysicalEntity)
+            %      the function to use to find the sibilings of the given
+            %      object.
+            %   mean_function: double(PhysicalArray[])
+            %      a function used to calculate the return value after the
+            %      sibilings were retrieved. Sometimes stored in map,
+            %      depending on t_prequisite.
             map_key = [obj.experiment.folder_, '_', class(obj), '_', length(obj_arr)];
             if isa(t_prequisite, 'char') || isa(t_prequisite, 'string')
                 % property algorithm - very fast
@@ -75,6 +163,21 @@ classdef PlotUtils
         end
         
         function func = divide(arr, idx_function, x_function, axis)
+            % DIVIDE upgrades xFunction to also divide by an entry in an array according to some criterion
+            % Parameters:
+            %   arr: double[]
+            %      the array to divide the result of xFunction by.
+            %   idx_function: char[], string, or int(PhysicalEntity)
+            %      the functino to apply on the entity to find which number
+            %      in the array to divide by.
+            %   x_function: char[], string, double(PhysicalEntity), or BulkFunc
+            %      this is the aspect of the entity we want to normalize
+            %      and display.
+            %   axis (Optional): string
+            %      "x" (default): gets the function without modifications
+            %      "y": applies a mean on the result of the function
+            %      "err": find the standard deviation for the result of the
+            %      function.
             if isa(idx_function, 'char') || isa(idx_function, 'string')
                 idx_function = PlotBuilder.property(idx_function);
             end
@@ -88,6 +191,14 @@ classdef PlotUtils
         end
         
         function fig_handles = sequenceWithTotal(plotter)
+            % SEQUENCEWITHTOTAL Plot a sequence graph, and add to it the general trendline of ALL frames
+            % basicaly it glues together the sequence variant and
+            % non-sequence variant. The general transline has a dashed
+            % form, and the graphs also change limits to accommedate the
+            % general trandline.
+            % Parameters:
+            %   plotter: PlotBuilder
+            %      the configurations to use to draw the graphs.
             fig_handles = plotter.sequence.draw;
             total_handle = plotter.sequence(false).draw;
             for i = 1:length(total_handle.CurrentAxes.Children)

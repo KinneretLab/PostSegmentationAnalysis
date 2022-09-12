@@ -1,40 +1,95 @@
 classdef Cell < PhysicalEntity
+    % CELL The base biological unit of life, and the focus of our work.
+    % Most of the graphing we do happens on this class type, ad there many
+    % phenomena relevant to cells.
+    % Cells have the biggest presence in any frame, and are the only
+    % objects that directly have a confidence score, which indicates how
+    % reliable they are for scienfitic study.
     properties
+        % the unique identifier of this CELL
+        % type: int
         cell_id
+        % the ID of the frame this CELL exists in
+        % type: int
         frame
+        % type: double
         center_x
+        % type: double
         center_y
+        % type: double
         center_z
+        % the geometrically corrected area of the cell, that is, how much space is occupies.
+        % type: double
         area
+        % type: double
         aspect_ratio
+        % the geometrically corrected perimeter of the cell, that is, how much space the outline occupies.
+        % type: double
         perimeter
+        % Does the cell exist at the edge of the animal?
+        % Set to 1 if the cell is next to the empty void, and 0 if it has a
+        % neighboring cell in every direction.
+        % type: boolean
         is_edge
+        % Does the cell's geometric center exist outside of the cell?
+        % Set to 1 if the cell's geometric center is outside the cell, and
+        % 0 if it is inside the cell.
+        % if this is set to 1, it is reasonable to assume the cell is fake.
+        % type: boolean
         is_convex
+        % type: double
         elong_xx
+        % type: double
         elong_yy
+        % type: double
         elong_zz
+        % type: double
         norm_x
+        % type: double
         norm_y
+        % type: double
         norm_z
+        % type: double
         fibre_orientation
+        % type: double
         fibre_localOP
+        % type: double
         fibre_coherence
+        % Defines how sure we are this cell really exists.
+        % values over 0.5 yield confidence the cell exists, while lower
+        % values indicate uncertainty for the bond.
+        % type: double (0.0-1.0)
         confidence
+        % The lower X coordinate of the rectangle (bounding box) containing the pixels of the cell in its frame.
+        % type: int
         bb_xStart
+        % The lower Y coordinate of the rectangle (bounding box) containing the pixels of the cell in its frame.
+        % type: int
         bb_yStart
+        % The higher X coordinate of the rectangle (bounding box) containing the pixels of the cell in its frame.
+        % type: int
         bb_xEnd
+        % The higher Y coordinate of the rectangle (bounding box) containing the pixels of the cell in its frame.
+        % type: int
         bb_yEnd
+        % the list of pixel coordinates indicating the edges of the cell
+        % you can calculate these values for retrieval using CELL#OUTLINE()
+        % then retrieve them from this variable.
+        % type: double[][]
         outline_
+        % An internal vairblae listing the cells that share a border with this cell.
+        % you can access this using CELL#NEIGHBORS
+        % type: CELL[]
         neighbors_
     end
     
     methods
         
         function obj = Cell(varargin)
-            if ~isempty(varargin)
-                varargin = [varargin(:)', {'confidence'}, {nan}];
-            end
-            obj@PhysicalEntity(varargin)
+            % CELL construct an array of cells.
+            % This is slightly modified since it has a default value for
+            % confidence.
+            obj@PhysicalEntity([varargin(:)', {'confidence'}, {nan}])
         end
 
         function id = uniqueID(~)
@@ -42,50 +97,83 @@ classdef Cell < PhysicalEntity
         end
         
         function cells = neighbors(obj, varargin)
+            % NEIGHBORS Find all the cells that share a border with this cell.
+            % That is, this only has level 1 neighbors.
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            % Return type: CELL[]
             cells = obj.getOrCalculate(class(Cell), "neighbors_", @(cell_arr) cell_arr.dBonds.conjugate.cells, varargin{:});
         end
 
         function id_in_frame = idInFrame(obj)
-            w = floor((sqrt(8 * obj.cell_id + 1) - 1) / 2);
+            % IDINFRAME find the unique ID of this cell, but within the frame it exists in.
+            % This allows or a more consistent and use ordering of the
+            % cells for the cost of uniqueness for the entire experiment.
+            % Could be useful for tracking.
+            % Return type: int[]
+            w = floor((sqrt(8 * [obj.cell_id] + 1) - 1) / 2);
             t = (w .^ 2 + w) / 2;
-            id_in_frame = w - obj.cell_id + t;
+            id_in_frame = w - [obj.cell_id] + t;
         end
 
         function strID = strID(obj)
-            strID = obj.experiment.frames([obj.experiment.frames.frame] == obj.frame).frame_name + "_" + obj.idInFrame;
+            % STRID find the unique name (not ID) of this cell.
+            % This is more useful for file-system operations like saving
+            % the cell image in a seperate file.
+            % Return type: string[]
+            strID = convertCharsToStrings({obj.frames.frame_name}) + "_" + obj.idInFrame;
         end
 
         function bonds = bonds(obj, varargin)
+            % VERTICES calculates the bonds each cell in this array borders (or touches).
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            % Return type: BOND[]
             bonds = obj.dBonds.bonds(varargin{:});
         end
 
         function vertices = vertices(obj, varargin)
+            % VERTICES calculates the vertices each cell in this array borders (or touches).
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            % Return type: VERTEX[]
             vertices = obj.dBonds.startVertices(varargin{:});
         end
         
         function cells = cells(obj, varargin)
+            % CELLS the identity function
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            % Return type: CELL[]
             cells = obj(varargin{:});
         end
 
-        function obj = outline(obj) % Currently runs on a 1-dimensional list because of dBonds function.
-            disp(sprintf('Getting directed bonds'));
+        function obj = outline(obj)
+            % OUTLINE Calculates the list of pixel coordinates indicating the edges of the cell
+            % you can retrieve them from the variable CELL#outline_.
+            % Currently runs on a 1-dimensional list because of dBonds function.
+            fprintf('Getting directed bonds');
             theseDBonds = dBonds(obj); % Currently runs on a 1-dimensional list
             dbArray = [obj.experiment];
             dbFolderArray = {dbArray.folder_};
             [~,ia,ic] = unique(dbFolderArray);
             for i=1:length(ia)
-                disp(sprintf('Creating bond array'));
+                fprintf('Creating bond array\n');
                 bondArray{i} = dbArray(ia(i)).bonds;
-                disp(sprintf('Creating bond pixel list array'));
-                pixelListArray{i} = dbArray(ia(i)).bond_pixel_lists;
-                disp(sprintf('Creating vertex array'));
+                fprintf('Creating bond pixel list array\n');
+                pixelListArray{i} = dbArray(ia(i)).bondPixelLists;
+                fprintf('Creating vertex array\n');
                 vertexArray{i} = dbArray(ia(i)).vertices;
 
             end
             flags = [];
             for i=1:length(obj)
                 if mod(i,50) == 0
-                    disp(sprintf(['Finding outline for cell # ',num2str(i)]));
+                    fprintf('Finding outline for cell #%d \n', i);
                 end
                 orderedDBonds = DBond();
                 orderedDBonds(1) = theseDBonds(i,1);

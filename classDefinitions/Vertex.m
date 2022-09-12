@@ -1,14 +1,25 @@
 classdef Vertex < PhysicalEntity
+    % VERTEX A point on the graph that represents one of the edges of a bond.
+    % Vertices acts as the oundray both between 3 cells or more, or between 3
+    % bonds (or dbonds) or more.
+    % At the end of the day, this is just a physical point.
     properties
+        % the ID of the frame this Vertex exists in
+        % type: int
         frame
+        % the unique identifier of this entity
+        % type: int
         vertex_id
+        % the pixel X coordinate of the vertex in the image
         x_pos
+        % the pixel Y coordinate of the vertex in the image
         y_pos
     end
     
     methods
         
         function obj = Vertex(varargin)
+            % VERTEX construct an array of Vertexes. Nothing special.
             obj@PhysicalEntity(varargin)
         end
 
@@ -17,12 +28,26 @@ classdef Vertex < PhysicalEntity
         end
         
         function vertices = vertices(obj, varargin)
+            % VERTICES the identity function
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            % Return type: VERTEX[]
             vertices = obj(varargin{:});
         end
         
         function bonds = bonds(obj, varargin)
-            dbonds = [obj.dbonds, obj.lookupMany(clazz, "vertex_id", "vertex2_id")];
+            % BONDS calculates the bonds each vertex in this array touches.
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            % Return type: BOND[]
+            
+            % the relevant DBonds here are both those that start from here
+            % and those that point to it.
+            dbonds = [obj.dbonds, obj.lookupMany(class(DBond), "vertex_id", "vertex2_id")];
             bonds = dbonds.bonds;
+            % unique value filtering
             for i=1:length(obj)
                 temp = unique(bonds(i,:));
                 temp = temp(~isnan(temp));
@@ -36,8 +61,17 @@ classdef Vertex < PhysicalEntity
         end
         
         function cells = cells(obj, varargin)
+            % BONDS calculates the cells each vertex in this array touches.
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            % Return type: CELL[]
+            
+            % the relevant DBonds here are both those that start from here
+            % and those that point to it.
             dbonds = [obj.dbonds, obj.lookupMany(clazz, "vertex_id", "vertex2_id")];
             cells = dbonds.cells;
+            % unique value filtering
             for i=1:length(obj)
                 temp = unique(cells(i,:));
                 temp = temp(~isnan(temp));

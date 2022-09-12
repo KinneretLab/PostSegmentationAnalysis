@@ -59,6 +59,11 @@ classdef PlotBuilder < FigureBuilder
         % Controls the positions of the vertical graph edges.
         % type: double[2]
         y_lim_
+        % An additional filter to apply on the data before starting the calculation at all.
+        % This is not neccesary (you can apply this beforehand in ADDDATA,
+        % but is a very useful utility.
+        % type: boolean[](PhysicalEntity[])
+        filter_function_
         % Controls the type of grid displayed on the graph.
         % type: string
         grid_
@@ -138,6 +143,14 @@ classdef PlotBuilder < FigureBuilder
             func = BulkFunc(@(obj_arr, plotter) (nanstd(plotter.filter([obj_arr.(prop_name)]))));
         end
         
+        function func = logical(const_value)
+            % STD a constant function that gets the standard deviation of corresponding property from the entities.
+            %   It can be used for a few things, but it is used for error
+            %   functions, and filtering.
+            % returns: double[](PhysicalEntity[]) or int[](PhysicalEntity[])
+            func = BulkFunc(@(entity_arr) const_value & true(size(entity_arr)));
+        end
+        
         function ret = smart_apply(func, varargin)
             % SMART_APPLY applies the function with the given arguments,
             % using only as many arguments as it is allowed to use.
@@ -169,6 +182,7 @@ classdef PlotBuilder < FigureBuilder
             obj.y_label_bold_     = 'normal';
             obj.y_label_italic_   = 'normal';
             obj.y_calibration_    = 1;
+            obj.filter_function_  = PlotBuilder.logical(1);
             obj.title_            = "plot figure";
             obj.grid_             = "off";
             obj.data_             = {};
@@ -209,21 +223,31 @@ classdef PlotBuilder < FigureBuilder
             %   -1.
             % This method is used inside the PLOTBUILDER.DRAW method.
             
+            % step 0: filter the data using the object filter provided
+            % note: full_data is a cell array, where each cell is a list of
+            % physical entities to put in the same graph.
+            if isa(obj.filter_function_, 'BulkFunc')
+                % BulkFunc indicate that the data can be calculated using
+                % an array function, which is much more efficient than a
+                % for loop.
+                full_data = cellfun(@(phys_arr) phys_arr(obj.filter_function_(phys_arr)), obj.data_, 'UniformOutput', false);
+            else
+                % the slow variant for filtering, which
+                % does an iteration over all entries. Can take a while.
+                full_data = cellfun(@(phys_arr) arrayfun(@(phys) phys_arr(obj.filter_function_(phys))), obj.data_, 'UniformOutput', false);
+            end
             % step 1: calculate the x coordinate of all points.
             % this can be used to sort the data out.
             if isa(obj.x_function_, 'BulkFunc')
                 % BulkFunc indicate that the data can be calculated using
                 % an array function, which is much more efficient than a
                 % for loop.
-                x_data = cellfun(@(obj_arr) obj.smart_apply(obj.x_function_, obj_arr, obj, obj_arr), obj.data_, 'UniformOutput', false);
+                x_data = cellfun(@(obj_arr) obj.smart_apply(obj.x_function_, obj_arr, obj, obj_arr), full_data, 'UniformOutput', false);
             else
                 % the slow variant for calculating x coordinates, which
                 % does an iteration over all entries. Can take a while.
-                x_data = cellfun(@(obj_arr) (arrayfun(@(o) obj.smart_apply(obj.x_function_, o, obj, obj_arr), obj_arr)), obj.data_, 'UniformOutput', false);
+                x_data = cellfun(@(obj_arr) (arrayfun(@(o) obj.smart_apply(obj.x_function_, o, obj, obj_arr), obj_arr)), full_data, 'UniformOutput', false);
             end
-            % note: full_data is a cell array, where each cell is a list of
-            % physical entities to put in the same graph.
-            full_data = obj.data_;
             % outlier filtering, which depends on the mode.
             if obj.outliers_ ~= "none"
                 % get the outlier flags for each set of points on the
@@ -903,6 +927,49 @@ classdef PlotBuilder < FigureBuilder
             end 
             if isa(func, 'function_handle') || isa(func, 'BulkFunc')
                 obj.y_err_function_ = func;
+            end
+        end
+        
+        function obj = filterFunction(obj, func)
+            % FILTERFUNCTION Add a filter to apply on the data before starting the calculation at all.
+            % This is not neccesary (you can apply this beforehand in ADDDATA,
+            % but is a very useful utility.
+            % Parameters:
+            %   func: char[], string, double, function, BulkFunc
+            %      The function (or property name) to use to determine the
+            %      data to keep for the calculation (1 is keep, 0 is
+            %      ignore).
+            %      All types will be translated into some form of
+            %      boolean[](PhysicalEntity[]).
+            %      no args: the true function: @(entity_arr) ones(size(entity_arr))
+            %      logical or double: this is translated into the constant function. 
+            %      For example, for f = FILTERFUNCTION(false):
+            %         f(entity_arr) = false(size(entity_arr))
+            %      char[] or string: this is translated into a function as
+            %      if it is literal MATLAB code. You can refer to the input
+            %      array using "obj_arr".
+            %      For example, for f = FILTERFUNCTION("[obj_arr.confidence] > 0.5"):
+            %         f(entity_arr) = [entity_arr.confidence] > 0.5
+            %      function or BulkFunc: this is simply set. Function must accept a
+            %      PhysicalEntity[] array and return a boolean[].
+            %      For example, for f = FILTERFUNCTION(myFunction):
+            %         f(entity_arr) = myFunction(entity_arr)
+            %      Default: the true function: @(entity_arr) ones(size(entity_arr))
+            if nargin == 0
+                obj.filter_function_ = PlotBuilder.logical(true);
+            else
+                if isa(func, 'char') || isa(func, 'string')
+                    if ~contains(func, "obj_arr")
+                        warning("[WARN] your filter string does not contain obj_arr. This probably will lead to errors.");
+                    end
+                    obj.filter_function_ = BulkFunc(@(obj_arr) eval(func)); % WARNING: do NOT rename obj_arr!
+                end
+                if isa(func, 'logical') || isa(func, 'double')
+                    obj.filter_function_ = PlotBuilder.logical(logical(func));
+                end 
+                if isa(func, 'function_handle') || isa(func, 'BulkFunc')
+                    obj.filter_function_ = func;
+                end
             end
         end
         

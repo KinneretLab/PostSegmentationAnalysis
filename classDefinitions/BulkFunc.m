@@ -1,5 +1,5 @@
 classdef BulkFunc
-    %BulkFunc An object oriented representation of efficient functions
+    % BULKFUNC An object oriented representation of efficient functions
     % - functions that apply on entire arrays. Useful as xFunction.
     
     properties
