@@ -84,6 +84,14 @@ classdef Vertex < PhysicalEntity
             end
         end
         
+        function plot_pixels = plot_pixels(obj)
+            plot_pixels = {};
+            obj = flatten(obj);
+            for i=1:length(obj)
+                plot_pixels{i} = [obj(i).x_pos,obj(i).y_pos];
+            end
+        end
+        
     end
     
 end

@@ -81,6 +81,7 @@ classdef Cell < PhysicalEntity
         % you can access this using CELL#NEIGHBORS
         % type: CELL[]
         neighbors_
+        plot_pixels_
     end
     
     methods
@@ -152,10 +153,13 @@ classdef Cell < PhysicalEntity
             cells = obj(varargin{:});
         end
 
+
+
         function obj = outline(obj)
             % OUTLINE Calculates the list of pixel coordinates indicating the edges of the cell
             % you can retrieve them from the variable CELL#outline_.
-            % Currently runs on a 1-dimensional list because of dBonds function.
+            % Currently runs on a 1-dimensional list, if multidiemnsional array is given, it is first flattened.
+            obj = flatten(obj);
             fprintf('Getting directed bonds');
             theseDBonds = dBonds(obj); % Currently runs on a 1-dimensional list
             dbArray = [obj.experiment];
@@ -175,47 +179,71 @@ classdef Cell < PhysicalEntity
                 if mod(i,50) == 0
                     fprintf('Finding outline for cell #%d \n', i);
                 end
-                orderedDBonds = DBond();
-                orderedDBonds(1) = theseDBonds(i,1);
-                orderedBonds = Bond();
-                % Order cell's dbonds
-                for j=1:(length(theseDBonds(i,:))-1)
-                    nextDBond = orderedDBonds(j).left_dbond_id;
-                    cellDBondIDs = [theseDBonds(i,:).dbond_id];
-                    flag = (cellDBondIDs == nextDBond);
-                    orderedDBonds(j+1) = theseDBonds(i,flag);
-                end
-                % Get ordered vertices
-                orderedVertices = [orderedDBonds.vertex_id];
-                % Get bonds for ordered dbonds:
-                for j=1:length(orderedDBonds)
-                    bondIDArray = [bondArray{ic(i)}.bond_id];
-                    thisID = orderedDBonds(j).bond_id;
-                    flag = (bondIDArray == thisID);
-                    orderedBonds(j) = bondArray{ic(i)}(flag);
-                end
-                % Get coordinates for each of the bonds, flip if necessary, and complete outline with vertices:
-                thisOutline = [];
-                for k=1:length(orderedBonds)
-                  thisID = orderedBonds(k).bond_id;
-                    bondIDArray = [pixelListArray{ic(i)}.pixel_bondID];
-                    flags = (bondIDArray == thisID);
-                    orderedBonds(k).pixel_list = pixelListArray{ic(i)}(flags);
-                    startVertex = vertexArray{ic(i)}([vertexArray{ic(i)}.vertex_id] == orderedVertices(k));
-                    if ~isempty(orderedBonds(k).pixel_list)
-                        [~,I] = min(sqrt((orderedBonds(k).pixel_list.orig_x_coord-startVertex.x_pos).^2 +(orderedBonds(k).pixel_list.orig_y_coord-startVertex.y_pos).^2));
-                        if I == 1
-                            theseCoords =  [orderedBonds(k).pixel_list.orig_x_coord,orderedBonds(k).pixel_list.orig_y_coord];
-                        else if I==length(orderedBonds(k).pixel_list.orig_x_coord)
-                                theseCoords =  flipud([orderedBonds(k).pixel_list.orig_x_coord,orderedBonds(k).pixel_list.orig_y_coord]);
-                            end
-                        end
-                        thisOutline = [thisOutline;[startVertex.x_pos,startVertex.y_pos];theseCoords];
-                    else
-                        thisOutline = [thisOutline;[startVertex.x_pos,startVertex.y_pos]];
+                if isempty(obj(i).outline_)
+                    orderedDBonds = DBond();
+                    orderedDBonds(1) = theseDBonds(i,1);
+                    orderedBonds = Bond();
+                    % Order cell's dbonds
+                    for j=1:(length(theseDBonds(i,:))-1)
+                        nextDBond = orderedDBonds(j).left_dbond_id;
+                        cellDBondIDs = [theseDBonds(i,:).dbond_id];
+                        flag = (cellDBondIDs == nextDBond);
+                        orderedDBonds(j+1) = theseDBonds(i,flag);
                     end
+                    % Get ordered vertices
+                    orderedVertices = [orderedDBonds.vertex_id];
+                    % Get bonds for ordered dbonds:
+                    for j=1:length(orderedDBonds)
+                        bondIDArray = [bondArray{ic(i)}.bond_id];
+                        thisID = orderedDBonds(j).bond_id;
+                        flag = (bondIDArray == thisID);
+                        orderedBonds(j) = bondArray{ic(i)}(flag);
+                    end
+                    % Get coordinates for each of the bonds, flip if necessary, and complete outline with vertices:
+                    thisOutline = [];
+                    for k=1:length(orderedBonds)
+                        thisID = orderedBonds(k).bond_id;
+                        bondIDArray = [pixelListArray{ic(i)}.pixel_bondID];
+                        flags = (bondIDArray == thisID);
+                        orderedBonds(k).pixel_list = pixelListArray{ic(i)}(flags);
+                        startVertex = vertexArray{ic(i)}([vertexArray{ic(i)}.vertex_id] == orderedVertices(k));
+                        if ~isempty(orderedBonds(k).pixel_list)
+                            [~,I] = min(sqrt((orderedBonds(k).pixel_list.orig_x_coord-startVertex.x_pos).^2 +(orderedBonds(k).pixel_list.orig_y_coord-startVertex.y_pos).^2));
+                            if I == 1
+                                theseCoords =  [orderedBonds(k).pixel_list.orig_x_coord,orderedBonds(k).pixel_list.orig_y_coord];
+                            else if I==length(orderedBonds(k).pixel_list.orig_x_coord)
+                                    theseCoords =  flipud([orderedBonds(k).pixel_list.orig_x_coord,orderedBonds(k).pixel_list.orig_y_coord]);
+                                end
+                            end
+                            thisOutline = [thisOutline;[startVertex.x_pos,startVertex.y_pos];theseCoords];
+                        else
+                            thisOutline = [thisOutline;[startVertex.x_pos,startVertex.y_pos]];
+                        end
+                    end
+                    obj(i).outline_ = thisOutline;
                 end
-                obj(i).outline_ = thisOutline;
+            end
+
+        end
+
+        function plot_pixels = plot_pixels(obj)
+            plot_pixels = {};
+            obj = flatten(obj);
+            sprintf('Getting cell outlines')
+            obj = outline(obj);
+            disp(sprintf('Finding pixels inside cell outlines'));
+            for i=1:length(obj)
+                if isempty(obj(i).plot_pixels_)
+                    minX = floor(min(obj(i).outline_(:,1)));
+                    maxX = ceil(max(obj(i).outline_(:,1)));
+                    minY = floor(min(obj(i).outline_(:,2)));
+                    maxY = ceil(max(obj(i).outline_(:,2)));
+                    [xq,yq] = meshgrid([minX:maxX],[minY:maxY]);
+                    in = inpolygon(xq,yq,obj(i).outline_(:,1),obj(i).outline_(:,2));
+                    obj(i).plot_pixels_ = [xq(in),yq(in)];
+
+                end
+                plot_pixels{i} = obj(i).plot_pixels_;
             end
 
         end

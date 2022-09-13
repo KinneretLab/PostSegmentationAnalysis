@@ -87,6 +87,14 @@ classdef Bond < PhysicalEntity
             coords = obj.getOrCalculate(clazz, "pixel_list", ...
                 @(bond_arr) bond_arr.lookup1(clazz, "bond_id", "pixel_bondID"), varargin{:});
         end
+        
+        function plot_pixels = plot_pixels(obj)
+            plot_pixels = {};
+            obj = flatten(obj);
+            for i=1:length(obj)
+            plot_pixels{i} = [obj(i).coords.orig_x_coord,obj(i).coords.orig_y_coord];
+            end
+        end
     end
     
     methods (Access = private)
