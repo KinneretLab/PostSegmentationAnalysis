@@ -231,15 +231,15 @@ classdef (Abstract) PhysicalEntity < handle
                     end
                     % to increase efficiency, we sort the search targets by
                     % frame.
-                    map_key = entity.experiment.folder_;
-                    full_map_key = [map_key, '_', entity.frame];
+                    map_key = entity.experiment.uniqueName;
+                    full_map_key = [map_key, ':', entity.frame];
                     if ~index.isKey(full_map_key)
                         % if the map is not aware of the frame, index the
                         % frame (and other frames in the experiment)
                         full_phys = entity.experiment.lookup(clazz);
                         frame_num = [full_phys.(full_phys.frameID)];
                         for frame_id=unique(frame_num)
-                            index([map_key, '_', frame_id]) = full_phys(frame_num == frame_id);
+                            index([map_key, ':', frame_id]) = full_phys(frame_num == frame_id);
                         end
                     end
                     % get all candidate results
@@ -299,15 +299,15 @@ classdef (Abstract) PhysicalEntity < handle
                     end
                     % to increase efficiency, we sort the search targets by
                     % frame.
-                    map_key = entity.experiment.folder_;
-                    full_map_key = [map_key, '_', entity.frame];
+                    map_key = entity.experiment.uniqueName;
+                    full_map_key = [map_key, ':', entity.frame];
                     if ~index.isKey(full_map_key)
                         % if the map is not aware of the frame, index the
                         % frame (and other frames in the experiment)
                         full_phys = entity.experiment.lookup(clazz);
                         frame_num = [full_phys.(full_phys.frameID)];
                         for frame_id=unique(frame_num)
-                            index([map_key, '_', frame_id]) = full_phys(frame_num == frame_id);
+                            index([map_key, ':', frame_id]) = full_phys(frame_num == frame_id);
                         end
                     end
                     % get all candidate results
@@ -368,7 +368,7 @@ classdef (Abstract) PhysicalEntity < handle
             if ~isempty(obj_to_index)
                 fprintf("Indexing %s for %d %ss\n", prop, length(obj_to_index), class(obj_to_index(1)));
                 % apply calculation on the neccesary objects
-                index_result = lookup_func(obj(index_flag)');
+                index_result = lookup_func(obj(index_flag));
                 for i=1:size(index_result, 1)
                     % store non NaN unique results in the respective object
                     result_row = index_result(i, :);
@@ -379,9 +379,9 @@ classdef (Abstract) PhysicalEntity < handle
             sizes = arrayfun(@(entity) length(entity.(prop)), obj);
             if ismember(clazz, {'logical', 'double', 'single', 'uint8', ...
                     'uint16', 'uint32', 'uint64', 'int8', 'int16', 'int32', 'int64'})
-                phys_arr(length(obj), max(sizes)) = feval(clazz, 0);
+                phys_arr(numel(obj), max(sizes, [], 'all')) = feval(clazz, 0);
             else
-                phys_arr(length(obj), max(sizes)) = feval(clazz);
+                phys_arr(numel(obj), max(sizes, [], 'all')) = feval(clazz);
             end
             for i=1:length(obj)
                 phys_arr(i, 1:sizes(i)) = obj(i).(prop);

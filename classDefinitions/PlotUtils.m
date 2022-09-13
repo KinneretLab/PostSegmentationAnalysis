@@ -124,7 +124,7 @@ classdef PlotUtils
             %      a function used to calculate the return value after the
             %      sibilings were retrieved. Sometimes stored in map,
             %      depending on t_prequisite.
-            map_key = [obj.experiment.folder_, '_', class(obj), '_', length(obj_arr)];
+            map_key = [obj.experiment.uniqueName, ':', class(obj), ':', length(obj_arr)];
             if isa(t_prequisite, 'char') || isa(t_prequisite, 'string')
                 % property algorithm - very fast
                 if map.isKey(map_key)

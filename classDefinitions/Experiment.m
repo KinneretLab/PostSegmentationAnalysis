@@ -43,11 +43,12 @@ classdef Experiment < handle
         % Return type: Experiment
         function obj = load(folder)
             map = Experiment.loaded_;
-            if map.isKey(folder)
-                obj = map(folder);
+            map_key = Experiment.toUniqueName({folder});
+            if map.isKey(map_key)
+                obj = map(map_key);
             else
                 obj = Experiment(folder);
-                map(folder) = obj;
+                map(map_key) = obj;
             end
         end
         
@@ -73,6 +74,17 @@ classdef Experiment < handle
             % MATLAB session.
             map = Experiment.loaded_;
             map.remove(map.keys);
+        end
+    end
+    
+    methods (Static, Access = private)
+        function unique_name = toUniqueName(folder_names)
+            regex_result = regexp(folder_names, "\w+", 'match');
+            if length(folder_names) == 1
+                unique_name = [regex_result{1}{end - 1}, '_', regex_result{1}{end}];
+            else
+                unique_name = cellfun(@(result) [result{end - 1}, '_', result{end}], regex_result, 'UniformOutput', false);
+            end
         end
     end
     
@@ -230,6 +242,10 @@ classdef Experiment < handle
             %   the result.
             % Return type: BONDPIXELLIST[] with size (1, ?)
             bond_pixels_arr = obj.lookup(class(BondPixelList), varargin{:});
+        end
+        
+        function unique_name = uniqueName(obj)
+            unique_name = toUniqueName({obj.folder_});
         end
 
     end
