@@ -1,0 +1,267 @@
+@startuml
+
+class handle {
+    + eq() ==
+    + unique()
+}
+
+class Experiment extends handle {
+    -- Experiment indexing --
+    - {static} {field} loaded_: Map(string -> Experiment)
+    ..
+    + uniqueName(): string
+    + {static} load(experiment): Experiment
+    + {static} remove(folder | experiment)
+    + {static} clear()
+    -- Data queries --
+    - {field} data_: Map(clazz -> PhysicalEntity[])
+    - {field} files_: Map(clazz -> path)
+    - {field} folder_: path
+    ..
+    + imread(relative_path): Image
+    + lookup(clazz, ...): PhysicalEntity[]
+    + cells(...): Cell[]
+    + {method} <i>other specialized lookups...</i>
+}
+
+abstract class PhysicalEntity extends handle {
+    + experiment: Experiment
+    + isnan()
+    + eq() ==
+    + ne() !=
+    + {abstract} uniqueID(): string
+    + frameID(): string
+    + flatten(): PhysicalEntity[]
+    + siblings(prequisite): PhysicalEntity[]
+    + frames(...): Frame
+    + dBonds(...): DBond[]
+    # lookup1(clazz, string, string, ...): PhysicalEntity[]
+    # lookupMany(clazz, string, string, ...): PhysicalEntity[]
+    # getOrCalculate(clazz, string, func, ...): PhysicalEntity[]
+}
+
+class Cell extends PhysicalEntity {
+    + cell_id: int
+    + frame: int
+    + center_x: double
+    + center_y: double
+    + center_z: double
+    + area: double
+    + aspect_ratio: double
+    + perimeter: double
+    + is_edge: boolean
+    + is_convex: boolean
+    + elong_xx: double
+    + elong_yy: double
+    + elong_zz: double
+    + norm_x: double
+    + norm_y: double
+    + norm_z: double
+    + fibre_orientation: double
+    + fibre_localOP: double
+    + fibre_coherence: double
+    + confidence: double
+    + bb_xStart: int
+    + bb_yStart: int
+    + bb_xEnd: int
+    + bb_yEnd: int
+    + outline_: double[][]
+    + neighbors_: Cell[]
+    + plot_pixels_: Image
+    + uniqueID(): string
+    + neighbors(...): Cell[]
+    + idInFrame(): int
+    + strID(): string
+    + bonds(...): Bond[]
+    + vertices(...): Vertex[]
+    + cells(...): Cell
+    + outline()
+    + plot_pixels()
+}
+
+class Bond extends PhysicalEntity {
+    + bond_id: int
+    + frame: int
+    + bond_length: double
+    + pixel_list: BondPixelList
+    + confidence_: double
+    + uniqueID(): string
+    + confidence(): double
+    + bonds(...): Bond
+    + vertices(...): Vertex[]
+    + cells(...): Cell[]
+    + coords(...): BondPixelList
+    + plot_pixels()
+}
+
+class DBond extends PhysicalEntity {
+    + dbond_id: int
+    + frame: int
+    + cell_id: int
+    + conj_dbond_id: int
+    + bond_id: int
+    + vertex_id: int
+    + vertex2_id: int
+    + left_dbond_id: int
+    + uniqueID(): string
+    + conjugate(...): DBond
+    + next(...): DBond
+    + cells(...): Cell
+    + bonds(...): Bond[]
+    + startVertices(...): Vertex
+    + endVertices(...): Vertex
+    + vertices(...): Vertex[]
+    + coords(...): BondPixelList
+}
+
+class Frame extends PhysicalEntity {
+    + frame: int
+    + frame_name: string
+    + time_sec: double
+    + mask_: Image
+    + uniqueID(): string
+    + mask(...): Image
+    + bonds(...): Bond[]
+    + vertices(...): Vertex[]
+    + cells(...): Cell[]
+    # lookupByFrame(clazz, ...): PhysicalEntity[]
+}
+
+class BondPixelList extends PhysicalEntity {
+    + orig_x_coord: double[]
+    + orig_y_coord: double[]
+    + smooth_x_coord: double[]
+    + smooth_y_coord: double[]
+    + smooth_z_coord: double[]
+    + pixel_bondId: int
+    + pixel_frame: int
+    + uniqueID(): string
+    + frameID(): string
+    + orig(): double[][]
+    + smooth(): double[][]
+    + bonds(...): Bond[]
+    + <s>dBonds(...)</s>
+    + coords(...): BondPixelList
+}
+
+class Vertex extends PhysicalEntity {
+    + vertex_id: int
+    + frame: int
+    + x_pos: double
+    + y_pos_: double
+    + uniqueID(): string
+    + bonds(...): Bond[]
+    + vertices(...): Vertex
+    + cells(...): Cell[]
+    + plot_pixels()
+}
+
+class BulkFunc {
+    - f: function
+    + subsref(...) f(...)
+    + nargin(): int
+}
+
+class SimpleProfiler {
+    + {static} profile(func, Object[], boolean)
+    + {static} classify(double, boolean)
+}
+
+abstract class FigureBuilder {
+    # title_: string
+    # title_size_: int
+    # title_bold_: boolean
+    # title_italic_: boolean
+    + {static} optional(if_true, if_false, state)
+    + title(string)
+    + titleBold(boolean)
+    + titleItalic(boolean)
+    + titleSize(int)
+    + {abstract} calculate()
+    + {abstract} draw()
+}
+
+class PlotBuilder extends FigureBuilder {
+    - bins_: int?
+    - correlation_: boolean
+    - cumulative_: boolean
+    - data_: PhysicalEntity[][]
+    - {field} filter_function_: boolean(PhysicalEntity)
+    - grid_: string
+    - legend_: string[]
+    - mode_: string
+    - normalize_: boolean
+    - outliers_: string
+    - reference_slopes_: double[]
+    - sequence_: boolean
+    - visibility_: boolean
+    - x_calibration_: double
+    - {field} x_err_function_: double(PhysicalEntity[])
+    - {field} x_function_: double(PhysicalEntity)
+    - x_label_: string
+    - x_label_bold_: boolean
+    - x_label_italic_: boolean
+    - x_label_size_: int
+    - {field} x_lim_: (int, int)
+    - x_log_scale_: boolean
+    - y_calibration_: int
+    - {field} y_err_function_: double(PhysicalEntity[])
+    - {field} y_function_: double(PhysicalEntity[])
+    - y_label_: string
+    - y_label_bold_: boolean
+    - y_label_italic_: boolean
+    - y_label_size_: int
+    - {field} y_lim_: (int, int)
+    - y_log_scale_: boolean
+    + addData(PhysicalEntity[])
+    + binning(boolean?)
+    + calculate()
+    + clearData()
+    + correlation(boolean?)
+    + {static} count()
+    + cumulative(boolean?)
+    + distribution(boolean?)
+    + draw()
+    + filter(PhysicalEntity[])
+    + filterFunction(boolean(PhysicalEntity))
+    + grid(string?)
+    + invisible(boolean?)
+    + {static} logical(int)
+    + {static} mean(property)
+    + mode(string?)
+    + normalize(boolean?)
+    + outliers(string?)
+    + {static} property(property)
+    + referenceSlopes(int[])
+    + sequence(boolean?)
+    + {static} smart_apply()
+    + {static} std(property)
+    + xAxis(string)
+    + xBold(boolean?)
+    + xCalibration(double)
+    + xErrFunction(double(PhysicalEntity[]))
+    + xFunction(double(PhysicalEntity))
+    + xItalic(boolean?)
+    + xLim((int, int))
+    + xLogScale(boolean?)
+    + xSize(int)
+    + yAxis(string)
+    + yBold(boolean?)
+    + yCalibration(double)
+    + yErrFunction(double(PhysicalEntity[]))
+    + yFunction(double(PhysicalEntity[]))
+    + yItalic(boolean?)
+    + yLim((int int))
+    + yLogScale(boolean?)
+    + ySize(int)
+}
+
+class ImageBuilder extends FigureBuilder {
+???
+{method} ???
+}
+
+FigureBuilder .> PhysicalEntity
+PhysicalEntity -o Experiment
+BulkFunc <.. PlotBuilder
+@enduml

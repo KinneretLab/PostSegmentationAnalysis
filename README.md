@@ -121,3 +121,150 @@ The first part of the script runs a function that reads and prepares the data fr
 
 * **Note on normalisation:** The tensions calculated using this method can only be calculated up to a single multiplicative factor per image frame, therefore comparison between values in different frames is not meaningful. The calculated pressures are similarly true up to the same multiplicative constant (since they are proportional to the tensions), and are also true up to an additional additive constant (which can be thought of as a baseline pressure). In this implementation, the pressures are normalized to average to 1, and which sets the scale for all tensions and pressures. For visualisation, a particular percentile threshold is set for visualising the range of values so that it captures the main variability in the data.
 
+## Visualizing the data
+There are two key components you will need to use to visualize the results you want:
+- choosing the data you want to visualize
+- the aspects of the data you want to see and how you want it to be presented
+Each of these components have relevant objects that deal with the task.
+
+### Loading & Manipulating physical data - PhysicalEntity
+*HYDRA* has many physical things we are interested in, like the cells, bonds, etc.
+However, to work with them, we need to get them from the results.
+
+Let's start with a simple example: you want to get the average area of all the cells found in a movie.
+To do this, we use this code:
+
+```matlab
+movie = Experiment.load('C:/Path/To/Cells/Directory/Cells');
+
+target_cells = movie.cells;
+cell_areas = [target_cells.area];
+
+avg_area = mean(cell_areas);
+fprintf("Mean Area = %f", avg_area);
+```
+
+Let's go over each line:
+```matlab
+movie = Experiment.load('C:/Path/To/Cells/Directory/Cells');
+```
+This line of code "loads" the movie into memory. In reality, the data of the system os stored as a bunch of tables,
+which requires a lot of code to get working without errors. For this reason, `Experiment.load` is a utility function 
+that already implements this code for you and simplifies the next operations using objects.
+
+This function returns an `Experiment` instance. This represents the movie, or the experiment, as a whole. You can:
+- query things stored in the movie, like cells, bonds, etc.
+- You can query those things with a particular filter, accepted as an argument.
+- You can do additional file operations like load images in the movie folder.
+
+The advantage here is that the code remembers the operations you apply, so repeating operations can be done quicker.
+
+```matlab
+target_cells = movie.cells;
+```
+This line queries all the cells within the movie, that is, it reads the tables, figures out what are the relevant objects,
+and parses them into easy to understand, and use, objects. In this case, we appropriately get an array of `Cell` objects.
+
+`Cell` is considered a physical entity, which means:
+- you can look up many aspects of this object using the functions provided.
+- They can be compared (there is a NaN cell, you can check if two cells are the same, get unique entries in an array, etc.)
+- some operations, instead of giving numbers and implementation specific stuff, can get you the same usable objects to make
+  the code you need to write more intuitive.
+
+```matlab
+cell_areas = [target_cells.area];
+```
+
+This line gets you the area of each `Cell` in the array `target_cells`. You can run any query you want on the cells, from
+simple stuff like the above, or something more complex like getting the neighbors of the cells. In the case of neighbors,
+instead of getting a number, you once again get the Cell object, this time in a matrix, so you can apply additional operations on it.
+For example, for a particular Cell `c`, if you want to get the total neighbor area, you can use ``sum([c.neighbors.area])``.
+
+```matlab
+avg_area = mean(cell_areas);
+fprintf("Mean Area = %f", avg_area);
+```
+
+Finally, this is just regular MATLAB code used to calculate and display the mean area. Nothing special here.
+
+The above sums up the concept of interfacing with the data API presented here.
+There are many, many operations available in the code. For example, getting all the cells in the particular frames 1,2,5 can be done using
+`select_cells = movie.cells(ismember([movie.cells.frame], [1,2,5]);`
+Or if you want to find out which bonds border which cells, you can use
+`bonds = movie.cells.bonds;`
+
+It is a good idea to check the documentation file for each class, and they provide detailed documentation and 
+explanation about each function its parameters, and the result.
+
+### Visualizing the chosen data - FigureBuilder
+Once you have the data you are interested in, you want to actually see graphs and images with the data. We offer two classes:
+- `PlotBuilder`, responsible for plotting any 2D graph (line, PDF, CDF, scatter, etc.) of any 2 (or 1) aspects of the chosen data.
+- `ImageBuilder`, responsible for visualizing aspects of every physical entity in particular frames. This generates an 
+  actual image.
+
+Here, we will discuss using `PlotBuilder` as `ImageBuilder` hasn't been created yet, but they follow similar principles.
+
+Plotting a particular graph usually involves just 3 lines of code. For example, if we want to track the mean area as a 
+function of the frame, we would write
+```matlab
+movie = Experiment.load('C:/Path/To/Cells/Directory/Cells');
+
+target_cells = movie.cells;
+
+f = PlotBuilder().xFunction("frame").yFunction("area").addData(target_cells).draw;
+```
+
+We already dealt with the data loading in the previous section, here we deal with the big line here:
+```matlab
+PlotBuilder()
+```
+this constructs a new instance of `PlotBuilder`. This object is responsible for holding the instructions on how to make the graph.
+This can be anything from the title of the graph to turning on logarithmic scaling, to choosing what aspects to use for the X and Y axes.
+You always start here.
+
+```matlab
+.xFunction("frame").yFunction("area")
+```
+
+These two functions defines what we will see on the X and Y axes: the X axis will show the frame of the cells, and the 
+Y function will calculate the area of those cells (in particular, the mean).
+This may seem way too simple, as there is no code written here on *How* to get the area, but that's because `PlotBuilder`
+already knows how to convert the input, "area", into a function that gets this property from the cells. This is done internally.
+In cases of more complex functions, you can put those in. For example, another way to instruct the plotter to get the area for the Y axis is with
+`.yFunction(@(cell) cell.area))`, which gives a "function which returns the area" as an argument.
+
+We provided a few commonly used functions in `PlotUtils` for your convenience. Go check them out.
+
+```matlab
+.addData(target_cells)
+```
+
+This function lets the plotter know what cells it should use to actually make the plot.
+In our case, these are all the cells from the movie. However, the plotter can work with any physical (and even non-physical)
+entity, like bonds, defects, etc.
+You can add multiple lines to the same graph using th same method, again, but with the other source cells:
+`.addData(cells1).addData(cells2)`
+
+As a side note: `addData` also allows you to give a name for the data, which is then used in the legend for th graph.
+
+```matlab
+f = ().draw;
+```
+This final method applies all the instructions and actually draws the graph. Nothing will happen without it.
+The other method just return a new plotter with the new configurations.
+
+Once again, it is a good idea to check the documentation file for the classes `PlotBuilder`, `ImageBuilder`, `PlotUtils`, 
+since they provide detailed documentation and explanation about each function its parameters, and the result, especially since 
+there are many somewhat unintuitive available operations available that make life much easier.
+
+### Data visualization - class structure
+
+![Class Structure](doc/api_graph.svg)
+
+If you want to implement new stuff, you would probably need to extend one of the existing classes for the builtin support.
+- Implement `PhysicalEntity` if you want to add a new data type that exists within the *HYDRA*, like defects.
+- Implement `FigureBuilder` if you want to add a new way to visualize the data mocing out of the experiments.
+
+Each of these provides useful methods out-of-the-box, and some functions you are required to implement.
+The documentation speifies what exactly they are supposed to do, and it is your job to implement the functions 
+according to those guidelines.

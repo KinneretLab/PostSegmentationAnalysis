@@ -62,7 +62,11 @@ classdef Experiment < handle
             %      the experiment to remove, of the name of the folder it
             %      is built on.
             if isa(key, 'Experiment')
-                key = key.folder_;
+                key = key.uniqueName;
+            else
+                if contains(key, '/')
+                    key = Experiment.toUniqueName({key});
+                end
             end
             map = Experiment.loaded_;
             map.remove(key);

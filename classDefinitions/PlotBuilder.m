@@ -102,6 +102,9 @@ classdef PlotBuilder < FigureBuilder
         % Controls whether the graph should be invisible to users for efficiency.
         % type: string
         visibility_
+        % Controls whether the correlation function should be calculated instead of the normal values.
+        % type: boolean
+        correlation_
     end
 
     methods(Static)
@@ -197,6 +200,7 @@ classdef PlotBuilder < FigureBuilder
             obj.sequence_         = false;
             obj.legend_           = {};
             obj.visibility_       = "on";
+            obj.correlation_      = false;
         end
         
         function filtered_arr = filter(obj, raw_arr)
@@ -365,10 +369,19 @@ classdef PlotBuilder < FigureBuilder
                     % documentation)
                     x_result = data_sorted.keys;
                     y_result = data_sorted.values;
+                    x_result = [x_result{:}];
+                    y_result = [y_result{:}];
+                    if obj.correlation_
+                        % this is INCREDIBLY bad. This definatly needs to
+                        % be implemented manually since the X is not even
+                        % considered here!
+                        [x_result, y_result] = autocorr(y_result);
+                    end
+                    % How do we support errors for correlations?
                     x_err_result = x_err_sorted.values;
                     y_err_result = y_err_sorted.values;
-                    data_arrays{frame_idx, 2 * data_idx - 1} = [x_result{:}] .* obj.x_calibration_;
-                    data_arrays{frame_idx, 2 * data_idx} = [y_result{:}] .* obj.y_calibration_;
+                    data_arrays{frame_idx, 2 * data_idx - 1} = x_result .* obj.x_calibration_;
+                    data_arrays{frame_idx, 2 * data_idx} = y_result .* obj.y_calibration_;
                     err_arrays{frame_idx, 2 * data_idx - 1} = [x_err_result{:}] .* obj.x_calibration_;
                     err_arrays{frame_idx, 2 * data_idx} = [y_err_result{:}] .* obj.y_calibration_;
                 end
@@ -783,6 +796,19 @@ classdef PlotBuilder < FigureBuilder
             %      false (default): a single graph is drawn.
             %      true  (no args): draw multiple graphs, one per frame.
             obj.sequence_ = FigureBuilder.optional(true, false, varargin);
+        end
+        
+        function obj = correlation(obj, varargin)
+            % CORRELATION Instead of simply calculating the values, find
+            % out the correlation function of those values and return that
+            % instead.
+            % Parameters:
+            %   varargin: boolean
+            %      false (default): normal value calculation
+            %      true  (no args): after the values are calculated,
+            %                       retrieve their auto-correlation
+            %                       instead.
+            obj.correlation_ = FigureBuilder.optional(true, false, varargin);
         end
 
         function obj = invisible(obj, varargin)
