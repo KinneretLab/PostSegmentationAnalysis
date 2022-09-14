@@ -160,7 +160,7 @@ classdef Cell < PhysicalEntity
             % you can retrieve them from the variable CELL#outline_.
             % Currently runs on a 1-dimensional list, if multidiemnsional array is given, it is first flattened.
             obj = flatten(obj);
-            fprintf('Getting directed bonds');
+            fprintf('Getting directed bonds ');
             theseDBonds = dBonds(obj); % Currently runs on a 1-dimensional list
             dbArray = [obj.experiment];
             dbFolderArray = {dbArray.folder_};
@@ -183,12 +183,16 @@ classdef Cell < PhysicalEntity
                     orderedDBonds = DBond();
                     orderedDBonds(1) = theseDBonds(i,1);
                     orderedBonds = Bond();
+                    cellDBonds = theseDBonds(i,:); % Make sure only non-empty dbonds are used:
+                    numDBonds = length(cellDBonds(~isempty(cellDBonds)));
                     % Order cell's dbonds
-                    for j=1:(length(theseDBonds(i,:))-1)
-                        nextDBond = orderedDBonds(j).left_dbond_id;
-                        cellDBondIDs = [theseDBonds(i,:).dbond_id];
-                        flag = (cellDBondIDs == nextDBond);
-                        orderedDBonds(j+1) = theseDBonds(i,flag);
+                    if numDBonds>1
+                        for j=1:(numDBonds-1)
+                            nextDBond = orderedDBonds(j).left_dbond_id;
+                            cellDBondIDs = [theseDBonds(i,:).dbond_id];
+                            flag = (cellDBondIDs == nextDBond);
+                            orderedDBonds(j+1) = theseDBonds(i,flag);
+                        end
                     end
                     % Get ordered vertices
                     orderedVertices = [orderedDBonds.vertex_id];
@@ -207,17 +211,22 @@ classdef Cell < PhysicalEntity
                         flags = (bondIDArray == thisID);
                         orderedBonds(k).pixel_list = pixelListArray{ic(i)}(flags);
                         startVertex = vertexArray{ic(i)}([vertexArray{ic(i)}.vertex_id] == orderedVertices(k));
-                        if ~isempty(orderedBonds(k).pixel_list)
-                            [~,I] = min(sqrt((orderedBonds(k).pixel_list.orig_x_coord-startVertex.x_pos).^2 +(orderedBonds(k).pixel_list.orig_y_coord-startVertex.y_pos).^2));
-                            if I == 1
-                                theseCoords =  [orderedBonds(k).pixel_list.orig_x_coord,orderedBonds(k).pixel_list.orig_y_coord];
-                            else if I==length(orderedBonds(k).pixel_list.orig_x_coord)
-                                    theseCoords =  flipud([orderedBonds(k).pixel_list.orig_x_coord,orderedBonds(k).pixel_list.orig_y_coord]);
-                                end
-                            end
-                            thisOutline = [thisOutline;[startVertex.x_pos,startVertex.y_pos];theseCoords];
+                        if isempty(startVertex)
+                            theseCoords =  [orderedBonds(k).pixel_list.orig_x_coord,orderedBonds(k).pixel_list.orig_y_coord];
+                            thisOutline = [thisOutline; theseCoords];
                         else
-                            thisOutline = [thisOutline;[startVertex.x_pos,startVertex.y_pos]];
+                            if ~isempty(orderedBonds(k).pixel_list)
+                                [~,I] = min(sqrt((orderedBonds(k).pixel_list.orig_x_coord-startVertex.x_pos).^2 +(orderedBonds(k).pixel_list.orig_y_coord-startVertex.y_pos).^2));
+                                if I == 1
+                                    theseCoords =  [orderedBonds(k).pixel_list.orig_x_coord,orderedBonds(k).pixel_list.orig_y_coord];
+                                else if I==length(orderedBonds(k).pixel_list.orig_x_coord)
+                                        theseCoords =  flipud([orderedBonds(k).pixel_list.orig_x_coord,orderedBonds(k).pixel_list.orig_y_coord]);
+                                    end
+                                end
+                                thisOutline = [thisOutline;[startVertex.x_pos,startVertex.y_pos];theseCoords];
+                            else
+                                thisOutline = [thisOutline;[startVertex.x_pos,startVertex.y_pos]];
+                            end
                         end
                     end
                     obj(i).outline_ = thisOutline;

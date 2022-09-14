@@ -5,7 +5,7 @@ addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\GroupCodes\
 %% 0.1 Define mainDirList
 
 % Locations of original data - needed only for timestamps
-topMainDir = 'z:\SD\Yonit\2020\2020_09\2020_09_08\TIFF Files 18hr'; % main folder of original files
+topMainDir = 'phhydra\phhydraB\SD\Yonit\2020\2020_09\2020_09_01\TIFF Files 18hr'; % main folder of original files
 rawMainAnalysisDirList= { ... % enter in the following line all sub-directories for movie analysis.
 
 '\Set1\', ...
@@ -18,9 +18,7 @@ for i=1:length(rawMainAnalysisDirList),rawMainDirList{i}=[topMainDir,rawMainAnal
 topAnalysisDir='Z:\Analysis\users\Yonit\Movie_Analysis\DefectLibrary\'; % main folder for movie analysis
 mainAnalysisDirList= { ... % enter in the following line all sub-directories for movie analysis.
 
-'2020_09_08_18hr_set1\', ...
-
-
+'2020_09_01_18hr_set1\', ...
 
 
 };
@@ -30,9 +28,9 @@ for i=1:length(mainAnalysisDirList),mainDirList{i}=[topAnalysisDir,mainAnalysisD
 %% 0.2 Define parameters per movie
 
 % Comment out the following irrelevant choice for framelist:
- frameList = cell(1,length(mainAnalysisDirList));
+% frameList = cell(1,length(mainAnalysisDirList));
 % frameList = {[1:89,90:5:230,235:275,280:5:305],[1:8,10:121,123:143,145:157,159,161:181,183:1140],[]}; % Enter specific frame ranges in this format if you
-% frameList = {[1:10]}; % Enter specific frame ranges in this format if you
+ frameList = {[1:19,21:25,27:32]}; % Enter specific frame ranges in this format if you
 
 % want to run on particular frames (in this example, 1:6 is for the first
 % movie, 1:9 is for the second). If left empty, runs on all frames.

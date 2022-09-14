@@ -216,7 +216,7 @@ classdef Experiment < handle
             %   varargin: additional MATLAB builtin operations to apply on
             %   the result.
             % Return type: FRAME[] with size (1, ?)
-            frame_arr = obj.lookup(class(Frame), flags);
+            frame_arr = obj.lookup(class(Frame), varargin{:});
         end
         
         function bond_pixels_arr = bondPixelLists(obj, varargin)
