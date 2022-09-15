@@ -37,7 +37,7 @@ classdef Bond < PhysicalEntity
             % BOND Constructs an array of bonds.
             % This includes NaNs for any calculated value so things don't
             % mess up in array calculations.
-            obj@PhysicalEntity([varargin{:}, {'bond_length'}, {nan}])
+            obj@PhysicalEntity([varargin(:)', {'bond_length'}, {nan}])
         end
 
         function id = uniqueID(~)

@@ -257,7 +257,10 @@ classdef (Abstract) PhysicalEntity < handle
                     % get all candidate results
                     frame_filtered_phys = index(full_map_key);
                     % run actual search on them
-                    phys_arr(lookup_idx) = frame_filtered_phys([frame_filtered_phys.(target_prop)] == entity.(requester_prop));
+                    lookup_result = frame_filtered_phys([frame_filtered_phys.(target_prop)] == entity.(requester_prop));
+                    if ~isempty(lookup_result)
+                        phys_arr(lookup_idx) = lookup_result;
+                    end
                 end
             else
                 for lookup_idx = 1:numel(obj)
