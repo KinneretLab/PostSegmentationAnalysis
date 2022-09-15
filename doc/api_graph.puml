@@ -24,6 +24,12 @@ class Experiment extends handle {
     + {method} <i>other specialized lookups...</i>
 }
 
+class Pair extends handle {
+    + elements: PhysicalEntity[]
+    + distance: double
+    + frame(): int[]
+}
+
 abstract class PhysicalEntity extends handle {
     + experiment: Experiment
     + isnan()
@@ -35,6 +41,7 @@ abstract class PhysicalEntity extends handle {
     + siblings(prequisite): PhysicalEntity[]
     + frames(...): Frame
     + dBonds(...): DBond[]
+    + pair(func, ...): Pair[]
     # lookup1(clazz, string, string, ...): PhysicalEntity[]
     # lookupMany(clazz, string, string, ...): PhysicalEntity[]
     # getOrCalculate(clazz, string, func, ...): PhysicalEntity[]
@@ -160,6 +167,7 @@ class BulkFunc {
     - f: function
     + subsref(...) f(...)
     + nargin(): int
+    + {static} apply(bulk_or_func) f(...)
 }
 
 class SimpleProfiler {
@@ -183,7 +191,6 @@ abstract class FigureBuilder {
 
 class PlotBuilder extends FigureBuilder {
     - bins_: int?
-    - correlation_: boolean
     - cumulative_: boolean
     - data_: PhysicalEntity[][]
     - {field} filter_function_: boolean(PhysicalEntity)
@@ -217,7 +224,6 @@ class PlotBuilder extends FigureBuilder {
     + binning(boolean?)
     + calculate()
     + clearData()
-    + correlation(boolean?)
     + {static} count()
     + cumulative(boolean?)
     + distribution(boolean?)
@@ -261,7 +267,22 @@ class ImageBuilder extends FigureBuilder {
 {method} ???
 }
 
+class PlotUtils {
+    + {static} axify(func, string?): double[](PhysicalEntity[])
+    + {static} shape(string?): double[](PhysicalEntity[])
+    + {static} cellFiberAngle(string?): double[](PhysicalEntity[])
+    + {static} numNeighbors(string?): double[](PhysicalEntity[])
+    + {static} xNormalize(func, func): double(PhysicalEntity)
+    + {static} divide(double[], func, func, string?): double[](PhysicalEntity[])
+    + {static} sequenceWithTotal(PlotBuilder): figure[]
+    + {static} correlation(func, boolean?, boolean?): double[](PhysicalEntity[])
+    - {static} getOrStore(???): ???
+    - {static} getCorrelation(???): ???
+}
+
 FigureBuilder .> PhysicalEntity
 PhysicalEntity -o Experiment
 BulkFunc <.. PlotBuilder
+PlotUtils .> PlotBuilder
+Pair .> PhysicalEntity
 @enduml
