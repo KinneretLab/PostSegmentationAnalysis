@@ -24,14 +24,20 @@ classdef Bond < PhysicalEntity
         % values indicate uncertainty for the bond.
         % type: double (0.0-1.0)
         confidence_
+        % An internal vairblae listing the cells this bond is a border of.
+        % you can access this using BOND#CELLS
+        % type: CELL[]
+        cells_
     end
     
     methods
         
         
         function obj = Bond(varargin)
-            % BOND Constructs an array of bonds. Nothing special.
-            obj@PhysicalEntity(varargin)
+            % BOND Constructs an array of bonds.
+            % This includes NaNs for any calculated value so things don't
+            % mess up in array calculations.
+            obj@PhysicalEntity([varargin{:}, {'bond_length'}, {nan}])
         end
 
         function id = uniqueID(~)
@@ -74,7 +80,7 @@ classdef Bond < PhysicalEntity
             %   varargin: additional MATLAB builtin operations to apply on
             %   the result.
             % Return type: CELL[]
-            cells = obj.dBonds.cells(varargin{:});
+            cells = obj.getOrCalculate(class(Cell), "cells_", @(bonds) bonds.dBonds.cells, varargin{:});
         end
 
         function coords = coords(obj, varargin)

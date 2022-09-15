@@ -19,5 +19,15 @@ classdef BulkFunc
             n = nargin(obj.f);
         end
     end
+    
+    methods (Static)
+        function result = apply(func_or_bulk, varargin)
+            if isa(func_or_bulk, 'BulkFunc')
+                result = func_or_bulk.f(varargin{1:nargin(func_or_bulk)});
+            else
+                result = arrayfun(func_or_bulk, varargin{1:nargin(func_or_bulk)});
+            end
+        end
+    end
 end
 

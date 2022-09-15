@@ -195,6 +195,18 @@ classdef (Abstract) PhysicalEntity < handle
                 dbonds = obj.lookupMany(clazz, obj.uniqueID, obj.uniqueID, varargin{:});
             end
         end
+        
+        function pair_list = pair(obj, dist_func, varargin)
+            [mesh_x, mesh_y] = meshgrid(obj);
+            full_pair_list = reshape(cat(3, mesh_x, mesh_y), [], 2);
+            distance_list = BulkFunc.apply(dist_func, full_pair_list(:, 1), full_pair_list(:, 2));
+            pair_list = Pair(full_pair_list, distance_list);
+            pair_list = pair_list(distance_list > 0);
+            % filter result and put it into result_arr
+            if nargin > 2
+                pair_list = pair_list(varargin{:});
+            end
+        end
     end
     
     methods(Access = protected)
@@ -368,7 +380,10 @@ classdef (Abstract) PhysicalEntity < handle
             if ~isempty(obj_to_index)
                 fprintf("Indexing %s for %d %ss\n", prop, length(obj_to_index), class(obj_to_index(1)));
                 % apply calculation on the neccesary objects
-                index_result = lookup_func(obj(index_flag));
+                index_result = lookup_func(obj_to_index);
+                if size(index_result, 1) ~= length(obj_to_index)
+                    index_result = index_result';
+                end
                 for i=1:size(index_result, 1)
                     % store non NaN unique results in the respective object
                     result_row = index_result(i, :);
