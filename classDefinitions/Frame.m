@@ -104,7 +104,7 @@ classdef Frame < PhysicalEntity
                 end
                 % to increase efficiency, we sort the search targets by
                 % experiment (for some reason this is more efficient, MATLAB is weird).
-                map_key = entity.experiment.folder_;
+                map_key = entity.experiment.uniqueName;
                 if ~index.isKey(map_key)
                     % if the map is not aware of the frame, index the
                     % experiment

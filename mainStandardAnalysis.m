@@ -33,38 +33,57 @@ for exp_idx = 1:length(experiment_folders)
     
     cell_plotter = loadPlotter(folder, class(Cell), [min_area max_area]);
     bond_plotter = loadPlotter(folder, class(Bond), [min_area max_area]);
+    frame_pair_plotter = loadFramePlotter(folder);
     
-    getGraphs(cell_plotter, bond_plotter, [folder, '\Figures\'], calibration, time_only);
+    getGraphs(cell_plotter, bond_plotter, frame_pair_plotter, [folder, '\Figures\'], calibration, time_only, [min_area max_area]);
 end
 
 %% functions
 function plotter = loadPlotter(experiment_folder, lookup_clazz, area_constraints)
     if exist([experiment_folder, '\Cells_auto'], 'dir')
         auto_data = Experiment.load([experiment_folder, '\Cells_auto']).lookup(lookup_clazz);
-        auto_data = checkArea(auto_data, area_constraints);
+        auto_data = checkArea(auto_data, area_constraints, true);
         hand_data = Experiment.load([experiment_folder, '\Cells']).lookup(lookup_clazz);
-        hand_data = checkArea(hand_data, area_constraints);
+        hand_data = checkArea(hand_data, area_constraints, true);
         plotter = PlotBuilder().addData(auto_data, 'auto')...
             .addData(auto_data([auto_data.confidence] > 0.5), 'scored')...
             .addData(hand_data, 'hand');
     else
         auto_data = Experiment.load([experiment_folder, '\Cells']).lookup(lookup_clazz);
-        auto_data = checkArea(auto_data, area_constraints);
+        auto_data = checkArea(auto_data, area_constraints, true);
         plotter = PlotBuilder().addData(auto_data, 'auto')...
             .addData(auto_data([auto_data.confidence] > 0.5), 'scored');
     end
 end
 
-function filtered_phys_arr = checkArea(phys_arr, area_constraints)
+function plotter = loadFramePlotter(experiment_folder)
+    dist_func = BulkFunc(@(l_frame, r_frame) abs([l_frame.frame] - [r_frame.frame]));
+    if exist([experiment_folder, '\Cells_auto'], 'dir')
+        auto_data = Experiment.load([experiment_folder, '\Cells_auto']).frames.pair(dist_func);
+        hand_data = Experiment.load([experiment_folder, '\Cells']).frames.pair(dist_func);
+        plotter = PlotBuilder().addData(auto_data, 'auto')...
+            .addData(hand_data, 'hand');
+    else
+        auto_data = Experiment.load([experiment_folder, '\Cells']).lookup(lookup_clazz);
+        plotter = PlotBuilder().addData(auto_data, 'auto');
+    end
+end
+
+function filtered_phys_arr = checkArea(phys_arr, area_constraints, remove_flag)
     transposed = phys_arr';
     cells = transposed.cells;
     areas = area_constraints(1) * ones(size(cells));
-    areas(~isnan(cells)) = [cells.area];
+    areas(~isnan(cells)) = [cells(~isnan(cells)).area];
     test = area_constraints(1) <= areas & areas <= area_constraints(2);
-    filtered_phys_arr = phys_arr(logical(prod(test, 2)));
+    if remove_flag
+        filtered_phys_arr = phys_arr(logical(prod(test, 2)));
+    else
+        filtered_phys_arr = phys_arr;
+        filtered_phys_arr(logical(prod(test, 2))) = feval(class(phys_arr(1)));
+    end
 end
     
-function getGraphs(cell_plotter, bond_plotter, save_dir, scale, time_only)
+function getGraphs(cell_plotter, bond_plotter, frame_pair_plotter, save_dir, scale, time_only, area_constraints)
     % iterate oveer auto and hand to generate corresponding data
     meas_functions = {"area", PlotUtils.xNormalize("area", "frame"), ...
         "perimeter", PlotUtils.xNormalize("perimeter", "frame"), ...
@@ -101,8 +120,10 @@ function getGraphs(cell_plotter, bond_plotter, save_dir, scale, time_only)
         axis_name = meas_axes(i);
         if meas_bond_flag(i)
             plotter = bond_plotter.filterFunction(filter);
+            from_frame_meas = BulkFunc(@(frames) nanmean(BulkFunc.apply(PlotUtils.axify(meas), checkArea(frames.bonds, area_constraints, false)), 2));
         else
             plotter = cell_plotter.filterFunction(filter);
+            from_frame_meas = BulkFunc(@(frames) nanmean(BulkFunc.apply(PlotUtils.axify(meas), checkArea(frames.cells, area_constraints, false)), 2));
         end
         
         if time_flag(i)
@@ -112,6 +133,13 @@ function getGraphs(cell_plotter, bond_plotter, save_dir, scale, time_only)
             forceSave(f, save_prefix + "_time.png");
             close(f);
         end
+        
+        
+        f = frame_pair_plotter.yAxis(axis_name + " correlation").xAxis("frame difference")...
+            .xFunction("distance").yFunction(PlotUtils.correlation(from_frame_meas)) ...
+            .outliers.title(name + " time correlation").draw;
+        forceSave(f, save_prefix + "_time_corr.png");
+        close(f);
         
         if ~time_only
             f_arr = PlotUtils.sequenceWithTotal(plotter.xFunction(meas) ...

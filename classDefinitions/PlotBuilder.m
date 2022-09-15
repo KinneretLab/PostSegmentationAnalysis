@@ -112,7 +112,7 @@
             % by default, the X function is set to be
             % PLOTBUILDER.PROPERTY("frame")
             % returns: double[](PhysicalEntity[])
-            func = BulkFunc(@(obj) ([obj.(prop_name)]));
+            func = BulkFunc(@(obj) (reshape([obj.(prop_name)], size(obj))));
         end
 
         function func = count(include_nan)
@@ -365,10 +365,12 @@
                     % documentation)
                     x_result = data_sorted.keys;
                     y_result = data_sorted.values;
+                    x_result = [x_result{:}];
+                    y_result = [y_result{:}];
                     x_err_result = x_err_sorted.values;
                     y_err_result = y_err_sorted.values;
-                    data_arrays{frame_idx, 2 * data_idx - 1} = [x_result{:}] .* obj.x_calibration_;
-                    data_arrays{frame_idx, 2 * data_idx} = [y_result{:}] .* obj.y_calibration_;
+                    data_arrays{frame_idx, 2 * data_idx - 1} = x_result .* obj.x_calibration_;
+                    data_arrays{frame_idx, 2 * data_idx} = y_result .* obj.y_calibration_;
                     err_arrays{frame_idx, 2 * data_idx - 1} = [x_err_result{:}] .* obj.x_calibration_;
                     err_arrays{frame_idx, 2 * data_idx} = [y_err_result{:}] .* obj.y_calibration_;
                 end

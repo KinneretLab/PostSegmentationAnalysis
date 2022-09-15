@@ -124,7 +124,7 @@ classdef PlotUtils
             %      a function used to calculate the return value after the
             %      sibilings were retrieved. Sometimes stored in map,
             %      depending on t_prequisite.
-            map_key = [obj.experiment.folder_, '_', class(obj), '_', length(obj_arr)];
+            map_key = [obj.experiment.uniqueName, ':', class(obj), ':', length(obj_arr)];
             if isa(t_prequisite, 'char') || isa(t_prequisite, 'string')
                 % property algorithm - very fast
                 if map.isKey(map_key)
@@ -213,6 +213,60 @@ classdef PlotUtils
                 fig.CurrentAxes.YLim(2) = max([fig.CurrentAxes.YLim(2), total_handle.CurrentAxes.YLim(2)]);
             end
             close(total_handle)
+        end
+        
+        function y_func = correlation(func, mean_on_pairs, var_on_all_pairs)
+            if nargin < 2
+                mean_on_pairs = true;
+            end
+            if nargin < 3
+                var_on_all_pairs = true;
+            end
+            if isa(func, 'char') || isa(func, 'string')
+                func = PlotBuilder.property(func);
+            end
+            map = containers.Map;
+            y_func = @(obj, plotter, obj_arr) PlotUtils.getCorrelation(obj, plotter, obj_arr, func, map, mean_on_pairs, var_on_all_pairs);
+        end
+        
+        function y_value = getCorrelation(x_pairs, plotter, all_pairs, func, map, mean_on_pairs, var_on_all_pairs)
+            % get or calculate mean using exp:length:"mean"
+            mean_key = [x_pairs(1).elements(1).experiment.uniqueName, ':', class(x_pairs(1)), ':', length(all_pairs), ':mean'];
+            if map.isKey(mean_key)
+                corr_mean = map(mean_key);
+            else
+                if mean_on_pairs
+                    to_avg = [all_pairs.elements];
+                else
+                    to_avg = unique([all_pairs.elements]);
+                end
+                corr_mean = nanmean(BulkFunc.apply(func, to_avg, plotter, [all_pairs.elements]));
+                map(mean_key) = corr_mean;
+            end
+            
+            corr_val = BulkFunc.apply(func, [x_pairs.elements], plotter, [all_pairs.elements]);
+            corr_val = reshape(corr_val, numel(x_pairs), 2);
+            
+            if var_on_all_pairs
+                % get or calculate var using exp_length:"var"
+                var_key = [x_pairs(1).elements(1).experiment.uniqueName, ':', class(x_pairs(1)), ':', length(all_pairs), ':var'];
+                if map.isKey(var_key)
+                    corr_var = map(var_key);
+                else
+                    corr_var = BulkFunc.apply(func, [all_pairs.elements], plotter, [all_pairs.elements]);
+                    corr_var = reshape(corr_var, numel(all_pairs), 2);
+                    
+                    corr_var = nansum((corr_var - corr_mean) .^ 2, 'all') / 2;
+                    map(var_key) = corr_var;
+                end
+            else
+                    corr_var = nansum((corr_val - corr_mean) .^ 2, 'all') / 2;
+            end
+            
+            corr_val = corr_val - corr_mean;
+            corr_prod = dot(corr_val(:,1), corr_val(:, 2));
+            
+            y_value = corr_prod / corr_var;
         end
     end
 end
