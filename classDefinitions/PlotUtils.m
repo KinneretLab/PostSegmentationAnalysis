@@ -108,60 +108,6 @@ classdef PlotUtils
             func = @(obj, ~, obj_arr) (x_function(obj) / PlotUtils.getOrStore(obj, obj_arr, map, t_prequisite, mean_function));
         end
         
-        function [result, map] = getOrStore(obj, obj_arr, map, t_prequisite, mean_function)
-            % GETORSTORE a small utility function that gets the property from a map or calculates it.
-            % Parameters:
-            %   obj: PhysicalEntity
-            %      the object to get the sibilings of
-            %   obj_arr: PhysicalEntity[]
-            %      the array of objects to lookup for the shared property
-            %   map: Map
-            %      the map to search for the pre-existing property
-            %   t_prequisite: char[], string, boolean(PhysicalEntity[], PhysicalEntity)
-            %      the function to use to find the sibilings of the given
-            %      object.
-            %   mean_function: double(PhysicalArray[])
-            %      a function used to calculate the return value after the
-            %      sibilings were retrieved. Sometimes stored in map,
-            %      depending on t_prequisite.
-            map_key = [obj.experiment.uniqueName, ':', class(obj), ':', length(obj_arr)];
-            if isa(t_prequisite, 'char') || isa(t_prequisite, 'string')
-                % property algorithm - very fast
-                if map.isKey(map_key)
-                    value_map = map(map_key);
-                else
-                    t_entry = [obj_arr.(t_prequisite)];
-                    t_values = unique(t_entry);
-                    value_map = containers.Map('KeyType','double','ValueType','any');
-                    for bin_idx=1:length(t_values)
-                        t_value = t_values(bin_idx);
-                        value_map(t_value) = obj_arr(t_entry == t_value);
-                    end
-                    for key = value_map.keys
-                        value_map(key{1}) = mean_function(value_map(key{1}));
-                    end
-                    map(map_key) = value_map;
-                end
-                result = value_map(obj.(t_prequisite));
-            else
-                % boolean algorithm - slow
-                if map.isKey(map_key)
-                    candidates = map(map_key);
-                    for candidate = candidates
-                        if ismember(obj, candidate{1})
-                            result = mean_function(candidate{1});
-                            return
-                        end
-                    end
-                    result = obj_arr(t_prequisite(obj_arr, obj));
-                    map(map_key) = [candidates(:)', {result}];
-                else
-                    result = obj_arr(t_prequisite(obj_arr, obj));
-                    map(map_key) = {result};
-                end
-            end
-        end
-        
         function func = divide(arr, idx_function, x_function, axis)
             % DIVIDE upgrades xFunction to also divide by an entry in an array according to some criterion
             % Parameters:
@@ -227,6 +173,64 @@ classdef PlotUtils
             end
             map = containers.Map;
             y_func = @(obj, plotter, obj_arr) PlotUtils.getCorrelation(obj, plotter, obj_arr, func, map, mean_on_pairs, var_on_all_pairs);
+        end
+        
+        
+    end
+    
+    methods(Static, Access=private)
+        function [result, map] = getOrStore(obj, obj_arr, map, t_prequisite, mean_function)
+            % GETORSTORE a small utility function that gets the property from a map or calculates it.
+            % Parameters:
+            %   obj: PhysicalEntity
+            %      the object to get the sibilings of
+            %   obj_arr: PhysicalEntity[]
+            %      the array of objects to lookup for the shared property
+            %   map: Map
+            %      the map to search for the pre-existing property
+            %   t_prequisite: char[], string, boolean(PhysicalEntity[], PhysicalEntity)
+            %      the function to use to find the sibilings of the given
+            %      object.
+            %   mean_function: double(PhysicalArray[])
+            %      a function used to calculate the return value after the
+            %      sibilings were retrieved. Sometimes stored in map,
+            %      depending on t_prequisite.
+            map_key = [obj.experiment.uniqueName, ':', class(obj), ':', length(obj_arr)];
+            if isa(t_prequisite, 'char') || isa(t_prequisite, 'string')
+                % property algorithm - very fast
+                if map.isKey(map_key)
+                    value_map = map(map_key);
+                else
+                    t_entry = [obj_arr.(t_prequisite)];
+                    t_values = unique(t_entry);
+                    value_map = containers.Map('KeyType','double','ValueType','any');
+                    for bin_idx=1:length(t_values)
+                        t_value = t_values(bin_idx);
+                        value_map(t_value) = obj_arr(t_entry == t_value);
+                    end
+                    for key = value_map.keys
+                        value_map(key{1}) = mean_function(value_map(key{1}));
+                    end
+                    map(map_key) = value_map;
+                end
+                result = value_map(obj.(t_prequisite));
+            else
+                % boolean algorithm - slow
+                if map.isKey(map_key)
+                    candidates = map(map_key);
+                    for candidate = candidates
+                        if ismember(obj, candidate{1})
+                            result = mean_function(candidate{1});
+                            return
+                        end
+                    end
+                    result = obj_arr(t_prequisite(obj_arr, obj));
+                    map(map_key) = [candidates(:)', {result}];
+                else
+                    result = obj_arr(t_prequisite(obj_arr, obj));
+                    map(map_key) = {result};
+                end
+            end
         end
         
         function y_value = getCorrelation(x_pairs, plotter, all_pairs, func, map, mean_on_pairs, var_on_all_pairs)

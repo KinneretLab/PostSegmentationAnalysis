@@ -270,7 +270,10 @@ classdef (Abstract) PhysicalEntity < handle
                         continue;
                     end
                     target_phys = obj(lookup_idx).experiment.lookup(clazz);
-                    phys_arr(lookup_idx) = target_phys([target_phys.(target_prop)] == obj(lookup_idx).(requester_prop));
+                    lookup_result = target_phys([target_phys.(target_prop)] == obj(lookup_idx).(requester_prop));
+                    if ~isempty(lookup_result)
+                        phys_arr(lookup_idx) = lookup_result;
+                    end
                 end
             end
             % filter result and put it into result_arr
