@@ -16,7 +16,7 @@ for i=1:length(dBonds)
         bondInd = ([thisBondData.bond_id] == thisBond);
     end
     
-    if isempty(orderedVerts)
+    if isnan(orderedVerts)
         coords = thisBondData([thisBondData.bond_id] == thisBond).coords;
         outline = [outline; coords];
     else

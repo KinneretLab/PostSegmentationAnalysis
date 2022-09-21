@@ -190,7 +190,7 @@ classdef Cell < PhysicalEntity
                     orderedDBonds(1) = theseDBonds(i,1);
                     orderedBonds = Bond();
                     cellDBonds = theseDBonds(i,:); % Make sure only non-empty dbonds are used:
-                    numDBonds = length(cellDBonds(~isempty(cellDBonds)));
+                    numDBonds = length(cellDBonds(~isnan(cellDBonds)));
                     % Order cell's dbonds
                     if numDBonds>1
                         for j=1:(numDBonds-1)
@@ -238,9 +238,9 @@ classdef Cell < PhysicalEntity
                     obj(i).outline_ = thisOutline;
                 end
             end
-
+            
         end
-
+        
         function plot_pixels = plot_pixels(obj)
             plot_pixels = {};
             obj = flatten(obj);
@@ -254,15 +254,23 @@ classdef Cell < PhysicalEntity
                     minY = floor(min(obj(i).outline_(:,2)));
                     maxY = ceil(max(obj(i).outline_(:,2)));
                     [xq,yq] = meshgrid([minX:maxX],[minY:maxY]);
-                    in = inpolygon(xq,yq,obj(i).outline_(:,1),obj(i).outline_(:,2));
-                    obj(i).plot_pixels_ = [xq(in),yq(in)];
-
-                end
+                    [in,on] = inpolygon(xq,yq,obj(i).outline_(:,1),obj(i).outline_(:,2));
+                    obj(i).plot_pixels_ = [xq(in & (~on)),yq(in & (~on))];
+                    
+                 end
                 plot_pixels{i} = obj(i).plot_pixels_;
             end
-
+            
         end
-
+        
+        function list_pixels = list_pixels(obj)
+            list_pixels = [];
+            obj = flatten(obj);
+            list_pixels(:,1) = [obj.center_x];
+            list_pixels(:,2) = [obj.center_y];
+        end
+        
     end
-
+    
 end
+

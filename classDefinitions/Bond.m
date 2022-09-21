@@ -97,10 +97,29 @@ classdef Bond < PhysicalEntity
         function plot_pixels = plot_pixels(obj)
             plot_pixels = {};
             obj = flatten(obj);
-            for i=1:length(obj)
-            plot_pixels{i} = [obj(i).coords.orig_x_coord,obj(i).coords.orig_y_coord];
+            coords = obj.coords;
+            for i=1:length(coords)
+                plot_pixels{i} = [coords(i).orig_x_coord,coords(i).orig_y_coord];
             end
         end
+        
+        function list_pixels = list_pixels(obj)
+            list_pixels = [];
+            obj = flatten(obj);
+            coords = obj.coords;
+            for i=1:length(obj)
+                x_pixels = [coords(i).orig_x_coord];
+                y_pixels = [coords(i).orig_y_coord];
+                if (~isempty(x_pixels)&& ~isempty(y_pixels))
+                    list_pixels(i,1) = x_pixels(round(length(x_pixels)/2));
+                    list_pixels(i,2) = y_pixels(round(length(y_pixels)/2));
+                else
+                    list_pixels(i,1) = NaN;
+                    list_pixels(i,2) = NaN;
+                end
+            end
+        end
+        
     end
     
     methods (Access = private)

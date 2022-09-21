@@ -10,10 +10,18 @@ dir5 = 'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\Cel
 
 cellIMDir = 'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\Cells\AllSegmented';
 
-db_arr = [Experiment(dir1),Experiment(dir2)];
-[cell_arr,db_arr] = db_arr.cells;
-[bond_arr,db_arr] = db_arr.bonds;
-[frame_arr,db_arr] = db_arr.frames;
+exp_arr = Experiment(dir3);
+cell_arr = exp_arr.cells;
+bond_arr = exp_arr.bonds;
+frame_arr = exp_arr.frames;
+
+%%
+class_list = {'cells','bonds','cells'};
+filter_list = {'[obj_arr.aspect_ratio]>1.25','','[obj_arr.is_edge]==0'};
+value_fun_list = {'area','bond_length','aspect_ratio'};
+calibration_list = {{'xy',2},{'xy',1},{'xy',0}};
+type_list = {'image','image','list'};
+image_size = [512,512];
 
 
 %% Time plots
