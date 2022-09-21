@@ -329,7 +329,11 @@ classdef (Abstract) PhysicalEntity < handle
                         end
                     end
                     % get all candidate results
-                    frame_filtered_phys = index(full_map_key);
+                    if index.isKey(full_map_key)
+                        frame_filtered_phys = index(full_map_key);
+                    else
+                        frame_filtered_phys = [];
+                    end
                     % run actual search on them
                     lookup_result{lookup_idx} = frame_filtered_phys([frame_filtered_phys.(target_prop)] == entity.(requester_prop));
                 end
@@ -349,7 +353,9 @@ classdef (Abstract) PhysicalEntity < handle
             sizes = cellfun(@(result) (length(result)), lookup_result);
             phys_arr(length(obj), max(sizes)) = feval(clazz);
             for i=1:length(obj)
-                phys_arr(i, 1:sizes(i)) = lookup_result{i};
+                if sizes(i) > 0
+                    phys_arr(i, 1:sizes(i)) = lookup_result{i};
+                end
             end
             % filter result and put it into result_arr
             if nargin > 4
@@ -381,7 +387,7 @@ classdef (Abstract) PhysicalEntity < handle
             % Return type: clazz[]
             
             % check which objects needs to calculate stuff
-            index_flag = arrayfun(@(entity) isempty(entity.(prop)), obj);
+            index_flag = arrayfun(@(entity) ~isnan(entity) & Null.isNull(entity.(prop)), obj);
             obj_to_index = obj(index_flag);
             if ~isempty(obj_to_index)
                 fprintf("Indexing %s for %d %ss\n", prop, length(obj_to_index), class(obj_to_index(1)));
@@ -404,8 +410,10 @@ classdef (Abstract) PhysicalEntity < handle
             else
                 phys_arr(numel(obj), max(sizes, [], 'all')) = feval(clazz);
             end
-            for i=1:length(obj)
-                phys_arr(i, 1:sizes(i)) = obj(i).(prop);
+            for i=1:numel(obj)
+                if sizes(i) > 0
+                    phys_arr(i, 1:sizes(i)) = obj(i).(prop);
+                end
             end
             % a reshape in case of a 1:1 function
             if numel(phys_arr) == numel(obj)

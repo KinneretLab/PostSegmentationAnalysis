@@ -41,7 +41,7 @@ classdef PlotUtils
             %      "y": applies a mean on the result of the function
             %      "err": find the standard deviation for the result of the
             %      function.
-            func = @(cell) ([cell.perimeter] ./ sqrt([cell.area]));
+            func = @(cell) reshape([cell.perimeter] ./ sqrt([cell.area]), size(cell));
             if nargin == 1
                 func = PlotUtils.axify(func, axis);
             end
@@ -60,7 +60,7 @@ classdef PlotUtils
             
             orientCellAngle =  @(cell)( mod(atan([cell.elong_yy]./[cell.elong_xx])+pi,pi)); % projected cell orientation from the projected elongation vector
             projDifOrient  =  @(cell)( min(abs([cell.fibre_orientation]-  orientCellAngle(cell) ),pi-abs([cell.fibre_orientation]-orientCellAngle(cell)))); % differnece between fiber angle and cell angle on projected xy plane
-            func =  @(cell) (mod(atan(tan (projDifOrient(cell)).*abs([cell.norm_z])),pi)); % real angle of cell orientation  vs fiber in tangential plane
+            func =  @(cell) reshape(mod(atan(tan (projDifOrient(cell)).*abs([cell.norm_z])),pi), size(cell)); % real angle of cell orientation  vs fiber in tangential plane
 
             if nargin == 1
                 func = PlotUtils.axify(func, axis);
@@ -76,7 +76,7 @@ classdef PlotUtils
             %      "y": applies a mean on the result of the function
             %      "err": find the standard deviation for the result of the
             %      function.
-            func =  @(cell_arr) sum(~isnan(cell_arr.neighbors), 2)';
+            func =  @(cell_arr) reshape(sum(~isnan(cell_arr.neighbors), 2)', size(cell_arr));
             if nargin == 1
                 func = PlotUtils.axify(func, axis);
             end

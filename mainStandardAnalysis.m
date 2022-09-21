@@ -5,24 +5,25 @@ max_area = 1800;
 min_area = 30;
 calibration = 0.52; % calibration of images in um/pixel
 time_only = false;
+match_frames = true;
 
 %% Configuration - here you can set the big experiment folders to draw graphs for.
 % Don't worry about hand segmentation, the program will do this for you.
 
 experiment_folders = {
     ... hand segmented, sorted by time
-    'Z:\Analysis\users\Yonit\Movie_Analysis\DefectLibrary\2020_09_01_18hr_set1', ...
-    'Z:\Analysis\users\Yonit\Movie_Analysis\DefectLibrary\2020_09_08_18hr_set1', ...
-    'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6', ...
+...    'Z:\Analysis\users\Yonit\Movie_Analysis\DefectLibrary\2020_09_01_18hr_set1', ... COMPLETED, no correlation
+...     'Z:\Analysis\users\Yonit\Movie_Analysis\DefectLibrary\2020_09_08_18hr_set1', ... COMPLETED
+...    'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6', ... COMPLETED, no correlation
     ... auto-segmented, sorted by user then time
-    'Z:\Analysis\users\Liora\Movie_Analysis\2021_07_26\2021_07_26_pos1', ...
-    'Z:\Analysis\users\Liora\Movie_Analysis\2021_07_26\2021_07_26_pos2', ...
+...     'Z:\Analysis\users\Liora\Movie_Analysis\2021_07_26\2021_07_26_pos1', ...
+...     'Z:\Analysis\users\Liora\Movie_Analysis\2021_07_26\2021_07_26_pos2', ...
     'Z:\Analysis\users\Liora\Movie_Analysis\2021_07_26\2021_07_26_pos3', ...
-    'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\SD1_2021_05_06_pos5', ...
-    'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\SD1_2021_05_06_pos6', ...
-    'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_06_21_pos2', ...
-    ...'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_06_21_pos3', ...
-    'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_06_21_pos4', ...
+%     'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\SD1_2021_05_06_pos5', ...
+%     'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\SD1_2021_05_06_pos6', ...
+%     'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_06_21_pos2', ...
+%     'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_06_21_pos3', ...
+%     'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_06_21_pos4', ...
     };
 
 %% the actual code execution
@@ -31,17 +32,21 @@ for exp_idx = 1:length(experiment_folders)
     folder = experiment_folders{exp_idx};
     fprintf("generating figures for experiment (%d/%d): %s\n", exp_idx, length(experiment_folders), folder);
     
-    cell_plotter = loadPlotter(folder, class(Cell), [min_area max_area]);
-    bond_plotter = loadPlotter(folder, class(Bond), [min_area max_area]);
-    frame_pair_plotter = loadFramePlotter(folder);
+    cell_plotter = loadPlotter(folder, class(Cell), [min_area max_area], match_frames);
+    bond_plotter = loadPlotter(folder, class(Bond), [min_area max_area], match_frames);
+    frame_pair_plotter = loadFramePlotter(folder, match_frames);
     
     getGraphs(cell_plotter, bond_plotter, frame_pair_plotter, [folder, '\Figures\'], calibration, time_only, [min_area max_area]);
 end
 
 %% functions
-function plotter = loadPlotter(experiment_folder, lookup_clazz, area_constraints)
+function plotter = loadPlotter(experiment_folder, lookup_clazz, area_constraints, match_frames)
     if exist([experiment_folder, '\Cells_auto'], 'dir')
         auto_data = Experiment.load([experiment_folder, '\Cells_auto']).lookup(lookup_clazz);
+        if match_frames
+            hand_frames = [Experiment.load([experiment_folder, '\Cells']).frames.frame];
+            auto_data = auto_data(ismember([auto_data.frame], hand_frames));
+        end
         auto_data = checkArea(auto_data, area_constraints, true);
         hand_data = Experiment.load([experiment_folder, '\Cells']).lookup(lookup_clazz);
         hand_data = checkArea(hand_data, area_constraints, true);
@@ -56,30 +61,49 @@ function plotter = loadPlotter(experiment_folder, lookup_clazz, area_constraints
     end
 end
 
-function plotter = loadFramePlotter(experiment_folder)
+function plotter = loadFramePlotter(experiment_folder, match_frames)
     dist_func = BulkFunc(@(l_frame, r_frame) abs([l_frame.frame] - [r_frame.frame]));
     if exist([experiment_folder, '\Cells_auto'], 'dir')
         auto_data = Experiment.load([experiment_folder, '\Cells_auto']).frames.pair(dist_func);
+        if match_frames
+            hand_frames = [Experiment.load([experiment_folder, '\Cells']).frames.frame];
+            auto_data = auto_data(ismember([auto_data.frame], hand_frames));
+        end
         hand_data = Experiment.load([experiment_folder, '\Cells']).frames.pair(dist_func);
         plotter = PlotBuilder().addData(auto_data, 'auto')...
             .addData(hand_data, 'hand');
+        % pre-load frames.cells
+        Experiment.load([experiment_folder, '\Cells_auto']).frames.cells;
+        Experiment.load([experiment_folder, '\Cells']).frames.cells;
     else
-        auto_data = Experiment.load([experiment_folder, '\Cells']).lookup(lookup_clazz);
+        auto_data = Experiment.load([experiment_folder, '\Cells']).frames.pair(dist_func);
         plotter = PlotBuilder().addData(auto_data, 'auto');
+        % pre-load frames.cells
+        Experiment.load([experiment_folder, '\Cells']).frames.cells;
     end
 end
 
 function filtered_phys_arr = checkArea(phys_arr, area_constraints, remove_flag)
     transposed = phys_arr';
+    if isa(phys_arr(1), class(Bond))
+        transposed = transposed(~isnan([transposed.bond_length]));
+    end
     cells = transposed.cells;
     areas = area_constraints(1) * ones(size(cells));
     areas(~isnan(cells)) = [cells(~isnan(cells)).area];
     test = area_constraints(1) <= areas & areas <= area_constraints(2);
+    existing_filter = logical(prod(test, 2));
+    final_filter = false(size(phys_arr));
+    if isa(phys_arr(1), class(Bond))
+        final_filter(~isnan([phys_arr.bond_length])) = existing_filter;
+    else
+        final_filter = existing_filter;
+    end
     if remove_flag
-        filtered_phys_arr = phys_arr(logical(prod(test, 2)));
+        filtered_phys_arr = phys_arr(final_filter);
     else
         filtered_phys_arr = phys_arr;
-        filtered_phys_arr(logical(prod(test, 2))) = feval(class(phys_arr(1)));
+        filtered_phys_arr(final_filter) = feval(class(phys_arr(1)));
     end
 end
     
@@ -89,7 +113,7 @@ function getGraphs(cell_plotter, bond_plotter, frame_pair_plotter, save_dir, sca
         "perimeter", PlotUtils.xNormalize("perimeter", "frame"), ...
         "bond_length", PlotUtils.xNormalize("bond_length", "frame"), ...
         PlotUtils.shape, PlotUtils.numNeighbors, PlotUtils.cellFiberAngle};
-    meas_filters = {1, 1, 1, 1, 1, 1, 1, "~[obj_arr.is_edge]", 1};
+    meas_filters = {1, 1, 1, 1, 1, 1, 1, "~[obj_arr.is_edge]", "([obj_arr.fibre_coherence]>0.92) & [obj_arr.aspect_ratio]>1.25"};
     meas_scales = [scale ^ 2, 1, scale, 1, scale, 1, 1, 1, 1];
     meas_names = ["Area", "Frame-Normalized Area", ...
         "Perimeter", "Frame-Normalized Perimeter", "Bond Length", ...
@@ -132,28 +156,31 @@ function getGraphs(cell_plotter, bond_plotter, frame_pair_plotter, save_dir, sca
                 .title("mean " + name + " (frame)").draw;
             forceSave(f, save_prefix + "_time.png");
             close(f);
+            
+%             f = frame_pair_plotter.yAxis(axis_name + " correlation").xAxis("frame difference")...
+%                 .xFunction("distance").yFunction(PlotUtils.correlation(from_frame_meas)) ...
+%                 .outliers.title(name + " time correlation").draw;
+%             forceSave(f, save_prefix + "_time_corr.png");
+%             close(f);
         end
         
-        
-        f = frame_pair_plotter.yAxis(axis_name + " correlation").xAxis("frame difference")...
-            .xFunction("distance").yFunction(PlotUtils.correlation(from_frame_meas)) ...
-            .outliers.title(name + " time correlation").draw;
-        forceSave(f, save_prefix + "_time_corr.png");
-        close(f);
-        
         if ~time_only
-            f_arr = PlotUtils.sequenceWithTotal(plotter.xFunction(meas) ...
+            f_arr = PlotUtils.sequenceWithTotal(plotter.invisible.xFunction(meas) ...
                 .xAxis(axis_name).xCalibration(calib).distribution.outliers ...
                 .title(name + " PDF (frame=%d)"));
-            mkdir (save_prefix + "_dist");
+            if ~exist(save_prefix + "_dist", 'dir')
+                mkdir(save_prefix + "_dist");
+            end
             for j = 1:length(f_arr)
                 forceSave(f_arr(j),save_prefix + "_dist\" + j + ".png");
                 close(f_arr(j));
             end
-            f_arr = PlotUtils.sequenceWithTotal(plotter.xFunction(meas)...
+            f_arr = PlotUtils.sequenceWithTotal(plotter.invisible.xFunction(meas)...
                 .xAxis(axis_name).xCalibration(calib).cumulative.normalize.outliers.xLogScale.yLogScale ...
                 .title("log-log " + name + " CDF (frame=%d)"));
-            mkdir (save_prefix + "_logcdf");
+            if ~exist(save_prefix + "_logcdf", 'dir')
+                mkdir(save_prefix + "_logcdf");
+            end
             for j = 1:length(f_arr)
                 forceSave(f_arr(j),save_prefix + "_logcdf\" + j + ".png");
                 close(f_arr(j));
@@ -163,6 +190,10 @@ function getGraphs(cell_plotter, bond_plotter, frame_pair_plotter, save_dir, sca
 end
 
 function forceSave(obj, file_path)
+    dir_path = fileparts(file_path);
+    if ~exist(dir_path, 'dir')
+        mkdir(dir_path);
+    end
     done = false;
     while ~done
         try
