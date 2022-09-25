@@ -44,6 +44,10 @@ classdef Bond < PhysicalEntity
             id = "bond_id";
         end
         
+        function logger = logger(~)
+            logger = Logger('Bond');
+        end
+        
         function conf = confidence(obj, varargin)
             % CONFIDENCE for automatically segmented images, this value estimates how sure we are this bond really exists.
             % values over 0.5 yield confidence the bond exists, while lower

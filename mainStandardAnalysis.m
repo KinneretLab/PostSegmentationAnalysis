@@ -28,12 +28,16 @@ experiment_folders = {
 
 %% the actual code execution
 
+logger = Logger('mainStandardAnalysis');
+
 for exp_idx = 1:length(experiment_folders)
     folder = experiment_folders{exp_idx};
-    fprintf("generating figures for experiment (%d/%d): %s\n", exp_idx, length(experiment_folders), folder);
-    
+    logger.info("generating figures for experiment (%d/%d): %s", exp_idx, length(experiment_folders), folder);
+    logger.info("loading Cells...");
     cell_plotter = loadPlotter(folder, class(Cell), [min_area max_area], match_frames);
+    logger.info("loading Bonds...");
     bond_plotter = loadPlotter(folder, class(Bond), [min_area max_area], match_frames);
+    logger.info("loading Frame Pairs...");
     frame_pair_plotter = loadFramePlotter(folder, match_frames);
     
     getGraphs(cell_plotter, bond_plotter, frame_pair_plotter, [folder, '\Figures\'], calibration, time_only, [min_area max_area]);
@@ -84,6 +88,7 @@ function plotter = loadFramePlotter(experiment_folder, match_frames)
 end
 
 function filtered_phys_arr = checkArea(phys_arr, area_constraints, remove_flag)
+    Logger('mainStandardAnalysis').info("filtering %ss by area", class(phys_arr(1)));
     transposed = phys_arr';
     if isa(phys_arr(1), class(Bond))
         transposed = transposed(~isnan([transposed.bond_length]));
@@ -126,10 +131,14 @@ function getGraphs(cell_plotter, bond_plotter, frame_pair_plotter, save_dir, sca
     meas_bond_flag = arrayfun(@(str) (contains(str, "bond")), meas_files);
     time_flag = [1, 0, 1, 0, 1, 0, 1, 1, 1];
     
+    logger = Logger('mainStandardAnalysis');
+    
     % unique graphs we want that do not fit into the scheme
+    logger.info("Plotting # Cells");
     f = cell_plotter.xAxis("frame").yAxis("# Cells").title("# Cells (frame)").draw;
     forceSave(f,save_dir + "num_cells_time.png");
     close(f);
+    logger.info("Plotting Area Coverage");
     f = cell_plotter.yFunction(@(cell_arr) (sum([cell_arr.area]) / sum(cell_arr(1).frames.mask, 'all'))) ...
         .xAxis("frame").yAxis("% Area").title("Area Coverage (frame)").draw;
     forceSave(f,save_dir + "area_coverage_time.png");
@@ -150,24 +159,12 @@ function getGraphs(cell_plotter, bond_plotter, frame_pair_plotter, save_dir, sca
             from_frame_meas = BulkFunc(@(frames) nanmean(BulkFunc.apply(PlotUtils.axify(meas), checkArea(frames.cells, area_constraints, false)), 2));
         end
         
-        if time_flag(i)
-            f = plotter.yAxis(axis_name).xAxis("frame").yFunction(PlotUtils.axify(meas, "y")).yCalibration(calib) ...
-                .outliers....yErrFunction(PlotUtils.axify(meas, "err"))...
-                .title("mean " + name + " (frame)").draw;
-            forceSave(f, save_prefix + "_time.png");
-            close(f);
-            
-%             f = frame_pair_plotter.yAxis(axis_name + " correlation").xAxis("frame difference")...
-%                 .xFunction("distance").yFunction(PlotUtils.correlation(from_frame_meas)) ...
-%                 .outliers.title(name + " time correlation").draw;
-%             forceSave(f, save_prefix + "_time_corr.png");
-%             close(f);
-        end
-        
         if ~time_only
+            logger.info("Plotting %s PDF", name);
             f_arr = PlotUtils.sequenceWithTotal(plotter.invisible.xFunction(meas) ...
                 .xAxis(axis_name).xCalibration(calib).distribution.outliers ...
                 .title(name + " PDF (frame=%d)"));
+            logger.info("Saving %s PDF", name);
             if ~exist(save_prefix + "_dist", 'dir')
                 mkdir(save_prefix + "_dist");
             end
@@ -175,9 +172,11 @@ function getGraphs(cell_plotter, bond_plotter, frame_pair_plotter, save_dir, sca
                 forceSave(f_arr(j),save_prefix + "_dist\" + j + ".png");
                 close(f_arr(j));
             end
+            logger.info("Plotting %s CDF", name);
             f_arr = PlotUtils.sequenceWithTotal(plotter.invisible.xFunction(meas)...
                 .xAxis(axis_name).xCalibration(calib).cumulative.normalize.outliers.xLogScale.yLogScale ...
                 .title("log-log " + name + " CDF (frame=%d)"));
+            logger.info("Saving %s CDF", name);
             if ~exist(save_prefix + "_logcdf", 'dir')
                 mkdir(save_prefix + "_logcdf");
             end
@@ -185,6 +184,22 @@ function getGraphs(cell_plotter, bond_plotter, frame_pair_plotter, save_dir, sca
                 forceSave(f_arr(j),save_prefix + "_logcdf\" + j + ".png");
                 close(f_arr(j));
             end
+        end
+        
+        if time_flag(i)
+            logger.info("Plotting Mean %s per frame", name);
+            f = plotter.yAxis(axis_name).xAxis("frame").yFunction(PlotUtils.axify(meas, "y")).yCalibration(calib) ...
+                .outliers....yErrFunction(PlotUtils.axify(meas, "err"))...
+                .title("mean " + name + " (frame)").draw;
+            forceSave(f, save_prefix + "_time.png");
+            close(f);
+            
+%             logger.info("Plotting %s time correlation", name);
+%             f = frame_pair_plotter.yAxis(axis_name + " correlation").xAxis("frame difference")...
+%                 .xFunction("distance").yFunction(PlotUtils.correlation(from_frame_meas)) ...
+%                 .outliers.title(name + " time correlation").draw;
+%             forceSave(f, save_prefix + "_time_corr.png");
+%             close(f);
         end
     end
 end

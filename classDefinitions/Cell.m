@@ -97,6 +97,10 @@ classdef Cell < PhysicalEntity
             id = "cell_id";
         end
         
+        function logger = logger(~)
+            logger = Logger('Cell');
+        end
+        
         function cells = neighbors(obj, varargin)
             % NEIGHBORS Find all the cells that share a border with this cell.
             % That is, this only has level 1 neighbors.

@@ -41,6 +41,10 @@ classdef Frame < PhysicalEntity
             id = "frame";
         end
         
+        function logger = logger(~)
+            logger = Logger('Frame');
+        end
+        
         function masks = mask(obj, varargin)
             % MASKS load the mask images per frame in the array.
             % A mask is a binary matrix such that 1 indicated the HYDRA
@@ -104,7 +108,7 @@ classdef Frame < PhysicalEntity
             %   the result.
             % Return type: clazz[]
             if length(obj) ~= numel(obj)
-                disp("multi-value lookup applied on a 2D matrix. This is illegal. Please flatten and re-apply.");
+                obj.logger.error("multi-value lookup applied on a 2D matrix. This is illegal. Please flatten and re-apply.");
             end
             index = containers.Map;
             lookup_result = cell(size(obj));

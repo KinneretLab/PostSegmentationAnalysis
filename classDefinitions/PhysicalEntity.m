@@ -28,6 +28,8 @@ classdef (Abstract) PhysicalEntity < handle
         %   unique ID of a particular entity using the code
         %   <code>physical_entity.(physical_entity.uniqueID)</code>
         uniqueID(obj)
+        
+        logger(obj)
     end
     
     methods
@@ -304,7 +306,7 @@ classdef (Abstract) PhysicalEntity < handle
             %   the result.
             % Return type: clazz[]
             if length(obj) ~= numel(obj)
-                disp("multi-value lookup applied on a 2D matrix. This is illegal. Please flatten and re-apply.");
+                obj.logger.error("multi-value lookup applied on a 2D matrix. This is illegal. Please flatten and re-apply.");
             end
             lookup_result = cell(size(obj));
             if numel(obj) > 2
@@ -390,7 +392,7 @@ classdef (Abstract) PhysicalEntity < handle
             index_flag = arrayfun(@(entity) ~isnan(entity) & Null.isNull(entity.(prop)), obj);
             obj_to_index = obj(index_flag);
             if ~isempty(obj_to_index)
-                fprintf("Indexing %s for %d %ss\n", prop, length(obj_to_index), class(obj_to_index(1)));
+                obj.logger.info("Indexing %s for %d %ss", prop, length(obj_to_index), class(obj_to_index(1)));
                 % apply calculation on the neccesary objects
                 index_result = lookup_func(obj_to_index);
                 if size(index_result, 1) ~= length(obj_to_index)

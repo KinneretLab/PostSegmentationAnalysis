@@ -29,6 +29,8 @@ classdef Experiment < handle
         % not to be used externally.
         % type: Map(string -> EXPERIMENT)
        loaded_ = containers.Map 
+       
+       logger = Logger('Experiment');
     end
     
     methods (Static)
@@ -122,7 +124,7 @@ classdef Experiment < handle
                 return
             end
             if length(obj) ~= 1
-                fprintf("[ERROR] Load function called for an array of experiments. This is an ambiguous call. Plase iterate over the array instead.")
+                obj(1).logger.error("Load function called for an array of experiments. This is an ambiguous call. Plase iterate over the array instead.")
                 return
             end
             result = imread([obj.folder_, '\', path]);
@@ -148,7 +150,7 @@ classdef Experiment < handle
             for row = 1:length(obj)
                 experiment = obj(row);
                 if ~experiment.data_.isKey(clazz)
-                    fprintf("Indexing %ss for Experiment %s\n", clazz, experiment.folder_);
+                    obj(1).logger.info("Indexing %ss for Experiment %s", clazz, experiment.folder_);
                     % load the data from the apropriate table
                     lookup_table = readtable(experiment.files_(clazz),'Delimiter',',');
                     % construct the target array of classes with the
