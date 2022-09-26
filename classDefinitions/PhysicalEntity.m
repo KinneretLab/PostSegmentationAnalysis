@@ -405,7 +405,7 @@ classdef (Abstract) PhysicalEntity < handle
                 end
             end
             % collect all the properties of the object into a tight matrix.
-            sizes = arrayfun(@(entity) length(entity.(prop)), obj);
+            sizes = arrayfun(@(entity) ~Null.isNull(entity.(prop)) * length(entity.(prop)), obj);
             if ismember(clazz, {'logical', 'double', 'single', 'uint8', ...
                     'uint16', 'uint32', 'uint64', 'int8', 'int16', 'int32', 'int64'})
                 phys_arr(numel(obj), max(sizes, [], 'all')) = feval(clazz, 0);
