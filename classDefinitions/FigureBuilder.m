@@ -1,4 +1,4 @@
-classdef (Abstract) FigureBuilder
+classdef (Abstract, HandleCompatible) FigureBuilder
     % FigureBuilder a tool used to draw figures
     %   This is the parent class to all the figures you want to build. Following are available sub-classes:
     %   ImageBuilder draws the cell graph in the XY space

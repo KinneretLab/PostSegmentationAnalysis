@@ -1,4 +1,4 @@
-classdef ImageBuilder < FigureBuilder
+classdef ImageBuilder <  FigureBuilder & handle
     
     properties (Access = protected)
         
@@ -7,6 +7,14 @@ classdef ImageBuilder < FigureBuilder
         image_size_             % double array
         data_                   % {obj array...}
         layer_arr_              % cell array of double arrays
+        save_format_
+
+    end
+    
+    properties (Access = public)
+        
+        layers_data_  % TODO untill i figure out how to get value
+        image_data_
     end
     
     methods
@@ -18,6 +26,8 @@ classdef ImageBuilder < FigureBuilder
             obj.z_calibration_           = 1;
             obj.image_size_              = [];
             obj.data_                    = {};
+            layers_data_                 = {};
+            image_data_                   = ImageDrawData;
         end
         
     end
@@ -44,7 +54,7 @@ classdef ImageBuilder < FigureBuilder
                 this_funct = func;
             end
         end
-            
+        
         function filter_fun = filterFunction(func)
             % FILTERFUNCTION Add a filter to apply on the data before starting the calculation at all.
             % This is not neccesary (you can apply this beforehand in ADDDATA,
@@ -91,7 +101,7 @@ classdef ImageBuilder < FigureBuilder
                 end
             end
         end
-
+        
     end
     
     
@@ -102,9 +112,9 @@ classdef ImageBuilder < FigureBuilder
         % DETAILED EXPLANATION TO BE ADDED
         function [layer_arr] = calculate(obj,class_list,filter_list,value_fun_list,type_list,calibration_list, varargin)
             
-           % Initiate output array
+            % Initiate output array
             layer_arr = {};
-          
+            
             % Run over list of layers to calculate
             for i= 1:length(class_list)
                 
@@ -113,7 +123,7 @@ classdef ImageBuilder < FigureBuilder
                 for j = 1:length(frame_arr)
                     % Get data arrays for frame, apply filter
                     phys_arr = frame_arr(j).(class_list{i});
-
+                    
                     % Apply filter to each entity
                     
                     filter_fun = ImageBuilder.filterFunction(filter_list{i});
@@ -126,7 +136,7 @@ classdef ImageBuilder < FigureBuilder
                     
                     
                     % Option for normalization by frame average
-%                     norm_fun = plotUtils.xNormalize(value_fun_list{i},"frame");
+                    %                     norm_fun = plotUtils.xNormalize(value_fun_list{i},"frame");
                     % NEED TO UNDERSTAND WHAT THIS RUNS ON, AND IN WHAT
                     % ORDER TO APPLY FILTERING AND CALCULATING VALUE.
                     
@@ -155,8 +165,8 @@ classdef ImageBuilder < FigureBuilder
                         this_im = NaN(image_size);
                         
                         for k=1:size(plot_pixels,2)
-                            for l=1:size(plot_pixels{k},1)          
-                            this_im(plot_pixels{k}(l,1),plot_pixels{k}(l,2)) = value_arr(k); % MAKE THIS NOT NEED LOOP
+                            for l=1:size(plot_pixels{k},1)
+                                this_im(plot_pixels{k}(l,1),plot_pixels{k}(l,2)) = value_arr(k); % MAKE THIS NOT NEED LOOP
                             end
                         end
                         
@@ -169,7 +179,7 @@ classdef ImageBuilder < FigureBuilder
                         pause(1)
                         
                     elseif strcmp(type_list{i},'list')
-                         
+                        
                         % Get relevant pixels (the function list_pixels is
                         % implemented in every relevant class). For cells,
                         % this is the centre of the cell, for bonds the
@@ -184,17 +194,67 @@ classdef ImageBuilder < FigureBuilder
                     
                 end
             end
-            
+            obj.layer_arr_=layer_arr;
+            obj.createDefaultLayerData(); % TODO see if needs to run here or where, or if it is only run by user...
         end
         
-        function [] = draw(obj)
+        function obj=createDefaultLayerData(obj) % TODO see if add if override version, in case we want to load or calculate different data..
+            [row, col]=size(obj.layer_arr_);
+            for i=1:row
+                obj.layers_data_{i} = ImageLayerDrawData;
+            end
+        end
+        
+        function obj = load(obj,path, file_name)
+            fname = path + file_name;
+            struct = load(fname);
+            fieldNames = fieldnames(struct);
+            obj.layer_arr_ = getfield(struct, fieldNames{1});
+            obj.createDefaultLayerData(); % TODO see if needs to run here or where, or if it is only run by user...
+        end
+        
+        function figures = draw(obj) %returns as many figures as there are frames
+            [row, col]=size(obj.layer_arr_); %TODO save as property
+            figures = {};
+            for i= 1 : col - 29
+                frame = obj.layer_arr_(:, i);
+                figures{i} = obj.drawFrame(frame);
+            end 
+        end
+        
+        function fig = drawFrame(obj, frame)
+            fig=figure;
+            %set(gcf,'visible','off');
+            [row, col]=size(frame);
+            image = [];
+            for i = 1 : row - 1 %TODO remove -1 when know how to draw the markers
+                if i == 1
+                    image = obj.drawLayer(frame{i}, i);
+                    figure;
+                    imshow(image);
+                end
+                if i ~= row - 1
+                    image = imfuse(image, obj.drawLayer(frame{i+1}, i+1), 'blend','Scaling','independent');
+                    %image = image + obj.drawLayer(frame{i+1}, i+1);
+                end                    
+            end
+            set(0, 'CurrentFigure', fig);
+            imshow(image, []);
+        end
+        
+        function layer_im=drawLayer(obj, layer, layerNum)
+            %set nan value
+            layer(isnan(layer)) = 0; %black
+            image=mat2gray(layer);
+            ind=gray2ind(image, 256);
+            layer_im=ind2rgb(ind, colormap("jet"));
         end
         
         function obj = addData(obj, frame_arr)
             if ~strcmp(class(frame_arr),'Frame')
                 disp(sprint('Data must be an object or array of class frame'));
             else
-            obj.data_{1} = frame_arr;
+                obj.data_{1} = frame_arr;
             end
         end
         
