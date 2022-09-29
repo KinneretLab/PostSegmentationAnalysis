@@ -3,17 +3,16 @@ classdef ImageLayerDrawData
     %   Detailed explanation goes here
     
     properties (Access=public)
-        scale_
-        color_for_nan_
-        colormap_
-        opacity_
+        scale_ 
+        colormap_ 
+        opacity_ 
         show_
-        markers_shape_
-        markers_color_
-        markers_size_
-        markers_shape_by_value_ %bool
-        markers_color_by_value_ %bool
-        markers_size_by_value_ %bool
+        markers_shape_ %TODO
+        markers_color_ %TODO
+        markers_size_ %TODO
+        markers_shape_by_value_ %bool, TODO
+        markers_color_by_value_ %bool, TODO
+        markers_size_by_value_ %bool, TODO
     end
     
     methods

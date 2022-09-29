@@ -8,7 +8,6 @@ classdef ImageBuilder <  FigureBuilder & handle
         data_                   % {obj array...}
         layer_arr_              % cell array of double arrays
         save_format_
-
     end
     
     properties (Access = public)
@@ -216,38 +215,63 @@ classdef ImageBuilder <  FigureBuilder & handle
         function figures = draw(obj) %returns as many figures as there are frames
             [row, col]=size(obj.layer_arr_); %TODO save as property
             figures = {};
-            for i= 1 : col - 29
+            for i= 1 : col-29
                 frame = obj.layer_arr_(:, i);
                 figures{i} = obj.drawFrame(frame);
-            end 
+            end
         end
         
         function fig = drawFrame(obj, frame)
             fig=figure;
             %set(gcf,'visible','off');
+            %frame=obj.filterLayersFromFrame(frame);
             [row, col]=size(frame);
-            image = [];
-            for i = 1 : row - 1 %TODO remove -1 when know how to draw the markers
+            frame_mask=[];
+            for i = 1 : row-1 %TODO remove -1 when know how to draw the markers
+                layer=obj.drawLayer(frame{i}, i);
                 if i == 1
-                    image = obj.drawLayer(frame{i}, i);
-                    figure;
-                    imshow(image);
+                    hold on;
+                    frame_mask = layer.AlphaData;
                 end
-                if i ~= row - 1
-                    image = imfuse(image, obj.drawLayer(frame{i+1}, i+1), 'blend','Scaling','independent');
-                    %image = image + obj.drawLayer(frame{i+1}, i+1);
-                end                    
+                if i ~= 1
+                    frame_mask = frame_mask + layer.AlphaData;
+                end
+                if i == row-1
+                    frame_mask(frame_mask>0)=1;
+                    background_mask=~frame_mask;
+                    %imshow(background_mask);
+                    background=ones(size(layer.CData)); %add color
+                    back_image=imshow(background);
+                    back_image.AlphaData=background_mask;
+                    hold off;
+                end
             end
             set(0, 'CurrentFigure', fig);
-            imshow(image, []);
+            % TODO add if to colorbar : colorbar;
+            %image=getimage(fig);
+            %imshow(image);
+            
+            
         end
         
-        function layer_im=drawLayer(obj, layer, layerNum)
-            %set nan value
-            layer(isnan(layer)) = 0; %black
-            image=mat2gray(layer);
+        
+        function layer_im=drawLayer(obj, layer, layer_num)
+            layer_data=obj.layers_data_{layer_num};
+            if isempty(layer_data.scale_)
+                layer_data.scale_=[min(layer(:)) max(layer(:))];
+            end
+            image=mat2gray(layer, layer_data.scale_);
             ind=gray2ind(image, 256);
-            layer_im=ind2rgb(ind, colormap("jet"));
+            image=ind2rgb(ind, colormap(layer_data.colormap_));
+            %creates the image
+            alpha_mask=zeros(size(layer));
+            if( layer_data.show_== true )
+                alpha_mask(~isnan(layer)) = 1; %creates regular mask, TODO think of way to save mask to make total mask for color of nan or smth
+                alpha_mask=alpha_mask.*layer_data.opacity_;
+            end
+            layer_im = imshow(image);
+            layer_im.AlphaData = alpha_mask;
+            
         end
         
         function obj = addData(obj, frame_arr)
