@@ -12,7 +12,7 @@ classdef ImageBuilder <  FigureBuilder & handle
     
     properties (Access = public)
         
-        layers_data_  % TODO untill i figure out how to get value
+        layers_data_  % TODO untill i figure out how to get or set value
         image_data_
     end
     
@@ -210,6 +210,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             fieldNames = fieldnames(struct);
             obj.layer_arr_ = getfield(struct, fieldNames{1});
             obj.createDefaultLayerData(); % TODO see if needs to run here or where, or if it is only run by user...
+            obj.image_data_=ImageDrawData;
         end
         
         function figures = draw(obj) %returns as many figures as there are frames
@@ -223,39 +224,54 @@ classdef ImageBuilder <  FigureBuilder & handle
         
         function fig = drawFrame(obj, frame)
             fig=figure;
+            if(isempty(obj.image_data_.background_image_)) %if the marker layer is the only layer then there must be a background image
+                background=obj.createBackground(size(frame{1})); 
+            else
+                background=obj.image_data_.background_image_;
+            end
+            imshow(background);
+            hold on;
             %set(gcf,'visible','off');
             %frame=obj.filterLayersFromFrame(frame);
             [row, col]=size(frame);
-            frame_mask=[];
-            for i = 1 : row-1 %TODO remove -1 when know how to draw the markers
-                layer=obj.drawLayer(frame{i}, i);
-                if i == 1
-                    hold on;
-                    frame_mask = layer.AlphaData;
-                end
-                if i ~= 1
-                    frame_mask = frame_mask + layer.AlphaData;
-                end
-                if i == row-1
-                    frame_mask(frame_mask>0)=1;
-                    background_mask=~frame_mask;
-                    %imshow(background_mask);
-                    background=ones(size(layer.CData)); %add color
-                    back_image=imshow(background);
-                    back_image.AlphaData=background_mask;
+            for i = 1 : row
+                obj.drawLayer(frame{i}, i);
+                if i == row                    
                     hold off;
                 end
             end
             set(0, 'CurrentFigure', fig);
-            % TODO add if to colorbar : colorbar;
-            %image=getimage(fig);
+            if(obj.image_data_.show_colorbar_)
+                cb=colorbar; %todo fix adds colorbar only for last hold on, use freezeColors pack
+                caxis(obj.image_data_.colorbar_axis_scale_);
+                cb.Label.String=obj.image_data_.colorbar_title_;
+            end
+            title(obj.image_data_.image_title_);
             %imshow(image);
-            
-            
         end
         
         
-        function layer_im=drawLayer(obj, layer, layer_num)
+        function drawLayer(obj, layer, layer_num)
+            if(~obj.isMarkerLayer(layer)) %TODO find better way maybe with imsize?
+                obj.drawImageLayer(layer, layer_num);
+            else
+                obj.drawMarkerLayer(layer, layer_num);
+            end
+        end
+        
+        function drawMarkerLayer(obj, layer, layer_num)
+            layer_data=obj.layers_data_{layer_num};
+            x=layer(:,2);
+            y=layer(:, 1);
+            value=layer(:,3);
+            if(layer_data.markers_shape_~="arrow")
+                s=scatter(x,y, layer_data.markers_color_);
+                s.MarkerEdgeAlpha=layer_data.opacity_;
+                s.MarkerFaceAlpha=layer_data.opacity_;
+            end
+        end
+        
+        function drawImageLayer(obj, layer, layer_num)
             layer_data=obj.layers_data_{layer_num};
             if isempty(layer_data.scale_)
                 layer_data.scale_=[min(layer(:)) max(layer(:))];
@@ -266,12 +282,27 @@ classdef ImageBuilder <  FigureBuilder & handle
             %creates the image
             alpha_mask=zeros(size(layer));
             if( layer_data.show_== true )
-                alpha_mask(~isnan(layer)) = 1; %creates regular mask, TODO think of way to save mask to make total mask for color of nan or smth
+                alpha_mask(~isnan(layer)) = 1; %creates regular mask
                 alpha_mask=alpha_mask.*layer_data.opacity_;
             end
             layer_im = imshow(image);
             layer_im.AlphaData = alpha_mask;
-            
+        end
+        
+        function is_marker = isMarkerLayer(obj, layer)
+            [row, col]=size(layer);
+            if(col==3)
+                is_marker=true;
+            else
+                is_marker=false;
+            end
+        end
+        
+        function back_image= createBackground(obj, size)
+            back_image = ones(size);
+            for i= 1:3
+                back_image(:,:,i)=obj.image_data_.color_for_nan_(i);
+            end
         end
         
         function obj = addData(obj, frame_arr)
