@@ -216,7 +216,7 @@ classdef ImageBuilder <  FigureBuilder & handle
         function figures = draw(obj) %returns as many figures as there are frames
             [row, col]=size(obj.layer_arr_); %TODO save as property
             figures = {};
-            for i= 1 : col-29
+            for i= 1 : col
                 frame = obj.layer_arr_(:, i);
                 figures{i} = obj.drawFrame(frame);
             end
@@ -241,11 +241,6 @@ classdef ImageBuilder <  FigureBuilder & handle
                 end
             end
             set(0, 'CurrentFigure', fig);
-            if(obj.image_data_.show_colorbar_)
-                cb=colorbar; %todo fix adds colorbar only for last hold on, use freezeColors pack
-                caxis(obj.image_data_.colorbar_axis_scale_);
-                cb.Label.String=obj.image_data_.colorbar_title_;
-            end
             title(obj.image_data_.image_title_);
             %imshow(image);
         end
@@ -264,8 +259,22 @@ classdef ImageBuilder <  FigureBuilder & handle
             x=layer(:,2);
             y=layer(:, 1);
             value=layer(:,3);
+            rescaled_value=rescale(value);
             if(layer_data.markers_shape_~="arrow")
-                s=scatter(x,y, layer_data.markers_color_);
+                if(layer_data.markers_size_by_value_)
+                    marker_size=rescaled_value;
+                    marker_size(marker_size==0)=nan;
+                    marker_size=marker_size.*layer_data.markers_size_;
+                else
+                    marker_size=ones(size(value)).*layer_data.markers_size_;
+                end
+                if(layer_data.markers_color_by_value_)
+                     s=scatter(x,y, marker_size, "CData" , rescaled_value);
+                     colormap(gca, layer_data.colormap_);
+                else
+                     s=scatter(x,y, marker_size, layer_data.markers_color_);
+                end
+                s.Marker=layer_data.markers_shape_;
                 s.MarkerEdgeAlpha=layer_data.opacity_;
                 s.MarkerFaceAlpha=layer_data.opacity_;
             end
@@ -287,6 +296,11 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
             layer_im = imshow(image);
             layer_im.AlphaData = alpha_mask;
+            if(obj.image_data_.show_colorbar_)
+                cb=colorbar; %todo fix adds colorbar only for last hold on, use freezeColors pack, has option to add up to 3 colorbars see if relevant, maybe addoption to which layer add the colorbar
+                caxis(obj.image_data_.colorbar_axis_scale_);
+                cb.Label.String=obj.image_data_.colorbar_title_;
+            end
         end
         
         function is_marker = isMarkerLayer(obj, layer)
