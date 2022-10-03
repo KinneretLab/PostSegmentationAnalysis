@@ -8,11 +8,11 @@ classdef ImageLayerDrawData
         opacity_
         show_
         markers_shape_ %TODO
-        markers_color_ %TODO
-        markers_size_ %TODO
-        markers_shape_by_value_ %bool, TODO
-        markers_color_by_value_ %bool, TODO
-        markers_size_by_value_ %bool, TODO
+        markers_color_
+        markers_size_
+        markers_color_by_value_ %bool
+        markers_size_by_value_ %bool
+        is_marker_quiver_ %TODO
     end
     
     methods (Access=public)
@@ -26,9 +26,9 @@ classdef ImageLayerDrawData
             % 'square' | 'diamond' | 'v' | '^' | '>' | '<' | 'pentagram' | 'hexagram' | 'none'.
             obj.markers_color_="red"; %add option for rgb value? add option for colormap in case markers color by value true.
             obj.markers_size_=2;
-            obj.markers_shape_by_value_= false; %bool how?
             obj.markers_color_by_value_= false; %bool
             obj.markers_size_by_value_= false; %bool
+            obj.is_marker_quiver_=false; %use setter- if markers_shape=="quiver or arrow" is_quiver=false or just add tis
         end
         
         %         function obj = setScale(obj, scale)

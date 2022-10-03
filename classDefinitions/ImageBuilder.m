@@ -204,14 +204,24 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
         end
         
-        function obj = load(obj,path, file_name)
-            fname = path + file_name;
+        function obj = load(obj, path, file_name) %todo decide maybe if load should be static, and return an image builder, if not load shouldnt return anything. also, maybe add option to if dispose of layer and image data
+            fname = fullfile(path, file_name);
             struct = load(fname);
             fieldNames = fieldnames(struct);
             obj.layer_arr_ = getfield(struct, fieldNames{1});
             obj.createDefaultLayerData(); % TODO see if needs to run here or where, or if it is only run by user...
             obj.image_data_=ImageDrawData;
         end
+        
+        function save(obj, figures, path, file_name)
+            [row, col]=size(figures);
+            for i = 1:col
+                fname = fullfile(path, sprintf("%s%d.png",file_name,i));
+                figure=figures{i};
+                saveas(figure, fname);
+                %TODO make sure that at some point figures are closed...
+            end
+        end 
         
         function figures = draw(obj) %returns as many figures as there are frames
             [row, col]=size(obj.layer_arr_); %TODO save as property
@@ -224,6 +234,7 @@ classdef ImageBuilder <  FigureBuilder & handle
         
         function fig = drawFrame(obj, frame)
             fig=figure;
+            set(gcf,'visible','off'); %todo get this from the draw function as an input!
             if(isempty(obj.image_data_.background_image_)) %if the marker layer is the only layer then there must be a background image
                 background=obj.createBackground(size(frame{1})); 
             else
@@ -231,8 +242,6 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
             imshow(background);
             hold on;
-            %set(gcf,'visible','off');
-            %frame=obj.filterLayersFromFrame(frame);
             [row, col]=size(frame);
             for i = 1 : row
                 obj.drawLayer(frame{i}, i);
@@ -242,6 +251,9 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
             set(0, 'CurrentFigure', fig);
             title(obj.image_data_.image_title_);
+            if(obj.image_data_.legend_for_markers_)
+                legend;
+            end
             %imshow(image);
         end
         
@@ -260,7 +272,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             y=layer(:, 1);
             value=layer(:,3);
             rescaled_value=rescale(value);
-            if(layer_data.markers_shape_~="arrow")
+            if(~layer_data.is_marker_quiver_)
                 if(layer_data.markers_size_by_value_)
                     marker_size=rescaled_value;
                     marker_size(marker_size==0)=nan;
@@ -277,6 +289,8 @@ classdef ImageBuilder <  FigureBuilder & handle
                 s.Marker=layer_data.markers_shape_;
                 s.MarkerEdgeAlpha=layer_data.opacity_;
                 s.MarkerFaceAlpha=layer_data.opacity_;
+            else
+                %TODO add quiver handle
             end
         end
         
@@ -312,9 +326,9 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
         end
         
-        function back_image= createBackground(obj, size)
+        function back_image = createBackground(obj, size)
             back_image = ones(size);
-            for i= 1:3
+            for i = 1:3
                 back_image(:,:,i)=obj.image_data_.color_for_nan_(i);
             end
         end
