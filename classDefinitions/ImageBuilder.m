@@ -130,10 +130,12 @@ classdef ImageBuilder <  FigureBuilder & handle
                     
                     % Get value for each object using the specified value
                     % function for this layer.
-                    value_fun = ImageBuilder.objFunction(value_fun_list{i});
+                    if ~iscell(value_fun_list{i})
+                        value_fun = ImageBuilder.objFunction(value_fun_list{i});
+                    else
+                        value_fun = ImageBuilder.objFunction(value_fun_list{i}{1});
+                    end
                     value_arr = arrayfun(value_fun,filtered_arr);
-                    
-                    
                     % Option for normalization by frame average
                     %                     norm_fun = plotUtils.xNormalize(value_fun_list{i},"frame");
                     % NEED TO UNDERSTAND WHAT THIS RUNS ON, AND IN WHAT
@@ -187,8 +189,23 @@ classdef ImageBuilder <  FigureBuilder & handle
                         list_pixels = filtered_arr.list_pixels;
                         this_list = [list_pixels,value_arr'];
                         layer_arr{i,j} = this_list;
+                        
+                    elseif strcmp(type_list{i},'quiver')
+                                                % Get relevant pixels (the function list_pixels is
+                        % implemented in every relevant class). For cells,
+                        % this is the centre of the cell, for bonds the
+                        % middle point of the bond, and for vertices it is
+                        % the vertex location.
+                        list_pixels = filtered_arr.list_pixels;
+                        value_fun_dir = ImageBuilder.objFunction(value_fun_list{i}{1});
+                        value_arr_dir = arrayfun(value_fun_dir,filtered_arr);
+                        value_fun_size = ImageBuilder.objFunction(value_fun_list{i}{2});
+                        value_arr_size = arrayfun(value_fun_size,filtered_arr);
+                        this_list = [list_pixels,value_arr_dir',value_arr_size'];
+                        layer_arr{i,j} = this_list;
+                        
                     else
-                        disp(sprintf('Typelist needs to specify image or list'));
+                        disp(sprintf('Typelist needs to specify image, list or quiver'));
                     end
                     
                 end

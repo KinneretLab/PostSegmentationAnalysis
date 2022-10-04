@@ -16,11 +16,11 @@ bond_arr = exp_arr.bonds;
 frame_arr = exp_arr.frames;
 
 %%
-class_list = {'cells','bonds','cells'};
-filter_list = {'[obj_arr.aspect_ratio]>1.25','','[obj_arr.is_edge]==0'};
-value_fun_list = {'area','bond_length','aspect_ratio'};
-calibration_list = {{'xy',2},{'xy',1},{'xy',0}};
-type_list = {'image','image','list'};
+class_list = {'cells','cells','bonds','cells'};
+filter_list = {'','[obj_arr.aspect_ratio]>1.25','','[obj_arr.is_edge]==0'};
+value_fun_list = {{@(cell)( mod(atan([cell.elong_yy]./[cell.elong_xx])+pi,pi)),'aspect_ratio'},'area','bond_length','aspect_ratio'};
+calibration_list = {{'xy',0},{'xy',2},{'xy',1},{'xy',0}};
+type_list = {'quiver','image','image','list'};
 image_size = [512,512];
 
 
