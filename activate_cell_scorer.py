@@ -49,6 +49,8 @@ def main():
             pred_confidence = torch.sigmoid(valid_outputs).item()
 
             df, cell_id = get_table(cfg, loaded_tables, dataset, i)
+            if cell_id == -1:
+                continue
             df.at[cell_id, 'confidence'] = pred_confidence
 
             # statistical analysis
@@ -88,7 +90,12 @@ def get_table(cfg: SmartConfig, table_db: Dict[str, pandas.DataFrame], ds: Score
             frame_id = int(frame_df[frame_df['frame_name'] == frame_name]['frame'])
             cell_in_frame = int(id_split[-1])
             cell_id = int((frame_id+cell_in_frame)*(frame_id+cell_in_frame+1)/2+frame_id)
-            cell_index = df[df['cell_id'] == cell_id].index[0]
+            filtered_df = df[df['cell_id'] == cell_id]
+            if len(filtered_df) > 0:
+                cell_index = filtered_df.index[0]
+            else:
+                cell_index = -1
+                print(f"[WARN] Could not find cell {'_'.join(id_split)} in the cell.csv table. Skipping...")
             return df, cell_index
 
 
