@@ -30,8 +30,11 @@ classdef ImageComponentHandler < handle
         function show(obj, app)
             obj.renderFromImageBuilder(app);
             app.ImageTab.Parent=app.TabGroup;
+            obj.setSettings();
         end
         
+        function setSettings(obj, app)
+        end
     end
     
     methods (Access=private)
