@@ -30,11 +30,18 @@ classdef ImageComponentHandler < handle
         function show(obj, app)
             obj.renderFromImageBuilder(app);
             app.ImageTab.Parent=app.TabGroup;
-            obj.setSettings();
+            obj.setImageSettings(app);
         end
         
-        function setSettings(obj, app)
+        function renderFromImageBuilder(obj, app)
+            obj.ImageDisplayHandler.hide();
+            figures=obj.ImageBuilder.draw(false);
+            obj.ImageDisplayHandler.setFigures(figures);
+            obj.ImageDisplayHandler.show(app, obj.frame_default_value_);
+            app.ChooseFrameSlider.Value=obj.frame_default_value_;
+            obj.setNumOfFrames(app, figures);
         end
+        
     end
     
     methods (Access=private)
@@ -44,29 +51,27 @@ classdef ImageComponentHandler < handle
         %             app.FrameNumberEditFieldLabel.Text=sprintf('Frame Number (Between 1-%d):',obj.NumOfFrames);
         %         end
         
-        function renderFromImageBuilder(obj, app)
-            figures=obj.ImageBuilder.draw();
-            obj.ImageDisplayHandler.setFigures(figures);
-            obj.ImageDisplayHandler.show(app, obj.frame_default_value_);
-            obj.setNumOfFrames(app, figures);
-        end
-        
         function setNumOfFrames(obj, app, figures)
             [row col]=size(figures);
             app.ChooseFrameSlider.Limits= [1 col];
-        end 
-        
-        function chooseFrame(obj, app) %add joint support for load images
-%             value = app.FrameNumberEditField.Value;
-%             %add validation
-%             obj.setFrame(value);
         end
-        
-        function setFrame(obj, frame) %add joint support for load images
-            %add validation
-            %             obj.ShownFrame=obj.ImageRawData{frame};
+        function setImageSettings(obj, app)
+            app.ImageTitleEditField.Value=obj.ImageBuilder.image_data_.getImageTitle();
+            color=obj.ImageBuilder.image_data_.getColorForNaN();
+            app.RValue.Value=color(1);
+            app.GValue.Value=color(2);
+            app.BValue.Value=color(3);
+            app.ShowColorbarCheckBox.Value =obj.ImageBuilder.image_data_.getShowColorbar();
+            app.ColorbarTitleEditField.Value=obj.ImageBuilder.image_data_.getColorbarTitle();
+            colorbar_scale=obj.ImageBuilder.image_data_.getColorbarAxisScale();
+            app.ColorbarAxisMin.Value=colorbar_scale(1);
+            app.ColorbarAxisMin.Value=colorbar_scale(2);
+            app.ShowLegendCheckBox.Value=obj.ImageBuilder.image_data_.getLegendForMarkers();
+
+            
+
+
         end
-        
     end
 end
 

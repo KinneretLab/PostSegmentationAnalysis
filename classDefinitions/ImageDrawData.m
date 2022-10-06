@@ -26,7 +26,7 @@ classdef ImageDrawData < handle
             obj.colorbar_axis_scale_ = [0 1];
             obj.image_title_="";
             obj.colorbar_title_="";
-            
+            obj.legend_for_markers_=false;
         end
         
         

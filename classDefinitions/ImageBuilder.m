@@ -223,18 +223,20 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
         end
         
-        function figures = draw(obj) %returns as many figures as there are frames
+        function figures = draw(obj, show_figures) %returns as many figures as there are frames
             [row, col]=size(obj.layer_arr_); %TODO save as property
             figures = {};
             for i= 1 : col
                 frame = obj.layer_arr_(:, i);
-                figures{i} = obj.drawFrame(frame);
+                figures{i} = obj.drawFrame(frame, show_figures);
             end
         end
         
-        function fig = drawFrame(obj, frame)
+        function fig = drawFrame(obj, frame, show_figures)
             fig=figure;
-            %set(gcf,'visible','off'); %todo get this from the draw function as an input!
+            if(~show_figures)
+                 set(gcf,'visible','off'); 
+            end
             if(isempty(obj.image_data_.getBackgroundImage())) %if the marker layer is the only layer then there must be a background image
                 background=obj.createBackground(size(frame{1}));
             else
