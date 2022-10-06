@@ -5,15 +5,17 @@ classdef ImageLayerDrawData < handle
     properties (Access=private)
         scale_
         colormap_
-        opacity_
+        opacity_ %for quiver- not an option TODO: see if neccessary
         show_
         markers_shape_
         markers_color_
         markers_size_
-        markers_color_by_value_ %bool
+        markers_color_by_value_ %bool TODO: for quiver- not an option
         markers_size_by_value_ %bool
-        is_marker_quiver_ %TODO
+        is_marker_quiver_
         is_marker_layer_
+        quiver_line_width_
+        quiver_show_arrow_head_
         
         %todo add option to if there are lines make them bolder
     end
@@ -27,12 +29,14 @@ classdef ImageLayerDrawData < handle
             obj.markers_shape_="o"; %arrows using quiver, everything else using scatter??
             %  Use one of these values: '+' | 'o' | '*' | '.' | 'x' |
             % 'square' | 'diamond' | 'v' | '^' | '>' | '<' | 'pentagram' | 'hexagram' | 'none'.
-            obj.markers_color_="red"; %add option for rgb value? add option for colormap in case markers color by value true.
+            obj.markers_color_="red"; %add option for rgb value?
             obj.markers_size_=2;
             obj.markers_color_by_value_= false; %bool
             obj.markers_size_by_value_= false; %bool
-            obj.is_marker_quiver_=false; %use setter- if markers_shape=="quiver or arrow" is_quiver=false or just add tis
+            obj.is_marker_quiver_=false;
             obj.is_marker_layer_=false;
+            obj.quiver_line_width_=0.5;
+            obj.quiver_show_arrow_head_=false;
         end
         
         function obj = setScale(obj, value)
@@ -121,6 +125,22 @@ classdef ImageLayerDrawData < handle
         
         function value = getIsMarkerLayer(obj)
             value = obj.is_marker_layer_;
+        end
+        
+        function obj = setQuiverLineWidth(obj, value)
+            obj.quiver_line_width_ = value;
+        end
+        
+        function value = getQuiverLineWidth(obj)
+            value = obj.quiver_line_width_;
+        end
+        
+        function obj = setQuiverShowArrowHead(obj, value)
+            obj.quiver_show_arrow_head_ = value;
+        end
+        
+        function value = getQuiverShowArrowHead(obj)
+            value = obj.quiver_show_arrow_head_;
         end
     end
 end

@@ -12,7 +12,7 @@ classdef ImageBuilder <  FigureBuilder & handle
     
     properties (Access = public)
         
-        layers_data_  % TODO untill i figure out how to get or set value
+        layers_data_
         image_data_
     end
     
@@ -221,7 +221,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                 saveas(figure, fname);
                 %TODO make sure that at some point figures are closed...
             end
-        end 
+        end
         
         function figures = draw(obj) %returns as many figures as there are frames
             [row, col]=size(obj.layer_arr_); %TODO save as property
@@ -234,9 +234,9 @@ classdef ImageBuilder <  FigureBuilder & handle
         
         function fig = drawFrame(obj, frame)
             fig=figure;
-            set(gcf,'visible','off'); %todo get this from the draw function as an input!
+            %set(gcf,'visible','off'); %todo get this from the draw function as an input!
             if(isempty(obj.image_data_.getBackgroundImage())) %if the marker layer is the only layer then there must be a background image
-                background=obj.createBackground(size(frame{1})); 
+                background=obj.createBackground(size(frame{1}));
             else
                 background=obj.image_data_.getBackgroundImage();
             end
@@ -245,8 +245,9 @@ classdef ImageBuilder <  FigureBuilder & handle
             [row, col]=size(frame);
             for i = 1 : row
                 obj.layers_data_{i}.setIsMarkerLayer(obj.isMarkerLayer(frame{i}));
+                obj.layers_data_{i}.setIsMarkerQuiver(obj.isMarkerQuiver(frame{i}));
                 obj.drawLayer(frame{i}, i);
-                if i == row                    
+                if i == row
                     hold off;
                 end
             end
@@ -255,15 +256,20 @@ classdef ImageBuilder <  FigureBuilder & handle
             if(obj.image_data_.getLegendForMarkers())
                 legend;
             end
-            %imshow(image);
         end
         
         
         function drawLayer(obj, layer, layer_num)
-            if(~obj.layers_data_{layer_num}.getIsMarkerLayer()) 
-                obj.drawImageLayer(layer, layer_num);
-            else
+            layer_data=obj.layers_data_{layer_num};
+            if(~layer_data.getShow())
+                return;
+            end
+            if(~obj.layers_data_{layer_num}.getIsMarkerLayer() && ~obj.layers_data_{layer_num}.getIsMarkerQuiver())
+                obj.drawImageLayer(layer, layer_num);                
+            elseif(obj.layers_data_{layer_num}.getIsMarkerLayer())
                 obj.drawMarkerLayer(layer, layer_num);
+            else
+                obj.drawQuiverLayer(layer, layer_num);
             end
         end
         
@@ -273,26 +279,50 @@ classdef ImageBuilder <  FigureBuilder & handle
             y=layer(:, 1);
             value=layer(:,3);
             rescaled_value=rescale(value);
-            if(~layer_data.getIsMarkerQuiver())
-                if(layer_data.getMarkersSizeByValue())
-                    marker_size=rescaled_value;
-                    marker_size(marker_size==0)=nan;
-                    marker_size=marker_size.*layer_data.getMarkersSize();
-                else
-                    marker_size=ones(size(value)).*layer_data.getMarkersSize();
-                end
-                if(layer_data.getMarkersColorByValue())
-                     s=scatter(x,y, marker_size, "CData" , rescaled_value);
-                     colormap(gca, layer_data.getColormap());
-                else
-                     s=scatter(x,y, marker_size, layer_data.getMarkersColor());
-                end
-                s.Marker=layer_data.getMarkersShape();
-                s.MarkerEdgeAlpha=layer_data.getOpacity();
-                s.MarkerFaceAlpha=layer_data.getOpacity();
+            if(layer_data.getMarkersSizeByValue())
+                marker_size=rescaled_value;
+                marker_size(marker_size==0)=nan;
+                marker_size=marker_size.*layer_data.getMarkersSize();
             else
-                %TODO add quiver handle
+                marker_size=ones(size(value)).*layer_data.getMarkersSize();
             end
+            if(layer_data.getMarkersColorByValue())
+                s=scatter(x,y, marker_size, "CData" , rescaled_value);
+                colormap(gca, layer_data.getColormap());
+            else
+                s=scatter(x,y, marker_size, layer_data.getMarkersColor());
+            end
+            s.Marker=layer_data.getMarkersShape();
+            s.MarkerEdgeAlpha=layer_data.getOpacity();
+            s.MarkerFaceAlpha=layer_data.getOpacity();
+        end
+        
+        function drawQuiverLayer(obj, layer, layer_num)
+            layer_data=obj.layers_data_{layer_num};
+            x=layer(:,2); %TODO: do option that switches these
+            y=layer(:, 1);
+            rad=layer(:,3);
+            length=layer(:,4);
+            if(layer_data.getMarkersSizeByValue())
+                q=layer_data.getMarkersSize();
+                size_q=length.*q;
+            else
+                q=layer_data.getMarkersSize();
+                size_q=ones(size(length)).*q;
+            end 
+            [u,v]=pol2cart(rad,size_q); %TODO: is there an option we wouldnt want the size by value?
+            x=x-u./2;
+            y=y-v./2;
+            q=quiver(x,y,u,v, layer_data.getMarkersColor());
+            q.LineWidth=layer_data.getQuiverLineWidth();
+            q.AutoScale="off";
+            if(layer_data.getQuiverShowArrowHead())
+                q.ShowArrowHead="on";
+            else
+                q.ShowArrowHead="off";
+            end
+%             q.MarkerEdgeAlpha=layer_data.getOpacity();
+%             q.MarkerFaceAlpha=layer_data.getOpacity();
         end
         
         function drawImageLayer(obj, layer, layer_num)
@@ -305,20 +335,18 @@ classdef ImageBuilder <  FigureBuilder & handle
             image=ind2rgb(ind, colormap(layer_data.getColormap()));
             %creates the image
             alpha_mask=zeros(size(layer));
-            if( layer_data.getShow()== true )
-                alpha_mask(~isnan(layer)) = 1; %creates regular mask
-                alpha_mask=alpha_mask.*layer_data.getOpacity();
-            end
+            alpha_mask(~isnan(layer)) = 1; %creates regular mask
+            alpha_mask=alpha_mask.*layer_data.getOpacity();
             layer_im = imshow(image);
             layer_im.AlphaData = alpha_mask;
             if(obj.image_data_.getShowColorbar())
-                cb=colorbar; %todo fix adds colorbar only for last hold on, use freezeColors pack, has option to add up to 3 colorbars see if relevant, maybe addoption to which layer add the colorbar
+                cb=colorbar; 
                 caxis(obj.image_data_.getColorbarAxisScale());
                 cb.Label.String=obj.image_data_.getColorbarTitle();
             end
         end
         
-        function is_marker = isMarkerLayer(obj, layer) 
+        function is_marker = isMarkerLayer(obj, layer)
             [row, col]=size(layer);
             if(col==3)
                 is_marker=true;
@@ -326,7 +354,16 @@ classdef ImageBuilder <  FigureBuilder & handle
                 is_marker=false;
             end
         end
-       
+        
+        function is_marker_quiver = isMarkerQuiver(obj, layer)
+            [row, col]=size(layer);
+            if(col==4)
+                is_marker_quiver=true;
+            else
+                is_marker_quiver=false;
+            end
+        end
+        
         function back_image = createBackground(obj, size)
             back_image = ones(size);
             for i = 1:3
