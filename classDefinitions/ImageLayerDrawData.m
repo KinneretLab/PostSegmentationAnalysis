@@ -5,6 +5,8 @@ classdef ImageLayerDrawData < handle
     properties (Access=private)
         scale_
         colormap_
+        is_solid_color_
+        solid_color_
         opacity_ %for quiver- not an option TODO: see if neccessary
         show_
         markers_shape_
@@ -37,6 +39,8 @@ classdef ImageLayerDrawData < handle
             obj.is_marker_layer_=false;
             obj.quiver_line_width_=0.5;
             obj.quiver_show_arrow_head_=false;
+            obj.is_solid_color_=false;
+            obj.solid_color_ = [1 1 1];
         end
         
         function obj = setScale(obj, value)
@@ -141,6 +145,22 @@ classdef ImageLayerDrawData < handle
         
         function value = getQuiverShowArrowHead(obj)
             value = obj.quiver_show_arrow_head_;
+        end
+        
+        function obj = setIsSolidColor(obj, value)
+            obj.is_solid_color_ = value;
+        end
+        
+        function value = getIsSolidColor(obj)
+            value = obj.is_solid_color_;
+        end
+        
+        function obj = setSolidColor(obj, value)
+            obj.solid_color_ = value;
+        end
+        
+        function value = getSolidColor(obj)
+            value = obj.solid_color_;
         end
     end
 end

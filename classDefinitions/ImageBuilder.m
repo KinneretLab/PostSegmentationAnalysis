@@ -223,7 +223,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
         end
         
-        function figures = draw(obj, show_figures) %returns as many figures as there are frames
+        function figures = draw(obj, show_figures) %returns as many figures as there are frames, add order of layers
             [row, col]=size(obj.layer_arr_); %TODO save as property
             figures = {};
             for i= 1 : col
@@ -238,7 +238,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                  set(gcf,'visible','off'); 
             end
             if(isempty(obj.image_data_.getBackgroundImage())) %if the marker layer is the only layer then there must be a background image
-                background=obj.createBackground(size(frame{1}));
+                background=obj.createBackground(size(frame{1}), obj.image_data_.getColorForNaN());
             else
                 background=obj.image_data_.getBackgroundImage();
             end
@@ -334,7 +334,12 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
             image=mat2gray(layer, layer_data.getScale());
             ind=gray2ind(image, 256);
-            image=ind2rgb(ind, colormap(layer_data.getColormap()));
+            if(layer_data.getIsSolidColor())
+                image=obj.createBackground(size(layer),layer_data.getSolidColor());
+            else
+                image=ind2rgb(ind, colormap(layer_data.getColormap()));
+                
+            end
             %creates the image
             alpha_mask=zeros(size(layer));
             alpha_mask(~isnan(layer)) = 1; %creates regular mask
@@ -366,11 +371,10 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
         end
         
-        function back_image = createBackground(obj, size)
+        function back_image = createBackground(obj, size, color)
             back_image = ones(size);
             for i = 1:3
-                color_for_nan=obj.image_data_.getColorForNaN();
-                back_image(:,:,i)=color_for_nan(i);
+                back_image(:,:,i)=color(i);
             end
         end
         
