@@ -103,6 +103,10 @@
         % type: string
         visibility_
     end
+    
+    properties (Constant)
+        logger = Logger('PlotBuilder');
+    end
 
     methods(Static)
         function func = property(prop_name)
@@ -226,6 +230,7 @@
             % step 0: filter the data using the object filter provided
             % note: full_data is a cell array, where each cell is a list of
             % physical entities to put in the same graph.
+            obj.logger.info('Calculate: Applying initial filter');
             if isa(obj.filter_function_, 'BulkFunc')
                 % BulkFunc indicate that the data can be calculated using
                 % an array function, which is much more efficient than a
@@ -238,6 +243,7 @@
             end
             % step 1: calculate the x coordinate of all points.
             % this can be used to sort the data out.
+            obj.logger.info('Calculate: calculating X values');
             if isa(obj.x_function_, 'BulkFunc')
                 % BulkFunc indicate that the data can be calculated using
                 % an array function, which is much more efficient than a
@@ -250,6 +256,7 @@
             end
             % outlier filtering, which depends on the mode.
             if obj.outliers_ ~= "none"
+                obj.logger.info('Calculate: Filtering outliers');
                 % get the outlier flags for each set of points on the
                 % graph, then use it to filter out the points (both the x
                 % data and the actual data itself)
@@ -355,6 +362,9 @@
                     % other stuff for them: Y,X_err,Y_err.
                     % Y is done last because it overrides the list of
                     % entries.
+                    if mod(frame_idx, 20) == 1
+                        obj.logger.info('Calculate: calculating Y,X_err,Y_err for frame (%d/%d), experiment (%d/%d)', frame_idx, length(frame_data), data_idx, length(full_data));
+                    end
                     for key = data_sorted.keys
                         x_err_sorted(key{1}) = obj.smart_apply(obj.x_err_function_, data_sorted(key{1}), obj, data_entry);
                         y_err_sorted(key{1}) = obj.smart_apply(obj.y_err_function_, data_sorted(key{1}), obj, data_entry);
@@ -389,6 +399,7 @@
             y_limits = [];
             % obviously, we want to itrate over the figures we are about to
             % draw.
+            obj.logger.info('Draw: starting to draw figures');
             for figure_idx = 1:size(raw_data, 1)
                 % create a new figure, with the visibility set accordingly.
                 fig_handle(figure_idx) = figure('visible',obj.visibility_);
@@ -528,6 +539,7 @@
             end
             % re-iterate over the figures now that we know what the XY
             % limits should be, and apply the correct limits.
+            obj.logger.info('Draw: adjusting X,Y limits');
             for fig = fig_handle
                 figure(fig)
                 if length(obj.x_lim_) == 2

@@ -268,3 +268,15 @@ If you want to implement new stuff, you would probably need to extend one of the
 Each of these provides useful methods out-of-the-box, and some functions you are required to implement.
 The documentation speifies what exactly they are supposed to do, and it is your job to implement the functions 
 according to those guidelines.
+
+### Data visualization - known issues
+
+- 0-length bond: Sometimes, vertices exist right next to each other. This generates bonds with a minimal length (0). 
+  These special and rare bonds do not have any directed bonds, and therefore do not have bordering cells.
+  By default, we set these cells to have confidence 0, but they can cause trouble in unexpected places.
+  It might be worth to still try to generate directed bonds to them.
+- empty frames: some frames might have completely messed up cell images, causing them to be defunct. However, 
+  we still might want to keep the frame since the fiber image might be fine. In such cases we will keep the defects, 
+  but not the cells. In such cases, it might seem like there are "empty" frames.
+- Vertex-less cells & bonds: sometimes, a cell does not border any other cell.
+  This leads to a cell or DBond not having any vertices. In such cases, the corresponding DBond points to itself.

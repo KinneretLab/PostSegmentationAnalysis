@@ -16,6 +16,18 @@ classdef Frame < PhysicalEntity
         % internal parameter holding the mask image.
         % type: boolean[]
         mask_
+        % An internal vairblae listing the cells this frame contains.
+        % you can access this using FRAME#CELLS
+        % type: CELL[]
+        cells_ = Null.null;
+        % An internal vairblae listing the bonds this frame contains.
+        % you can access this using FRAME#BONDS
+        % type: BOND[]
+        bonds_ = Null.null;
+        % An internal vairblae listing the vertices this frame contains.
+        % you can access this using FRAME#VERTICES
+        % type: VERTEX[]
+        vertices_ = Null.null;
     end
     
     methods
@@ -27,6 +39,10 @@ classdef Frame < PhysicalEntity
 
         function id = uniqueID(~)
             id = "frame";
+        end
+        
+        function logger = logger(~)
+            logger = Logger('Frame');
         end
         
         function masks = mask(obj, varargin)
@@ -55,7 +71,7 @@ classdef Frame < PhysicalEntity
             %   varargin: additional MATLAB builtin operations to apply on
             %   the result.
             % Return type: CELL[]
-            cells = obj.lookupByFrame(class(Cell), varargin);
+            cells = obj.getOrCalculate(class(Cell), "cells_", @(frames) frames.lookupByFrame(class(Cell)), varargin{:});
         end
         
         function bonds = bonds(obj, varargin)
@@ -64,7 +80,7 @@ classdef Frame < PhysicalEntity
             %   varargin: additional MATLAB builtin operations to apply on
             %   the result.
             % Return type: BOND[]
-            bonds = obj.lookupByFrame(class(Bond), varargin);
+            bonds = obj.getOrCalculate(class(Bond), "bonds_", @(frames) frames.lookupByFrame(class(Bond)), varargin{:});
         end
         
         function vertices = vertices(obj, varargin)
@@ -73,7 +89,7 @@ classdef Frame < PhysicalEntity
             %   varargin: additional MATLAB builtin operations to apply on
             %   the result.
             % Return type: VERTEX[]
-            vertices = obj.lookupByFrame(class(Vertex), varargin);
+            vertices = obj.getOrCalculate(class(Vertex), "vertices_", @(frames) frames.lookupByFrame(class(Vertex)), varargin{:});
         end
     end
     
@@ -92,7 +108,7 @@ classdef Frame < PhysicalEntity
             %   the result.
             % Return type: clazz[]
             if length(obj) ~= numel(obj)
-                disp("multi-value lookup applied on a 2D matrix. This is illegal. Please flatten and re-apply.");
+                obj.logger.error("multi-value lookup applied on a 2D matrix. This is illegal. Please flatten and re-apply.");
             end
             index = containers.Map;
             lookup_result = cell(size(obj));
@@ -103,23 +119,34 @@ classdef Frame < PhysicalEntity
                     continue;
                 end
                 % to increase efficiency, we sort the search targets by
-                % experiment (for some reason this is more efficient, MATLAB is weird).
+                % frame.
                 map_key = entity.experiment.uniqueName;
-                if ~index.isKey(map_key)
+                full_map_key = [map_key, ':', entity.frame];
+                if ~index.isKey(full_map_key)
                     % if the map is not aware of the frame, index the
-                    % experiment
+                    % frame (and other frames in the experiment)
                     full_phys = entity.experiment.lookup(clazz);
-                    index(map_key) = full_phys;
+                    frame_num = [full_phys.(full_phys.frameID)];
+                    for frame_id=unique(frame_num)
+                        index([map_key, ':', frame_id]) = full_phys(frame_num == frame_id);
+                    end
                 end
-                % run actual search on the relevant experiment
-                lookup_result{lookup_idx} = full_phys([full_phys.(full_phys.frameID)] == entity.frame);
+                % no need to actually look up anything, the index already
+                % took care of that.
+                if index.isKey(full_map_key)
+                    lookup_result{lookup_idx} = index(full_map_key);
+                else
+                    lookup_result{lookup_idx} = [];
+                end
             end
             % since the lookup was placed into a cell array, we need to
             % reshape it into a matrix.
             sizes = cellfun(@(result) (length(result)), lookup_result);
             phys_arr(length(obj), max(sizes)) = feval(clazz);
             for i=1:length(obj)
-                phys_arr(i, 1:sizes(i)) = lookup_result{i};
+                if sizes(i) > 0
+                    phys_arr(i, 1:sizes(i)) = lookup_result{i};
+                end
             end
             % filter result and put it into result_arr
             if nargin > 4

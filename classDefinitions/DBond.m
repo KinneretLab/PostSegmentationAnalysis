@@ -51,6 +51,10 @@ classdef DBond < PhysicalEntity
             id = "dbond_id";
         end
         
+        function logger = logger(~)
+            logger = Logger('DBond');
+        end
+        
         function dbonds = conjugate(obj, varargin)
             % CONJUGATE calculates the DBOND pointing the opposite direction and shares the same bond for each entry in this array.
             % Note that this doesn't have to exist for edge dbonds, in which

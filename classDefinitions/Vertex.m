@@ -27,6 +27,10 @@ classdef Vertex < PhysicalEntity
             id = "vertex_id";
         end
         
+        function logger = logger(~)
+            logger = Logger('Vertex');
+        end
+        
         function vertices = vertices(obj, varargin)
             % VERTICES the identity function
             % Parameters:

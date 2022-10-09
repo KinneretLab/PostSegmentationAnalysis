@@ -68,6 +68,10 @@ classdef BondPixelList < PhysicalEntity
             id = "pixel_frame";
         end
         
+        function logger = logger(~)
+            logger = Logger('BondPixelList');
+        end
+        
         function coords = coords(obj, varargin)
             % COORDS the identity function
             % Parameters:

@@ -13,65 +13,65 @@ classdef Cell < PhysicalEntity
         % type: int
         frame
         % type: double
-        center_x
+        center_x = nan;
         % type: double
-        center_y
+        center_y = nan;
         % type: double
-        center_z
+        center_z = nan;
         % the geometrically corrected area of the cell, that is, how much space is occupies.
         % type: double
-        area
+        area = nan;
         % type: double
-        aspect_ratio
+        aspect_ratio = nan;
         % the geometrically corrected perimeter of the cell, that is, how much space the outline occupies.
         % type: double
-        perimeter
+        perimeter = nan;
         % Does the cell exist at the edge of the animal?
         % Set to 1 if the cell is next to the empty void, and 0 if it has a
         % neighboring cell in every direction.
         % type: boolean
-        is_edge
+        is_edge = nan;
         % Does the cell's geometric center exist outside of the cell?
         % Set to 1 if the cell's geometric center is outside the cell, and
         % 0 if it is inside the cell.
         % if this is set to 1, it is reasonable to assume the cell is fake.
         % type: boolean
-        is_convex
+        is_convex = nan;
         % type: double
-        elong_xx
+        elong_xx = nan;
         % type: double
-        elong_yy
+        elong_yy = nan;
         % type: double
-        elong_zz
+        elong_zz = nan;
         % type: double
-        norm_x
+        norm_x = nan;
         % type: double
-        norm_y
+        norm_y = nan;
         % type: double
-        norm_z
+        norm_z = nan;
         % type: double
-        fibre_orientation
+        fibre_orientation = nan;
         % type: double
-        fibre_localOP
+        fibre_localOP = nan;
         % type: double
-        fibre_coherence
+        fibre_coherence = nan;
         % Defines how sure we are this cell really exists.
         % values over 0.5 yield confidence the cell exists, while lower
         % values indicate uncertainty for the bond.
         % type: double (0.0-1.0)
-        confidence
+        confidence = nan;
         % The lower X coordinate of the rectangle (bounding box) containing the pixels of the cell in its frame.
         % type: int
-        bb_xStart
+        bb_xStart = nan;
         % The lower Y coordinate of the rectangle (bounding box) containing the pixels of the cell in its frame.
         % type: int
-        bb_yStart
+        bb_yStart = nan;
         % The higher X coordinate of the rectangle (bounding box) containing the pixels of the cell in its frame.
         % type: int
-        bb_xEnd
+        bb_xEnd = nan;
         % The higher Y coordinate of the rectangle (bounding box) containing the pixels of the cell in its frame.
         % type: int
-        bb_yEnd
+        bb_yEnd = nan;
         % the list of pixel coordinates indicating the edges of the cell
         % you can calculate these values for retrieval using CELL#OUTLINE()
         % then retrieve them from this variable.
@@ -80,7 +80,7 @@ classdef Cell < PhysicalEntity
         % An internal vairblae listing the cells that share a border with this cell.
         % you can access this using CELL#NEIGHBORS
         % type: CELL[]
-        neighbors_
+        neighbors_ = Null.null;
         plot_pixels_
     end
     
@@ -90,17 +90,15 @@ classdef Cell < PhysicalEntity
             % CELL construct an array of cells.
             % This includes NaNs for any calculated value so things don't
             % mess up in array calculations.
-            obj@PhysicalEntity([varargin(:)', {'confidence'}, {nan}, {'center_x'}, {nan}, ...
-                {'center_y'}, {nan}, {'center_z'}, {nan}, {'area'}, {nan}, {'aspect_ratio'}, {nan}, ...
-                {'perimeter'}, {nan}, {'is_edge'}, {nan}, {'is_convex'}, {nan}, {'elong_xx'}, {nan}, ...
-                {'elong_yy'}, {nan}, {'elong_zz'}, {nan}, {'norm_x'}, {nan}, {'norm_y'}, {nan}, ...
-                {'norm_z'}, {nan}, {'fibre_orientation'}, {nan}, {'fibre_localOP'}, {nan}, ...
-                {'fibre_coherence'}, {nan}, {'bb_xStart'}, {nan}, {'bb_yStart'}, {nan}, ...
-                {'bb_xEnd'}, {nan}, {'bb_yEnd'}, {nan}])
+            obj@PhysicalEntity(varargin)
         end
 
         function id = uniqueID(~)
             id = "cell_id";
+        end
+        
+        function logger = logger(~)
+            logger = Logger('Cell');
         end
         
         function cells = neighbors(obj, varargin)

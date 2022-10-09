@@ -19,7 +19,8 @@ classdef Pair < handle
         
         function frames = frame(obj)
             if length(obj) > 1
-                frames = reshape([cellfun(@(elem) elem(1), obj.elements).frame], size(obj));
+                frames = [obj.elements];
+                frames = reshape([frames(1:2:end).frame], size(obj));
             else
                 frames = obj.elements(1).frame;
             end
