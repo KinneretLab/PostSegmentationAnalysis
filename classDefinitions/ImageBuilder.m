@@ -228,19 +228,22 @@ classdef ImageBuilder <  FigureBuilder & handle
             figures = {};
             for i= 1 : col
                 frame = obj.layer_arr_(:, i);
-                figures{i} = obj.drawFrame(frame, show_figures);
+                figures{i} = obj.drawFrame(frame, show_figures, i);
             end
         end
         
-        function fig = drawFrame(obj, frame, show_figures)
+        function fig = drawFrame(obj, frame, show_figures, frame_num)
             fig=figure;
             if(~show_figures)
                  set(gcf,'visible','off'); 
             end
             if(isempty(obj.image_data_.getBackgroundImage())) %if the marker layer is the only layer then there must be a background image
-                background=obj.createBackground(size(frame{1}), obj.image_data_.getColorForNaN());
+                background=obj.createBackground(size(frame{1}), obj.image_data_.getColorForNaN()); %TODO: FIX very problematic using the size of the first frame without making sure its not marker layer
             else
                 background=obj.image_data_.getBackgroundImage();
+                if(obj.image_data_.getIsBackgroundPerFrame())
+                    background=background{frame_num};
+                end
             end
             imshow(background);
             hold on;
@@ -248,7 +251,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             for i = 1 : row
                 obj.layers_data_{i}.setIsMarkerLayer(obj.isMarkerLayer(frame{i}));
                 obj.layers_data_{i}.setIsMarkerQuiver(obj.isMarkerQuiver(frame{i}));
-                obj.drawLayer(frame{i}, i);
+                obj.drawLayer(frame{i}, i,fig);
                 if i == row
                     hold off;
                 end
@@ -258,16 +261,24 @@ classdef ImageBuilder <  FigureBuilder & handle
             if(obj.image_data_.getLegendForMarkers())
                 legend;
             end
+            if(obj.image_data_.getShowColorbar())
+                cb=colorbar; 
+                caxis(obj.image_data_.getColorbarAxisScale());
+                cb.Label.String=obj.image_data_.getColorbarTitle();
+            end
         end
         
         
-        function drawLayer(obj, layer, layer_num)
+        function drawLayer(obj, layer, layer_num, fig)
+            if(isempty(layer))
+                return;
+            end
             layer_data=obj.layers_data_{layer_num};
             if(~layer_data.getShow())
                 return;
             end
             if(~obj.layers_data_{layer_num}.getIsMarkerLayer() && ~obj.layers_data_{layer_num}.getIsMarkerQuiver())
-                obj.drawImageLayer(layer, layer_num);                
+                obj.drawImageLayer(layer, layer_num, fig);                
             elseif(obj.layers_data_{layer_num}.getIsMarkerLayer())
                 obj.drawMarkerLayer(layer, layer_num);
             else
@@ -277,8 +288,8 @@ classdef ImageBuilder <  FigureBuilder & handle
         
         function drawMarkerLayer(obj, layer, layer_num)
             layer_data=obj.layers_data_{layer_num};
-            x=layer(:,2);
-            y=layer(:, 1);
+            x=layer(:,1);
+            y=layer(:, 2);
             value=layer(:,3);
             rescaled_value=rescale(value);
             if(layer_data.getMarkersSizeByValue())
@@ -301,8 +312,8 @@ classdef ImageBuilder <  FigureBuilder & handle
         
         function drawQuiverLayer(obj, layer, layer_num)
             layer_data=obj.layers_data_{layer_num};
-            x=layer(:,2); %TODO: do option that switches these
-            y=layer(:, 1);
+            x=layer(:,1); 
+            y=layer(:, 2);
             rad=layer(:,3);
             length=layer(:,4);
             if(layer_data.getMarkersSizeByValue())
@@ -327,18 +338,23 @@ classdef ImageBuilder <  FigureBuilder & handle
 %             q.MarkerFaceAlpha=layer_data.getOpacity();
         end
         
-        function drawImageLayer(obj, layer, layer_num)
+        function drawImageLayer(obj, layer, layer_num,fig)
             layer_data=obj.layers_data_{layer_num};
-            if isempty(layer_data.getScale())
-                layer_data.setScale([min(layer(:)) max(layer(:))]);
+            if isempty(layer_data.getScale()) %TODO:fix because if i want scale to be set dina,ically it only sets it on the first frame!!
+                mi=min(layer(:));
+                ma=max(layer(:));
+                layer_data.setScale([mi ma]);
             end
+            fliplr(layer);
+            layer=layer';
             image=mat2gray(layer, layer_data.getScale());
             ind=gray2ind(image, 256);
             if(layer_data.getIsSolidColor())
                 image=obj.createBackground(size(layer),layer_data.getSolidColor());
             else
-                image=ind2rgb(ind, colormap(layer_data.getColormap()));
-                
+                figure;
+                image=ind2rgb(ind, colormap(layer_data.getColormap())); %TODO: fix bug that applies this on background for some reason??                 
+                set(0, 'CurrentFigure', fig);
             end
             %creates the image
             alpha_mask=zeros(size(layer));
@@ -346,11 +362,6 @@ classdef ImageBuilder <  FigureBuilder & handle
             alpha_mask=alpha_mask.*layer_data.getOpacity();
             layer_im = imshow(image);
             layer_im.AlphaData = alpha_mask;
-            if(obj.image_data_.getShowColorbar())
-                cb=colorbar; 
-                caxis(obj.image_data_.getColorbarAxisScale());
-                cb.Label.String=obj.image_data_.getColorbarTitle();
-            end
         end
         
         function is_marker = isMarkerLayer(obj, layer)

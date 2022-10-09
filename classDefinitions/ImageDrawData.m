@@ -5,6 +5,7 @@ classdef ImageDrawData < handle
     properties (Access=private)
         overlay_ %todo: ask! see how
         background_image_
+        is_background_per_frame_
         color_for_nan_ %in rgb, if there is a background image this setting is disregarded
         %TODO: add protected way to add properties to this class, so they
         %will be validated
@@ -22,6 +23,7 @@ classdef ImageDrawData < handle
         function obj = ImageDrawData()
             obj.color_for_nan_= [0 0 0];
             obj.background_image_=[];
+            obj.is_background_per_frame_=false;
             obj.show_colorbar_= true;
             obj.colorbar_axis_scale_ = [0 1];
             obj.image_title_="";
@@ -115,6 +117,14 @@ classdef ImageDrawData < handle
         
         function value = getCropCenterPoint(obj)
             value = obj.crop_center_point_;
+        end
+        
+        function setIsBackgroundPerFrame(obj, value)
+            obj.is_background_per_frame_ = value;
+        end
+        
+        function value = getIsBackgroundPerFrame(obj)
+            value = obj.is_background_per_frame_;
         end
     end
 end
