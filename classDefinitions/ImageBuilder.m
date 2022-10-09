@@ -152,62 +152,65 @@ classdef ImageBuilder <  FigureBuilder & handle
                             end
                         end
                     end
-                    
-                    % NEED TO ADD OPTIONS FOR CALIBRATION
-                    
-                    if strcmp(type_list{i},'image')
+                    if ~isempty(filtered_arr)
+                        % NEED TO ADD OPTIONS FOR CALIBRATION
                         
-                        image_size = obj.image_size_; % GET THIS FROM EXPERIMENT INFO, NEED TO IMPLEMENT THIS
-                        
-                        % Get relevant pixels (the function plot_pixels is
-                        % implemented in every relevant class)
-                        plot_pixels = filtered_arr.plot_pixels;
-                        
-                        this_im = NaN(image_size);
-                        
-                        for k=1:size(plot_pixels,2)
-                            for l=1:size(plot_pixels{k},1)
-                                this_im(plot_pixels{k}(l,1),plot_pixels{k}(l,2)) = value_arr(k); % MAKE THIS NOT NEED LOOP
+                        if strcmp(type_list{i},'image')
+                            
+                            image_size = obj.image_size_; % GET THIS FROM EXPERIMENT INFO, NEED TO IMPLEMENT THIS
+                            
+                            % Get relevant pixels (the function plot_pixels is
+                            % implemented in every relevant class)
+                            plot_pixels = filtered_arr.plot_pixels;
+                            
+                            this_im = NaN(image_size);
+                            
+                            for k=1:size(plot_pixels,2)
+                                for l=1:size(plot_pixels{k},1)
+                                    this_im(plot_pixels{k}(l,1),plot_pixels{k}(l,2)) = value_arr(k); % MAKE THIS NOT NEED LOOP
+                                end
                             end
+                            
+                            layer_arr{i,j} = this_im;
+                            
+                            % TEMPORARILY HERE
+                            permuteMap = permute(this_im,[2 1]);
+                            imshow(permuteMap,[])
+                            colormap jet
+                            pause(1)
+                            
+                        elseif strcmp(type_list{i},'list')
+                            
+                            % Get relevant pixels (the function list_pixels is
+                            % implemented in every relevant class). For cells,
+                            % this is the centre of the cell, for bonds the
+                            % middle point of the bond, and for vertices it is
+                            % the vertex location.
+                            list_pixels = filtered_arr.list_pixels;
+                            this_list = [list_pixels,value_arr'];
+                            layer_arr{i,j} = this_list;
+                            
+                        elseif strcmp(type_list{i},'quiver')
+                            % Get relevant pixels (the function list_pixels is
+                            % implemented in every relevant class). For cells,
+                            % this is the centre of the cell, for bonds the
+                            % middle point of the bond, and for vertices it is
+                            % the vertex location.
+                            list_pixels = filtered_arr.list_pixels;
+                            value_fun_dir = ImageBuilder.objFunction(value_fun_list{i}{1});
+                            value_arr_dir = arrayfun(value_fun_dir,filtered_arr);
+                            value_fun_size = ImageBuilder.objFunction(value_fun_list{i}{2});
+                            value_arr_size = arrayfun(value_fun_size,filtered_arr);
+                            this_list = [list_pixels,value_arr_dir',value_arr_size'];
+                            layer_arr{i,j} = this_list;
+                            
+                        else
+                            disp(sprintf('Typelist needs to specify image, list or quiver'));
                         end
                         
-                        layer_arr{i,j} = this_im;
-                        
-                        % TEMPORARILY HERE
-                        permuteMap = permute(this_im,[2 1]);
-                        imshow(permuteMap,[])
-                        colormap jet
-                        pause(1)
-                        
-                    elseif strcmp(type_list{i},'list')
-                        
-                        % Get relevant pixels (the function list_pixels is
-                        % implemented in every relevant class). For cells,
-                        % this is the centre of the cell, for bonds the
-                        % middle point of the bond, and for vertices it is
-                        % the vertex location.
-                        list_pixels = filtered_arr.list_pixels;
-                        this_list = [list_pixels,value_arr'];
-                        layer_arr{i,j} = this_list;
-                        
-                    elseif strcmp(type_list{i},'quiver')
-                                                % Get relevant pixels (the function list_pixels is
-                        % implemented in every relevant class). For cells,
-                        % this is the centre of the cell, for bonds the
-                        % middle point of the bond, and for vertices it is
-                        % the vertex location.
-                        list_pixels = filtered_arr.list_pixels;
-                        value_fun_dir = ImageBuilder.objFunction(value_fun_list{i}{1});
-                        value_arr_dir = arrayfun(value_fun_dir,filtered_arr);
-                        value_fun_size = ImageBuilder.objFunction(value_fun_list{i}{2});
-                        value_arr_size = arrayfun(value_fun_size,filtered_arr);
-                        this_list = [list_pixels,value_arr_dir',value_arr_size'];
-                        layer_arr{i,j} = this_list;
-                        
                     else
-                        disp(sprintf('Typelist needs to specify image, list or quiver'));
+                        layer_arr{i,j} = {};
                     end
-                    
                 end
             end
             obj.layer_arr_=layer_arr;
@@ -242,7 +245,7 @@ classdef ImageBuilder <  FigureBuilder & handle
         function fig = drawFrame(obj, frame)
             fig=figure;
             if(isempty(obj.image_data_.background_image_)) %if the marker layer is the only layer then there must be a background image
-                background=obj.createBackground(size(frame{1})); 
+                background=obj.createBackground(size(frame{1}));
             else
                 background=obj.image_data_.background_image_;
             end
@@ -253,7 +256,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             [row, col]=size(frame);
             for i = 1 : row
                 obj.drawLayer(frame{i}, i);
-                if i == row                    
+                if i == row
                     hold off;
                 end
             end
@@ -286,10 +289,10 @@ classdef ImageBuilder <  FigureBuilder & handle
                     marker_size=ones(size(value)).*layer_data.markers_size_;
                 end
                 if(layer_data.markers_color_by_value_)
-                     s=scatter(x,y, marker_size, "CData" , rescaled_value);
-                     colormap(gca, layer_data.colormap_);
+                    s=scatter(x,y, marker_size, "CData" , rescaled_value);
+                    colormap(gca, layer_data.colormap_);
                 else
-                     s=scatter(x,y, marker_size, layer_data.markers_color_);
+                    s=scatter(x,y, marker_size, layer_data.markers_color_);
                 end
                 s.Marker=layer_data.markers_shape_;
                 s.MarkerEdgeAlpha=layer_data.opacity_;
