@@ -18,7 +18,7 @@ classdef ImageBuilder <  FigureBuilder & handle
     
     methods
         
-        function obj = ImageBuilder()
+        function obj = ImageBuilder(matlab_utility_funcs_path)
             obj@FigureBuilder()
             
             obj.xy_calibration_         = 1;
@@ -27,6 +27,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             obj.data_                    = {};
             layers_data_                 = {};
             image_data_                   = ImageDrawData;
+            addpath(matlab_utility_funcs_path); 
         end
         
     end
@@ -198,33 +199,38 @@ classdef ImageBuilder <  FigureBuilder & handle
         end
         
         function obj=createDefaultLayerData(obj) % TODO see if add if override version, in case we want to load or calculate different data..
-            [row, col]=size(obj.layer_arr_);
+            [row, ~]=size(obj.layer_arr_);
             for i=1:row
                 obj.layers_data_{i} = ImageLayerDrawData;
+                frame = obj.layer_arr_(:, 1);
+                obj.layers_data_{i}.setIsMarkerLayer(obj.isMarkerLayer(frame{i}));
+                obj.layers_data_{i}.setIsMarkerQuiver(obj.isMarkerQuiver(frame{i}));               
             end
         end
         
-        function obj = load(obj, path, file_name) %todo decide maybe if load should be static, and return an image builder, if not load shouldnt return anything. also, maybe add option to if dispose of layer and image data
+        function obj = load(obj, path, file_name) %todo maybe add option to if dispose of layer and image data
             fname = fullfile(path, file_name);
             struct = load(fname);
             fieldNames = fieldnames(struct);
             obj.layer_arr_ = getfield(struct, fieldNames{1});
             obj.createDefaultLayerData(); % TODO see if needs to run here or where, or if it is only run by user...
+
             obj.image_data_=ImageDrawData;
         end
         
-        function save(obj, figures, path, file_name)
-            [row, col]=size(figures);
+        function save(~, figures, path, file_name)
+            [~, col]=size(figures);
             for i = 1:col
                 fname = fullfile(path, sprintf("%s%d.png",file_name,i));
                 figure=figures{i};
+                figure=tightfig(figure);
                 saveas(figure, fname);
                 %TODO make sure that at some point figures are closed...
             end
         end
         
         function figures = draw(obj, show_figures) %returns as many figures as there are frames, add order of layers
-            [row, col]=size(obj.layer_arr_); %TODO save as property
+            [~, col]=size(obj.layer_arr_); 
             figures = {};
             for i= 1 : col
                 frame = obj.layer_arr_(:, i);
@@ -238,7 +244,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                  set(gcf,'visible','off'); 
             end
             if(isempty(obj.image_data_.getBackgroundImage())) %if the marker layer is the only layer then there must be a background image
-                background=obj.createBackground(size(frame{1}), obj.image_data_.getColorForNaN()); %TODO: FIX very problematic using the size of the first frame without making sure its not marker layer
+                background=obj.createBackground(obj.getBackgroundSize(frame), obj.image_data_.getColorForNaN());
             else
                 background=obj.image_data_.getBackgroundImage();
                 if(obj.image_data_.getIsBackgroundPerFrame())
@@ -247,10 +253,8 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
             imshow(background);
             hold on;
-            [row, col]=size(frame);
+            [row, ~]=size(frame);
             for i = 1 : row
-                obj.layers_data_{i}.setIsMarkerLayer(obj.isMarkerLayer(frame{i}));
-                obj.layers_data_{i}.setIsMarkerQuiver(obj.isMarkerQuiver(frame{i}));
                 obj.drawLayer(frame{i}, i,fig);
                 if i == row
                     hold off;
@@ -268,7 +272,6 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
         end
         
-        
         function drawLayer(obj, layer, layer_num, fig)
             if(isempty(layer))
                 return;
@@ -277,9 +280,9 @@ classdef ImageBuilder <  FigureBuilder & handle
             if(~layer_data.getShow())
                 return;
             end
-            if(~obj.layers_data_{layer_num}.getIsMarkerLayer() && ~obj.layers_data_{layer_num}.getIsMarkerQuiver())
+            if(~layer_data.getIsMarkerLayer() && ~layer_data.getIsMarkerQuiver())
                 obj.drawImageLayer(layer, layer_num, fig);                
-            elseif(obj.layers_data_{layer_num}.getIsMarkerLayer())
+            elseif(layer_data.getIsMarkerLayer())
                 obj.drawMarkerLayer(layer, layer_num);
             else
                 obj.drawQuiverLayer(layer, layer_num);
@@ -318,12 +321,12 @@ classdef ImageBuilder <  FigureBuilder & handle
             length=layer(:,4);
             if(layer_data.getMarkersSizeByValue())
                 q=layer_data.getMarkersSize();
-                size_q=length.*q;
+                size_q=rescale(length).*q;
             else
                 q=layer_data.getMarkersSize();
                 size_q=ones(size(length)).*q;
             end 
-            [u,v]=pol2cart(rad,size_q); %TODO: is there an option we wouldnt want the size by value?
+            [u,v]=pol2cart(rad,size_q);
             x=x-u./2;
             y=y-v./2;
             q=quiver(x,y,u,v, layer_data.getMarkersColor());
@@ -334,8 +337,6 @@ classdef ImageBuilder <  FigureBuilder & handle
             else
                 q.ShowArrowHead="off";
             end
-%             q.MarkerEdgeAlpha=layer_data.getOpacity();
-%             q.MarkerFaceAlpha=layer_data.getOpacity();
         end
         
         function drawImageLayer(obj, layer, layer_num,fig)
@@ -353,7 +354,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                 image=obj.createBackground(size(layer),layer_data.getSolidColor());
             else
                 figure;
-                image=ind2rgb(ind, colormap(layer_data.getColormap())); %TODO: fix bug that applies this on background for some reason??                 
+                image=ind2rgb(ind, colormap(layer_data.getColormap()));
                 set(0, 'CurrentFigure', fig);
             end
             %creates the image
@@ -364,8 +365,8 @@ classdef ImageBuilder <  FigureBuilder & handle
             layer_im.AlphaData = alpha_mask;
         end
         
-        function is_marker = isMarkerLayer(obj, layer)
-            [row, col]=size(layer);
+        function is_marker = isMarkerLayer(~, layer)
+            [~, col]=size(layer);
             if(col==3)
                 is_marker=true;
             else
@@ -373,8 +374,8 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
         end
         
-        function is_marker_quiver = isMarkerQuiver(obj, layer)
-            [row, col]=size(layer);
+        function is_marker_quiver = isMarkerQuiver(~, layer)
+            [~, col]=size(layer);
             if(col==4)
                 is_marker_quiver=true;
             else
@@ -382,11 +383,23 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
         end
         
-        function back_image = createBackground(obj, size, color)
+        function back_image = createBackground(~, size, color)
             back_image = ones(size);
             for i = 1:3
                 back_image(:,:,i)=color(i);
             end
+        end
+        
+        function s = getBackgroundSize(obj, frame)
+            [row, ~]=size(frame);
+            for i = 1:row
+                layer_data=obj.layers_data_{i};
+                if(~isempty(frame) && ~layer_data.getIsMarkerLayer() && ~layer_data.getIsMarkerQuiver())
+                    s=size(frame{i});
+                    return;
+                end
+            end
+            error("[ERROR] your layer_arr only contains markers. If you want to draw the image you need to add either image layer or background!");
         end
         
         function obj = addData(obj, frame_arr)
