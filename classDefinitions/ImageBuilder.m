@@ -12,7 +12,7 @@ classdef ImageBuilder <  FigureBuilder & handle
     
     properties (Access = public)
         
-        layers_data_  % TODO untill i figure out how to get or set value
+        layers_data_
         image_data_
     end
     
@@ -154,33 +154,33 @@ classdef ImageBuilder <  FigureBuilder & handle
                     end
                     if ~isempty(filtered_arr)
                         % NEED TO ADD OPTIONS FOR CALIBRATION
-                        
+
                         if strcmp(type_list{i},'image')
-                            
+
                             image_size = obj.image_size_; % GET THIS FROM EXPERIMENT INFO, NEED TO IMPLEMENT THIS
-                            
+
                             % Get relevant pixels (the function plot_pixels is
                             % implemented in every relevant class)
                             plot_pixels = filtered_arr.plot_pixels;
-                            
+
                             this_im = NaN(image_size);
-                            
+
                             for k=1:size(plot_pixels,2)
                                 for l=1:size(plot_pixels{k},1)
                                     this_im(plot_pixels{k}(l,1),plot_pixels{k}(l,2)) = value_arr(k); % MAKE THIS NOT NEED LOOP
                                 end
                             end
-                            
+
                             layer_arr{i,j} = this_im;
-                            
+
                             % TEMPORARILY HERE
                             permuteMap = permute(this_im,[2 1]);
                             imshow(permuteMap,[])
                             colormap jet
                             pause(1)
-                            
+
                         elseif strcmp(type_list{i},'list')
-                            
+
                             % Get relevant pixels (the function list_pixels is
                             % implemented in every relevant class). For cells,
                             % this is the centre of the cell, for bonds the
@@ -189,7 +189,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                             list_pixels = filtered_arr.list_pixels;
                             this_list = [list_pixels,value_arr'];
                             layer_arr{i,j} = this_list;
-                            
+
                         elseif strcmp(type_list{i},'quiver')
                             % Get relevant pixels (the function list_pixels is
                             % implemented in every relevant class). For cells,
@@ -203,11 +203,11 @@ classdef ImageBuilder <  FigureBuilder & handle
                             value_arr_size = arrayfun(value_fun_size,filtered_arr);
                             this_list = [list_pixels,value_arr_dir',value_arr_size'];
                             layer_arr{i,j} = this_list;
-                            
+
                         else
                             disp(sprintf('Typelist needs to specify image, list or quiver'));
                         end
-                        
+
                     else
                         layer_arr{i,j} = {};
                     end
@@ -224,8 +224,8 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
         end
         
-        function obj = load(obj,path, file_name)
-            fname = path + file_name;
+        function obj = load(obj, path, file_name) %todo decide maybe if load should be static, and return an image builder, if not load shouldnt return anything. also, maybe add option to if dispose of layer and image data
+            fname = fullfile(path, file_name);
             struct = load(fname);
             fieldNames = fieldnames(struct);
             obj.layer_arr_ = getfield(struct, fieldNames{1});
@@ -233,44 +233,65 @@ classdef ImageBuilder <  FigureBuilder & handle
             obj.image_data_=ImageDrawData;
         end
         
-        function figures = draw(obj) %returns as many figures as there are frames
+        function save(obj, figures, path, file_name)
+            [row, col]=size(figures);
+            for i = 1:col
+                fname = fullfile(path, sprintf("%s%d.png",file_name,i));
+                figure=figures{i};
+                saveas(figure, fname);
+                %TODO make sure that at some point figures are closed...
+            end
+        end
+
+        function figures = draw(obj, show_figures) %returns as many figures as there are frames, add order of layers
             [row, col]=size(obj.layer_arr_); %TODO save as property
             figures = {};
             for i= 1 : col
                 frame = obj.layer_arr_(:, i);
-                figures{i} = obj.drawFrame(frame);
+                figures{i} = obj.drawFrame(frame, show_figures);
             end
         end
         
-        function fig = drawFrame(obj, frame)
+        function fig = drawFrame(obj, frame, show_figures)
             fig=figure;
-            if(isempty(obj.image_data_.background_image_)) %if the marker layer is the only layer then there must be a background image
-                background=obj.createBackground(size(frame{1}));
+            if(~show_figures)
+                 set(gcf,'visible','off');
+            end
+            if(isempty(obj.image_data_.getBackgroundImage())) %if the marker layer is the only layer then there must be a background image
+                background=obj.createBackground(size(frame{1}), obj.image_data_.getColorForNaN());
             else
-                background=obj.image_data_.background_image_;
+                background=obj.image_data_.getBackgroundImage();
             end
             imshow(background);
             hold on;
-            %set(gcf,'visible','off');
-            %frame=obj.filterLayersFromFrame(frame);
             [row, col]=size(frame);
             for i = 1 : row
+                obj.layers_data_{i}.setIsMarkerLayer(obj.isMarkerLayer(frame{i}));
+                obj.layers_data_{i}.setIsMarkerQuiver(obj.isMarkerQuiver(frame{i}));
                 obj.drawLayer(frame{i}, i);
                 if i == row
                     hold off;
                 end
             end
             set(0, 'CurrentFigure', fig);
-            title(obj.image_data_.image_title_);
-            %imshow(image);
+            title(obj.image_data_.getImageTitle());
+            if(obj.image_data_.getLegendForMarkers())
+                legend;
+            end
         end
         
         
         function drawLayer(obj, layer, layer_num)
-            if(~obj.isMarkerLayer(layer)) %TODO find better way maybe with imsize?
+            layer_data=obj.layers_data_{layer_num};
+            if(~layer_data.getShow())
+                return;
+            end
+            if(~obj.layers_data_{layer_num}.getIsMarkerLayer() && ~obj.layers_data_{layer_num}.getIsMarkerQuiver())
                 obj.drawImageLayer(layer, layer_num);
-            else
+            elseif(obj.layers_data_{layer_num}.getIsMarkerLayer())
                 obj.drawMarkerLayer(layer, layer_num);
+            else
+                obj.drawQuiverLayer(layer, layer_num);
             end
         end
         
@@ -280,46 +301,75 @@ classdef ImageBuilder <  FigureBuilder & handle
             y=layer(:, 1);
             value=layer(:,3);
             rescaled_value=rescale(value);
-            if(layer_data.markers_shape_~="arrow")
-                if(layer_data.markers_size_by_value_)
-                    marker_size=rescaled_value;
-                    marker_size(marker_size==0)=nan;
-                    marker_size=marker_size.*layer_data.markers_size_;
-                else
-                    marker_size=ones(size(value)).*layer_data.markers_size_;
-                end
-                if(layer_data.markers_color_by_value_)
-                    s=scatter(x,y, marker_size, "CData" , rescaled_value);
-                    colormap(gca, layer_data.colormap_);
-                else
-                    s=scatter(x,y, marker_size, layer_data.markers_color_);
-                end
-                s.Marker=layer_data.markers_shape_;
-                s.MarkerEdgeAlpha=layer_data.opacity_;
-                s.MarkerFaceAlpha=layer_data.opacity_;
+            if(layer_data.getMarkersSizeByValue())
+                marker_size=rescaled_value;
+                marker_size(marker_size==0)=nan;
+                marker_size=marker_size.*layer_data.getMarkersSize();
+            else
+                marker_size=ones(size(value)).*layer_data.getMarkersSize();
             end
+            if(layer_data.getMarkersColorByValue())
+                s=scatter(x,y, marker_size, "CData" , rescaled_value);
+                colormap(gca, layer_data.getColormap());
+            else
+                s=scatter(x,y, marker_size, layer_data.getMarkersColor());
+            end
+            s.Marker=layer_data.getMarkersShape();
+            s.MarkerEdgeAlpha=layer_data.getOpacity();
+            s.MarkerFaceAlpha=layer_data.getOpacity();
+        end
+
+        function drawQuiverLayer(obj, layer, layer_num)
+            layer_data=obj.layers_data_{layer_num};
+            x=layer(:,2); %TODO: do option that switches these
+            y=layer(:, 1);
+            rad=layer(:,3);
+            length=layer(:,4);
+            if(layer_data.getMarkersSizeByValue())
+                q=layer_data.getMarkersSize();
+                size_q=length.*q;
+            else
+                q=layer_data.getMarkersSize();
+                size_q=ones(size(length)).*q;
+            end
+            [u,v]=pol2cart(rad,size_q); %TODO: is there an option we wouldnt want the size by value?
+            x=x-u./2;
+            y=y-v./2;
+            q=quiver(x,y,u,v, layer_data.getMarkersColor());
+            q.LineWidth=layer_data.getQuiverLineWidth();
+            q.AutoScale="off";
+            if(layer_data.getQuiverShowArrowHead())
+                q.ShowArrowHead="on";
+            else
+                q.ShowArrowHead="off";
+            end
+%             q.MarkerEdgeAlpha=layer_data.getOpacity();
+%             q.MarkerFaceAlpha=layer_data.getOpacity();
         end
         
         function drawImageLayer(obj, layer, layer_num)
             layer_data=obj.layers_data_{layer_num};
-            if isempty(layer_data.scale_)
-                layer_data.scale_=[min(layer(:)) max(layer(:))];
+            if isempty(layer_data.getScale())
+                layer_data.setScale([min(layer(:)) max(layer(:))]);
             end
-            image=mat2gray(layer, layer_data.scale_);
+            image=mat2gray(layer, layer_data.getScale());
             ind=gray2ind(image, 256);
-            image=ind2rgb(ind, colormap(layer_data.colormap_));
+            if(layer_data.getIsSolidColor())
+                image=obj.createBackground(size(layer),layer_data.getSolidColor());
+            else
+                image=ind2rgb(ind, colormap(layer_data.getColormap()));
+
+            end
             %creates the image
             alpha_mask=zeros(size(layer));
-            if( layer_data.show_== true )
-                alpha_mask(~isnan(layer)) = 1; %creates regular mask
-                alpha_mask=alpha_mask.*layer_data.opacity_;
-            end
+            alpha_mask(~isnan(layer)) = 1; %creates regular mask
+            alpha_mask=alpha_mask.*layer_data.getOpacity();
             layer_im = imshow(image);
             layer_im.AlphaData = alpha_mask;
-            if(obj.image_data_.show_colorbar_)
-                cb=colorbar; %todo fix adds colorbar only for last hold on, use freezeColors pack, has option to add up to 3 colorbars see if relevant, maybe addoption to which layer add the colorbar
-                caxis(obj.image_data_.colorbar_axis_scale_);
-                cb.Label.String=obj.image_data_.colorbar_title_;
+            if(obj.image_data_.getShowColorbar())
+                cb=colorbar;
+                caxis(obj.image_data_.getColorbarAxisScale());
+                cb.Label.String=obj.image_data_.getColorbarTitle();
             end
         end
         
@@ -332,10 +382,19 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
         end
         
-        function back_image= createBackground(obj, size)
+        function is_marker_quiver = isMarkerQuiver(obj, layer)
+            [row, col]=size(layer);
+            if(col==4)
+                is_marker_quiver=true;
+            else
+                is_marker_quiver=false;
+            end
+        end
+
+        function back_image = createBackground(obj, size, color)
             back_image = ones(size);
-            for i= 1:3
-                back_image(:,:,i)=obj.image_data_.color_for_nan_(i);
+            for i = 1:3
+                back_image(:,:,i)=color(i);
             end
         end
         
