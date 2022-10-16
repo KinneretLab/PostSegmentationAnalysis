@@ -28,6 +28,10 @@ classdef Frame < PhysicalEntity
         % you can access this using FRAME#VERTICES
         % type: VERTEX[]
         vertices_ = Null.null;
+        % An internal vairblae listing the true vertices this frame contains.
+        % you can access this using FRAME#TVERTICES
+        % type: TRUEVERTEX[]
+        t_vertices_ = Null.null;
     end
     
     methods
@@ -90,6 +94,15 @@ classdef Frame < PhysicalEntity
             %   the result.
             % Return type: VERTEX[]
             vertices = obj.getOrCalculate(class(Vertex), "vertices_", @(frames) frames.lookupByFrame(class(Vertex)), varargin{:});
+        end
+
+        function vertices = tVertices(obj, varargin)
+            % TVERTICES searches for the true vertices contained in each frame in this array.
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            % Return type: VERTEX[]
+            vertices = obj.getOrCalculate(class(TrueVertex), "t_vertices_", @(frames) frames.lookupByFrame(class(TrueVertex)), varargin{:});
         end
     end
     
