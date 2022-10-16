@@ -277,6 +277,7 @@ classdef PlotBuilder < FigureBuilder
             err_arrays = cell(length(frame_data), 2 * length(full_data));
             % since for a sequence we are plotting one graph per frame, we
             % need to iterate over each frame first.
+            last_log_time = datetime('now');
             for frame_idx = 1:length(frame_data)
                 if obj.sequence_
                     % figure out which entities should be included in this
@@ -362,8 +363,9 @@ classdef PlotBuilder < FigureBuilder
                     % other stuff for them: Y,X_err,Y_err.
                     % Y is done last because it overrides the list of
                     % entries.
-                    if mod(frame_idx, 20) == 1
+                    if seconds(datetime('now') - last_log_time) > 60 || frame_idx * data_idx == 1 || (frame_idx == length(frame_data) && data_idx == length(full_data))
                         obj.logger.info('Calculate: calculating Y,X_err,Y_err for frame (%d/%d), experiment (%d/%d)', frame_idx, length(frame_data), data_idx, length(full_data));
+                        last_log_time = datetime('now');
                     end
                     for key = data_sorted.keys
                         x_err_sorted(key{1}) = obj.smart_apply(obj.x_err_function_, data_sorted(key{1}), obj, data_entry);

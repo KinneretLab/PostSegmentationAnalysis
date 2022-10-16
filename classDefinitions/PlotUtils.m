@@ -83,6 +83,21 @@ classdef PlotUtils
             func = BulkFunc(func);
         end
         
+        function func = numBonds(axis)
+            % NUMNEIGHBORS The number of bonds the entity (cell, vertex, true vertex, etc.) has
+            % Parameters:
+            %   axis (Optional): string
+            %      "x" (default): gets the function without modifications
+            %      "y": applies a mean on the result of the function
+            %      "err": find the standard deviation for the result of the
+            %      function.
+            func =  @(entity_arr) reshape(sum(~isnan(entity_arr.bonds), 2)', size(entity_arr));
+            if nargin == 1
+                func = PlotUtils.axify(func, axis);
+            end
+            func = BulkFunc(func);
+        end
+        
         
         function func = xNormalize(x_function, t_prequisite)
             % normalize the result of x_function by the mean of the entities that share a property (sibilings).

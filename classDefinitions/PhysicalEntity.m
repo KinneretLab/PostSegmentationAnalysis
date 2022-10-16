@@ -97,10 +97,18 @@ classdef (Abstract) PhysicalEntity < handle
             if class(lhs) ~= class(rhs)
                 tf = zeros(size(lhs)) | zeros(size(rhs));
             else
-                tf = isnan(lhs) | isnan(rhs);
-                lhs = lhs(~tf);
-                rhs = rhs(~tf);
-                tf(~tf) = (reshape([lhs.(lhs.uniqueID)], size(lhs)) == reshape([rhs.(rhs.uniqueID)], size(rhs)) & ...
+                tf = ~(isnan(lhs) | isnan(rhs));
+                if length(lhs) == 1
+                    lhs = repmat(lhs, size(tf(tf)));
+                else
+                    lhs = lhs(tf);
+                end
+                if length(rhs) == 1
+                    rhs = repmat(rhs, size(tf(tf)));
+                else
+                    rhs = rhs(tf);
+                end
+                tf(tf) = (reshape([lhs.(lhs.uniqueID)], size(lhs)) == reshape([rhs.(rhs.uniqueID)], size(rhs)) & ...
                  reshape([lhs.experiment], size(lhs)) == reshape([rhs.experiment], size(rhs)));
             end
         end
@@ -234,7 +242,8 @@ classdef (Abstract) PhysicalEntity < handle
             %   varargin: additional MATLAB builtin operations to apply on
             %   the result.
             % Return type: clazz[]
-            phys_arr(size(obj, 1), size(obj, 2)) = feval(clazz);
+            size_obj = num2cell(size(obj));
+            phys_arr(size_obj{:}) = feval(clazz);
             if numel(obj) > 2
                 index = containers.Map;
                 for lookup_idx = 1:numel(obj)
@@ -306,7 +315,11 @@ classdef (Abstract) PhysicalEntity < handle
             %   the result.
             % Return type: clazz[]
             if length(obj) ~= numel(obj)
-                obj.logger.error("multi-value lookup applied on a 2D matrix. This is illegal. Please flatten and re-apply.");
+                if length(size(obj)) > 3
+                    obj.logger.error("multi-value lookup applied on a 3D matrix, when the max possible dimension is 3D.");
+                else
+                    obj.logger.warn("multi-value lookup applied on a 2D matrix. This might be an error. Consider flattening the matrix before.");
+                end
             end
             lookup_result = cell(size(obj));
             if numel(obj) > 2
@@ -353,11 +366,16 @@ classdef (Abstract) PhysicalEntity < handle
             % since the lookup was placed into a cell array, we need to
             % reshape it into a matrix.
             sizes = cellfun(@(result) (length(result)), lookup_result);
-            phys_arr(length(obj), max(sizes)) = feval(clazz);
-            for i=1:length(obj)
+            phys_arr(numel(obj), max(sizes)) = feval(clazz);
+            for i=1:numel(obj)
                 if sizes(i) > 0
                     phys_arr(i, 1:sizes(i)) = lookup_result{i};
                 end
+            end
+            if length(obj) ~= numel(obj)
+                % reorganize the 2D array into a 3D array
+                size_obj = num2cell(size(obj));
+                phys_arr = reshape(phys_arr, size_obj{:}, []);
             end
             % filter result and put it into result_arr
             if nargin > 4

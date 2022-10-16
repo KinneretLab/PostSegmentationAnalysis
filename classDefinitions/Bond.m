@@ -74,7 +74,7 @@ classdef Bond < PhysicalEntity
             %   varargin: additional MATLAB builtin operations to apply on
             %   the result.
             % Return type: VERTEX[]
-        	vertices = obj.dBonds.vertices(varargin{:});
+        	vertices = obj.dBonds(':',1).vertices(varargin{:});
         end
 
         function cells = cells(obj, varargin)
