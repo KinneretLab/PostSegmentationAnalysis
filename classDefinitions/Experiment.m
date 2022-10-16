@@ -151,11 +151,19 @@ classdef Experiment < handle
                 experiment = obj(row);
                 if ~experiment.data_.isKey(clazz)
                     obj(1).logger.info("Indexing %ss for Experiment %s", clazz, experiment.folder_);
-                    % load the data from the apropriate table
-                    lookup_table = readtable(experiment.files_(clazz),'Delimiter',',');
-                    % construct the target array of classes with the
-                    % apropriate data
-                    result = feval(clazz, experiment, lookup_table);
+                    if experiment.files_.isKey(clazz)
+                        % load the data from the apropriate table
+                        lookup_table = readtable(experiment.files_(clazz),'Delimiter',',');
+                        % construct the target array of classes with the
+                        % apropriate data
+                        result = feval(clazz, experiment, lookup_table);
+                    else
+                        % if this branch is activated, it implies the
+                        % object is calculated from existing objects,
+                        % meaning the constructuor is slightly different.
+                        result = feval(clazz, experiment, varargin{:});
+                        varargin(1:min(result(1).nargs, length(varargin))) = [];
+                    end
                     % save into the experiment index.
                     experiment.data_(clazz) = result;
                 else
@@ -222,6 +230,22 @@ classdef Experiment < handle
             %   the result.
             % Return type: VERTEX[] with size (1, ?)
             vertex_arr = obj.lookup(class(Vertex), varargin{:});
+        end
+        
+        function vertex_arr = tVertices(obj, varargin)
+            % VERTICES Retrieves all true vertices from the experiment(s), and loads/constructs them if neccesary.
+            % Additional arguments can be applied to get select slices or a
+            % conditional filtering
+            % for example, exp.cells([exp.cells.confidence] > 0.5) will
+            % only yield cells with a confidence bigger than 0.5
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            %   if you are contructing the array for the first time,
+            %   this function will use the first parameter as the radius
+            %   filter contruction parameter.
+            % Return type: TRUEVERTEX[] with size (1, ?)
+            vertex_arr = obj.lookup(class(TrueVertex), varargin{:});
         end
 
         function frame_arr = frames(obj, varargin)
