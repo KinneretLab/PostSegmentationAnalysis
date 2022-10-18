@@ -267,7 +267,9 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
             if(obj.image_data_.getShowColorbar())
                 cb=colorbar; 
-                caxis(obj.image_data_.getColorbarAxisScale());
+                if(~isempty(obj.image_data_.getColorbarAxisScale()))
+                    caxis(obj.image_data_.getColorbarAxisScale());
+                end
                 cb.Label.String=obj.image_data_.getColorbarTitle();
             end
         end
@@ -353,8 +355,10 @@ classdef ImageBuilder <  FigureBuilder & handle
             if(layer_data.getIsSolidColor())
                 image=obj.createBackground(size(layer),layer_data.getSolidColor());
             else
-                figure;
+                f_temp=figure;
+                set(gcf,'visible','off'); 
                 image=ind2rgb(ind, colormap(layer_data.getColormap()));
+                close(f_temp, "force");
                 set(0, 'CurrentFigure', fig);
             end
             %creates the image

@@ -25,7 +25,7 @@ classdef ImageDrawData < handle
             obj.background_image_=[];
             obj.is_background_per_frame_=false;
             obj.show_colorbar_= true;
-            obj.colorbar_axis_scale_ = [0 1];
+            obj.colorbar_axis_scale_ = [];
             obj.image_title_="";
             obj.colorbar_title_="";
             obj.legend_for_markers_=false;
@@ -41,6 +41,10 @@ classdef ImageDrawData < handle
         end
         
         function setBackgroundImage(obj, value)
+            [row, ~]=size(value);
+            if(row==1)
+                obj.setIsBackgroundPerFrame(true);
+            end
             obj.background_image_ = value;
         end
         
@@ -95,6 +99,7 @@ classdef ImageDrawData < handle
         function value = getLegendForMarkers(obj)
             value = obj.legend_for_markers_;
         end
+        
         function setCrop(obj, value)
             obj.crop_ = value;
         end
