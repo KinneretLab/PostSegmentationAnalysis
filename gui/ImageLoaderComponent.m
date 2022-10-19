@@ -45,19 +45,7 @@ classdef ImageLoaderComponent < handle
         end
         
         
-        function loadBackground(obj, app) %TODO: move extensions to config
-%             [file,path] = uigetfile('*.png;*.tiff;*.jpg;*.jpeg', 'Select One or More Files', ...
-%                 'MultiSelect', 'on');
-%             if(isa(file,'char'))
-%                  fname = [path file];
-%                  obj.background_image_=imread(fname);
-%             else
-%                 [~ ,num_of_files]=size(file);
-%                 for i= 1:num_of_files
-%                     fname = [path file{i}];
-%                     obj.background_image_{i}=imread(fname);
-%                 end
-%             end
+        function loadBackground(obj, app) 
             obj.background_image_=Utilities.getBackground;
             if(obj.is_image_loaded_)
                 obj.image_builder_.image_data_.setBackgroundImage(obj.background_image_);

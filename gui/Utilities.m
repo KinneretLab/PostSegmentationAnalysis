@@ -2,7 +2,7 @@ classdef Utilities
     %UNTITLED Summary of this class goes here
     
     methods (Static)        
-        function background_image = getBackground(obj)
+        function background_image = getBackground(obj) %TODO: move extensions to config
             background_image={};
             [file,path] = uigetfile('*.png;*.tiff;*.jpg;*.jpeg', 'Select One or More Files', ...
                 'MultiSelect', 'on');
