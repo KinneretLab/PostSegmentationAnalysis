@@ -21,6 +21,7 @@ classdef ImageComponentHandler < handle
         function show(obj, app)
             obj.renderFromImageBuilder(app);
             app.ImageTab.Parent=app.TabGroup;
+            obj.showLayers(app);
             obj.setImageSettings(app);
         end
         
@@ -40,7 +41,11 @@ classdef ImageComponentHandler < handle
         
         function loadBackground(obj)
             back=Utilities.getBackground();
-            obj.ImageBuilder.image_data_.setBackground(back);
+            obj.ImageBuilder.image_data_.setBackgroundImage(back);
+        end
+        
+        function changeLayer(obj, layer_num)
+            
         end
         
     end
@@ -71,12 +76,17 @@ classdef ImageComponentHandler < handle
             app.ShowColorbarCheckBox.Value =obj.ImageBuilder.image_data_.getShowColorbar();
             app.ColorbarTitleEditField.Value=obj.ImageBuilder.image_data_.getColorbarTitle();
             colorbar_scale=obj.ImageBuilder.image_data_.getColorbarAxisScale();
-            if(~isempty(colorbar_scale))\
+            if(~isempty(colorbar_scale))
                 app.ColorbarAxisMin.Value=colorbar_scale(1);
                 app.ColorbarAxisMax.Value=colorbar_scale(2);
             end
             app.ShowLegendCheckBox.Value=obj.ImageBuilder.image_data_.getLegendForMarkers();
         end
+        
+        function showLayers(obj, app)
+            layers_panel=LayersPanel(app.GridLayout8, obj);
+            layers_panel.create(obj.ImageBuilder.layers_data_);
+        end 
     end
 end
 
