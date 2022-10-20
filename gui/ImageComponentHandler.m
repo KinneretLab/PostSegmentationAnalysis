@@ -4,18 +4,20 @@ classdef ImageComponentHandler < handle
     
     properties (Access=private)
         ImageDisplayHandler
-        %         ImageRawData
-        %         NumOfFrames
-        %         NumOfLayers
-        %         ShownFrame
         ImageBuilder
         frame_default_value_=1
+        shown_layer_
+        app_ %TODO: remove app from functions that recieve it
+        layer_data_panel_
     end
     
     methods(Access=public)
-        function obj= ImageComponentHandler(imageDisplayHandler, imageBuilder)
+        function obj= ImageComponentHandler(imageDisplayHandler, imageBuilder, app)
             obj.ImageDisplayHandler=imageDisplayHandler;
             obj.ImageBuilder=imageBuilder;
+            obj.app_=app;
+            obj.layer_data_panel_=LayerDataPanel(obj.app_.GridLayout3, obj);
+
         end
         
         function show(obj, app)
@@ -27,6 +29,7 @@ classdef ImageComponentHandler < handle
         
         function renderFromInput(obj, app)
             obj.setImageData(app);
+            obj.ImageBuilder.layers_data_{obj.shown_layer_}=obj.layer_data_panel_.getLayerData(obj.ImageBuilder.layers_data_{obj.shown_layer_});
             obj.renderFromImageBuilder(app);
         end
         
@@ -45,13 +48,14 @@ classdef ImageComponentHandler < handle
         end
         
         function changeLayer(obj, layer_num)
-            
+            obj.shown_layer_=layer_num;
+            obj.showLayerData();
         end
         
     end
     
     methods (Access=private)     
-        function setNumOfFrames(obj, app, figures)
+        function setNumOfFrames(~, app, figures)
             [~, col]=size(figures);
             app.ChooseFrameSlider.Limits= [1 col];
         end
@@ -86,6 +90,10 @@ classdef ImageComponentHandler < handle
         function showLayers(obj, app)
             layers_panel=LayersPanel(app.GridLayout8, obj);
             layers_panel.create(obj.ImageBuilder.layers_data_);
+        end 
+        
+        function showLayerData(obj)
+            obj.layer_data_panel_.create(obj.ImageBuilder.layers_data_{obj.shown_layer_})
         end 
     end
 end
