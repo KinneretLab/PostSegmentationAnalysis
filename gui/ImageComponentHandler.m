@@ -9,6 +9,7 @@ classdef ImageComponentHandler < handle
         shown_layer_
         app_ %TODO: remove app from functions that recieve it
         layer_data_panel_
+        
     end
     
     methods(Access=public)
@@ -48,6 +49,7 @@ classdef ImageComponentHandler < handle
         end
         
         function changeLayer(obj, layer_num)
+            %obj.ImageBuilder.layers_data_{layer_num}=obj.layer_data_panel_.getLayerData(obj.ImageBuilder.layers_data_{layer_num});
             obj.shown_layer_=layer_num;
             obj.showLayerData();
         end
