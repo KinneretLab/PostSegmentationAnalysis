@@ -30,6 +30,9 @@ classdef LayerDataPanel<handle
         SizeByValueCheckBox
         SizeSpinnerLabel
         SizeSpinner
+        ShowArowheadCheckBox
+        LineWidthSpinnerLabel
+        LineWidthSpinner
     end
     
     methods
@@ -48,6 +51,8 @@ classdef LayerDataPanel<handle
             elseif(layer_data.getIsMarkerLayer())
                 obj.showMarkerLayerPanel();
                 obj.setMarkerLayerSettings(layer_data);
+            elseif(layer_data.getIsMarkerQuiver())
+                obj.showQuiverLayerPanel();
             end
         end
         
@@ -193,7 +198,42 @@ classdef LayerDataPanel<handle
             obj.Type.Layout.Column = 2;
         end
         
-        function hideImageLayerPanel(obj) 
+        function showQuiverLayerPanel(obj)
+            obj.Type.Text = 'Quiver';
+            obj.ShowCheckBox.Parent=obj.grid_;
+            obj.ShowCheckBox.Layout.Row = 2;
+            obj.ShowCheckBox.Layout.Column = 1;
+            
+            obj.ColorDropDownLabel.Parent = obj.grid_;
+            obj.ColorDropDownLabel.Layout.Row = 3;
+            obj.ColorDropDownLabel.Layout.Column = 1;
+            
+            obj.ColorDropDown.Parent = obj.grid_;
+            obj.ColorDropDown.Layout.Row = 3;
+            obj.ColorDropDown.Layout.Column = 2;
+            
+            obj.SizeByValueCheckBox.Parent = obj.grid_;
+            obj.SizeByValueCheckBox.Layout.Row = 4;
+            obj.SizeByValueCheckBox.Layout.Column = 1;
+            
+            obj.TypeLabel.Parent = obj.grid_;
+            obj.TypeLabel.Layout.Row = 1;
+            obj.TypeLabel.Layout.Column = 1;
+            
+            obj.Type.Parent = obj.grid_;
+            obj.Type.Layout.Row = 1;
+            obj.Type.Layout.Column = 2;
+            
+            obj.SizeSpinnerLabel.Parent = obj.grid_;
+            obj.SizeSpinnerLabel.Layout.Row = 5;
+            obj.SizeSpinnerLabel.Layout.Column = 1;
+            
+            obj.SizeSpinner.Parent = obj.grid_;
+            obj.SizeSpinner.Layout.Row = 5;
+            obj.SizeSpinner.Layout.Column = 2;
+        end
+        
+        function hideImageLayerPanel(obj)
             obj.ScaleGrid.Parent=[];
             obj.ScaleMin.Parent=[];
             obj.ScaleMax.Parent=[];
@@ -215,6 +255,12 @@ classdef LayerDataPanel<handle
             obj.SizeByValueCheckBox.Parent = [];
             obj.SizeSpinnerLabel.Parent = [];
             obj.SizeSpinner.Parent = [];
+        end
+        
+        function hideQuiverLayerPanel(obj)
+            obj.ShowArowheadCheckBox.Parent=[];
+            obj.LineWidthSpinnerLabel.Parent=[];
+            obj.LineWidthSpinner.Parent=[];
         end
         
         function hideSharedLayerPanel(obj)
@@ -242,12 +288,22 @@ classdef LayerDataPanel<handle
             obj.OpacitySpinner = uispinner(obj.grid_);
             obj.TypeLabel = uilabel(obj.grid_);
             obj.Type = uilabel(obj.grid_);
+            obj.ColorDropDownLabel = uilabel(obj.grid_);
+            obj.ColorDropDown = uidropdown(obj.grid_);
+            obj.SizeByValueCheckBox = uicheckbox(obj.grid_);
+            obj.SizeSpinnerLabel = uilabel(obj.grid_);
+            obj.SizeSpinner = uispinner(obj.grid_);
+            obj.SizeSpinner.Step =0.1;
+            obj.SizeSpinner.Limits =[0 Inf];
             obj.ShowCheckBox.Text = 'Show';
             obj.ColormapDropDownLabel.Text = 'Colormap';
             obj.OpacitySpinnerLabel.Text = 'Opacity';
             obj.OpacitySpinner.Limits = [0 1];
             obj.OpacitySpinner.Step =0.1;
             obj.TypeLabel.Text = 'Type';
+            obj.ColorDropDown.Items=PresetValues.getColors;
+            obj.SizeByValueCheckBox.Text = 'Size By Value';
+            obj.SizeSpinnerLabel.Text = 'Size';
             
         end
         
@@ -280,20 +336,22 @@ classdef LayerDataPanel<handle
             obj.ShapeDropDownLabel = uilabel(obj.grid_);
             obj.ShapeDropDown = uidropdown(obj.grid_);
             obj.ColorbyValueCheckBox = uicheckbox(obj.grid_);
-            obj.ColorDropDownLabel = uilabel(obj.grid_);
-            obj.ColorDropDown = uidropdown(obj.grid_);
-            obj.SizeByValueCheckBox = uicheckbox(obj.grid_);
-            obj.SizeSpinnerLabel = uilabel(obj.grid_);
-            obj.SizeSpinner = uispinner(obj.grid_);
-            obj.SizeSpinner.Step =0.1;
-            obj.SizeSpinner.Limits =[0 Inf];
             obj.ShapeDropDownLabel.Text = 'Shape';
             obj.ColorbyValueCheckBox.Text = 'Color by Value';
             obj.ColorDropDownLabel.Text = 'Color';
-            obj.SizeByValueCheckBox.Text = 'Size By Value';
-            obj.SizeSpinnerLabel.Text = 'Size';
-            obj.ColorDropDown.Items=PresetValues.getColors;
             obj.ShapeDropDown.Items=PresetValues.getMarkerShapes;
+        end
+        
+        function createQuiverLayerData(obj)
+            obj.ShowArowheadCheckBox= uicheckbox(obj.grid_);
+            obj.ShowArowheadCheckBox.Text = 'Color by Value';
+
+            obj.LineWidthSpinnerLabel= uilabel(obj.grid_);
+            obj.LineWidthSpinner=uispinner(obj.grid_);
+        end
+        
+        function setQuiverLayerSettings(obj, layer_data)
+            
         end
         
         function setImageLayerSettings(obj, layer_data)

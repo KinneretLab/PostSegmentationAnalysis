@@ -9,7 +9,7 @@ classdef ImageComponentHandler < handle
         shown_layer_
         app_ %TODO: remove app from functions that recieve it
         layer_data_panel_
-        
+        is_layer_first_loaded_=false
     end
     
     methods(Access=public)
@@ -49,7 +49,11 @@ classdef ImageComponentHandler < handle
         end
         
         function changeLayer(obj, layer_num)
-            %obj.ImageBuilder.layers_data_{layer_num}=obj.layer_data_panel_.getLayerData(obj.ImageBuilder.layers_data_{layer_num});
+            if(obj.is_layer_first_loaded_)
+                obj.ImageBuilder.layers_data_{obj.shown_layer_}=obj.layer_data_panel_.getLayerData(obj.ImageBuilder.layers_data_{obj.shown_layer_});
+            else
+                obj.is_layer_first_loaded_=true;
+            end
             obj.shown_layer_=layer_num;
             obj.showLayerData();
         end

@@ -32,9 +32,9 @@ classdef LayersPanel <handle
         
         function changedLayer(obj,event,~)
             num=event.UserData;
+            obj.image_component_handler_.changeLayer(num);
             obj.resetShownLayer();
             obj.setShownLayer(num);
-            obj.image_component_handler_.changeLayer(num);
         end
         
         function setShownLayer(obj, layer_num)
