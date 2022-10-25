@@ -103,8 +103,8 @@ classdef Experiment < handle
             if nargin > 0
                 obj.folder_ = folder;
                 obj.data_ = containers.Map();
-                obj.files_ = containers.Map(cellfun(@class,{Cell, Bond, Vertex, DBond, Frame, BondPixelList}, 'UniformOutput', false), ...
-                    cellfun(@(file) ([folder, '\', file, '.csv']), {'cells', 'bonds', 'vertices', 'directed_bonds', 'frames', 'bond_pixels'}, 'UniformOutput', false));
+                obj.files_ = containers.Map(cellfun(@class,{Cell, Bond, Vertex, DBond, Frame, BondPixelList, Defect}, 'UniformOutput', false), ...
+                    cellfun(@(file) ([folder, '\', file, '.csv']), {'cells', 'bonds', 'vertices', 'directed_bonds', 'frames', 'bond_pixels','defects'}, 'UniformOutput', false));
             else
                 obj.folder_ = nan;
             end
@@ -272,6 +272,19 @@ classdef Experiment < handle
             %   the result.
             % Return type: BONDPIXELLIST[] with size (1, ?)
             bond_pixels_arr = obj.lookup(class(BondPixelList), varargin{:});
+        end
+        
+        function defect_arr = defects(obj, varargin)
+            % DEFECTS Retrieves all defects from the experiment(s), and loads/constructs them if neccesary.
+            % Additional arguments can be applied to get select slices or a
+            % conditional filtering
+            % for example, exp.cells([exp.cells.confidence] > 0.5) will
+            % only yield cells with a confidence bigger than 0.5
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            % Return type: FRAME[] with size (1, ?)
+            defect_arr = obj.lookup(class(Defect), varargin{:});
         end
         
         function unique_name = uniqueName(obj)
