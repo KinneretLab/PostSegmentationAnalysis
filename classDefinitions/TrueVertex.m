@@ -117,6 +117,14 @@ classdef TrueVertex < PhysicalEntity
             % Return type: BOND[]
             bonds = obj.getOrCalculate(class(Bond), "bonds_", @calcBonds, varargin{:});
         end
+        
+        function list_pixels = list_pixels(obj)
+            
+            list_pixels = [];
+            obj = flatten(obj);
+            list_pixels(:,1) = [obj.x_pos];
+            list_pixels(:,2) = [obj.y_pos];
+        end
     end
     
     methods (Access = private)
