@@ -199,12 +199,20 @@ classdef ImageBuilder <  FigureBuilder & handle
         end
         
         function obj=createDefaultLayerData(obj) % TODO see if add if override version, in case we want to load or calculate different data..
-            [row, ~]=size(obj.layer_arr_);
+            [row, col]=size(obj.layer_arr_);
             for i=1:row
                 obj.layers_data_{i} = ImageLayerDrawData;
-                frame = obj.layer_arr_(:, 1);
+                j=1;
+                frame = obj.layer_arr_(:, j);
+                while isempty(frame{i}) && j<=col
+                    j=j+1;
+                    frame = obj.layer_arr_(:, j);
+                end
                 obj.layers_data_{i}.setIsMarkerLayer(obj.isMarkerLayer(frame{i}));
                 obj.layers_data_{i}.setIsMarkerQuiver(obj.isMarkerQuiver(frame{i}));               
+%                 frame = obj.layer_arr_(:, 1);
+%                 obj.layers_data_{i}.setIsMarkerLayer(obj.isMarkerLayer(frame{i}));
+%                 obj.layers_data_{i}.setIsMarkerQuiver(obj.isMarkerQuiver(frame{i}));               
             end
         end
         
