@@ -53,6 +53,7 @@ classdef LayerDataPanel<handle
                 obj.setMarkerLayerSettings(layer_data);
             elseif(layer_data.getIsMarkerQuiver())
                 obj.showQuiverLayerPanel();
+                obj.setQuiverLayerSettings(layer_data);
             end
         end
         
@@ -60,6 +61,7 @@ classdef LayerDataPanel<handle
             obj.hideImageLayerPanel();
             obj.hideMarkerLayerPanel();
             obj.hideSharedLayerPanel();
+            obj.hideQuiverLayerPanel();
         end
         
         function showMarkerLayerPanel(obj)
@@ -231,6 +233,21 @@ classdef LayerDataPanel<handle
             obj.SizeSpinner.Parent = obj.grid_;
             obj.SizeSpinner.Layout.Row = 5;
             obj.SizeSpinner.Layout.Column = 2;
+            
+            obj.ShowArowheadCheckBox.Parent=obj.grid_;
+            obj.ShowArowheadCheckBox.Layout.Row=4;
+            obj.ShowArowheadCheckBox.Layout.Column=2;
+            
+            obj.LineWidthSpinnerLabel.Parent=obj.grid_;
+            obj.LineWidthSpinnerLabel.Layout.Row=6;
+            obj.LineWidthSpinnerLabel.Layout.Column=1;
+            
+            obj.LineWidthSpinner.Parent=obj.grid_;
+            obj.LineWidthSpinner.Layout.Row=6;
+            obj.LineWidthSpinner.Layout.Column=2;
+
+            
+            
         end
         
         function hideImageLayerPanel(obj)
@@ -273,10 +290,12 @@ classdef LayerDataPanel<handle
             obj.Type.Parent = [];
         end
         
+        
         function createData(obj)
             obj.createSharedLayerData();
             obj.createImageLayerData();
             obj.createMarkerLayerData();
+            obj.createQuiverLayerData();
         end
         
         function createSharedLayerData(obj)
@@ -344,14 +363,21 @@ classdef LayerDataPanel<handle
         
         function createQuiverLayerData(obj)
             obj.ShowArowheadCheckBox= uicheckbox(obj.grid_);
-            obj.ShowArowheadCheckBox.Text = 'Color by Value';
+            obj.ShowArowheadCheckBox.Text = 'Show Arrowhead';
 
             obj.LineWidthSpinnerLabel= uilabel(obj.grid_);
+            obj.LineWidthSpinnerLabel.Text="Line Width";
             obj.LineWidthSpinner=uispinner(obj.grid_);
         end
         
         function setQuiverLayerSettings(obj, layer_data)
-            
+            obj.ShowCheckBox.Value=layer_data.getShow();
+            obj.ColorDropDown.Value=layer_data.getMarkersColor();
+            obj.SizeByValueCheckBox.Value= layer_data.getMarkersSizeByValue();
+            obj.ShowArowheadCheckBox.Value= layer_data.getQuiverShowArrowHead();
+            obj.SizeSpinner.Value=layer_data.getMarkersSize();
+            lin=layer_data.getQuiverLineWidth();
+            obj.LineWidthSpinner.Value=layer_data.getQuiverLineWidth();
         end
         
         function setImageLayerSettings(obj, layer_data)
@@ -376,6 +402,7 @@ classdef LayerDataPanel<handle
             obj.SizeSpinner.Value=layer_data.getMarkersSize();
             obj.ColormapDropDown.Value=layer_data.getColormap();
             obj.ShapeDropDown.Value=layer_data.getMarkersShape();
+            obj.ColorDropDown.Value=layer_data.getMarkersColor();
         end
         
         function layer_data =getLayerData(obj, layer_data)
@@ -383,6 +410,8 @@ classdef LayerDataPanel<handle
                 layer_data=obj.getImageLayerSettings(layer_data);
             elseif(layer_data.getIsMarkerLayer())
                 layer_data=obj.getMarkerLayerSettings(layer_data);
+            else
+                layer_data=obj.getQuiverLayerSettings(layer_data);
             end
         end
         
@@ -406,6 +435,15 @@ classdef LayerDataPanel<handle
             layer_data.setColormap(obj.ColormapDropDown.Value);
             layer_data.setMarkersColor(obj.ColorDropDown.Value);
             layer_data.setMarkersShape(obj.ShapeDropDown.Value);
+        end
+        
+        function layer_data=getQuiverLayerSettings(obj, layer_data)
+            layer_data.setShow(obj.ShowCheckBox.Value);
+            layer_data.setMarkersColor(obj.ColorDropDown.Value);
+            layer_data.setMarkersSizeByValue(obj.SizeByValueCheckBox.Value);
+            layer_data.setQuiverShowArrowHead(obj.ShowArowheadCheckBox.Value);
+            layer_data.setMarkersSize(obj.SizeSpinner.Value);
+            layer_data.setQuiverLineWidth(obj.LineWidthSpinner.Value);
         end
     end
 end

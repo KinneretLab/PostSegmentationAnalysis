@@ -28,6 +28,8 @@ classdef LayersPanel <handle
                 obj.Buttons{i}.ButtonPushedFcn=@obj.changedLayer;
             end
             obj.setShownLayer(obj.default_shown_layer_);
+            obj.image_component_handler_.changeLayer(obj.default_shown_layer_);
+
         end
         
         function changedLayer(obj,event,~)
