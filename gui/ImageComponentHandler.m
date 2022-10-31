@@ -10,6 +10,8 @@ classdef ImageComponentHandler < handle
         app_ %TODO: remove app from functions that recieve it
         layer_data_panel_
         is_layer_first_loaded_=false
+        figures_
+        layers_panel_
     end
     
     methods(Access=public)
@@ -18,6 +20,8 @@ classdef ImageComponentHandler < handle
             obj.ImageBuilder=imageBuilder;
             obj.app_=app;
             obj.layer_data_panel_=LayerDataPanel(obj.app_.GridLayout3, obj);
+            obj.layers_panel_=LayersPanel(app.GridLayout8, obj);
+
 
         end
         
@@ -28,24 +32,39 @@ classdef ImageComponentHandler < handle
             obj.setImageSettings(app);
         end
         
+        function saveFigures(obj)
+            [file, path] = uiputfile("*.*");
+            if(file ==0)
+                return;
+            end          
+            obj.ImageBuilder.save(obj.figures_, path, file);
+        end
+        
         function renderFromInput(obj, app)
             obj.setImageData(app);
             obj.ImageBuilder.layers_data_{obj.shown_layer_}=obj.layer_data_panel_.getLayerData(obj.ImageBuilder.layers_data_{obj.shown_layer_});
             obj.renderFromImageBuilder(app);
+            if(~obj.canDeleteBackground())
+                obj.app_.DeleteBackgroundButton.Enable=false;
+            end
         end
         
         function renderFromImageBuilder(obj, app)
+            obj.is_layer_first_loaded_=false;
             obj.ImageDisplayHandler.forceCloseFigures();
-            figures=obj.ImageBuilder.draw(false);
-            obj.ImageDisplayHandler.setFigures(figures);
+            obj.figures_=obj.ImageBuilder.draw(false);
+            obj.ImageDisplayHandler.setFigures(obj.figures_);
             obj.ImageDisplayHandler.show(app);
             app.ChooseFrameSlider.Value=obj.frame_default_value_;
-            obj.setNumOfFrames(app, figures);
+            obj.setNumOfFrames(app, obj.figures_);
         end
         
         function loadBackground(obj)
             back=Utilities.getBackground();
             obj.ImageBuilder.image_data_.setBackgroundImage(back);
+            if(obj.canDeleteBackground())
+                obj.app_.DeleteBackgroundButton.Enable=True;
+            end
         end
         
         function changeLayer(obj, layer_num)
@@ -58,11 +77,20 @@ classdef ImageComponentHandler < handle
             obj.showLayerData();
         end
         
+        function deleteBackground(obj)
+            obj.ImageBuilder.image_data_.setBackgroundImage({});
+        end
+        
     end
     
     methods (Access=private)     
         function setNumOfFrames(~, app, figures)
             [~, col]=size(figures);
+            if(col==1)
+                app.ChooseFrameSlider.Visible=false;
+                return;
+            end
+            app.ChooseFrameSlider.Visible=true;
             app.ChooseFrameSlider.Limits= [1 col];
         end
         
@@ -77,25 +105,42 @@ classdef ImageComponentHandler < handle
             obj.ImageBuilder.image_data_.setLegendForMarkers(app.ShowLegendCheckBox.Value);
         end
         
-        function setImageSettings(obj, app)
-            app.ImageTitleEditField.Value=obj.ImageBuilder.image_data_.getImageTitle();
+        function setImageSettings(obj, ~)
+            obj.app_.ImageTitleEditField.Value=obj.ImageBuilder.image_data_.getImageTitle();
             color=obj.ImageBuilder.image_data_.getColorForNaN();
-            app.RValue.Value=color(1);
-            app.GValue.Value=color(2);
-            app.BValue.Value=color(3);
-            app.ShowColorbarCheckBox.Value =obj.ImageBuilder.image_data_.getShowColorbar();
-            app.ColorbarTitleEditField.Value=obj.ImageBuilder.image_data_.getColorbarTitle();
+            obj.app_.RValue.Value=color(1);
+            obj.app_.GValue.Value=color(2);
+            obj.app_.BValue.Value=color(3);
+            obj.app_.ShowColorbarCheckBox.Value =obj.ImageBuilder.image_data_.getShowColorbar();
+            obj.app_.ColorbarTitleEditField.Value=obj.ImageBuilder.image_data_.getColorbarTitle();
             colorbar_scale=obj.ImageBuilder.image_data_.getColorbarAxisScale();
             if(~isempty(colorbar_scale))
-                app.ColorbarAxisMin.Value=colorbar_scale(1);
-                app.ColorbarAxisMax.Value=colorbar_scale(2);
+                obj.app_.ColorbarAxisMin.Value=colorbar_scale(1);
+                obj.app_.ColorbarAxisMax.Value=colorbar_scale(2);
             end
-            app.ShowLegendCheckBox.Value=obj.ImageBuilder.image_data_.getLegendForMarkers();
+            obj.app_.ShowLegendCheckBox.Value=obj.ImageBuilder.image_data_.getLegendForMarkers();
+            obj.app_.DeleteBackgroundButton.Enable=true;
+            if(~obj.canDeleteBackground())
+                obj.app_.DeleteBackgroundButton.Enable=false;
+            end
         end
         
-        function showLayers(obj, app)
-            layers_panel=LayersPanel(app.GridLayout8, obj);
-            layers_panel.create(obj.ImageBuilder.layers_data_);
+        function can_delete= canDeleteBackground(obj)
+            [~, col]=size(obj.ImageBuilder.layers_data_);
+            if(isempty(obj.ImageBuilder.image_data_.getBackgroundImage()))
+                can_delete=false;
+                return;
+            end
+            for i=1:col
+                can_delete=~obj.ImageBuilder.layers_data_{i}.getIsMarkerLayer() && ~obj.ImageBuilder.layers_data_{i}.getIsMarkerQuiver();
+                if(can_delete)
+                    return;
+                end
+            end
+        end
+        
+        function showLayers(obj, ~)
+            obj.layers_panel_.create(obj.ImageBuilder.layers_data_);
         end 
         
         function showLayerData(obj)

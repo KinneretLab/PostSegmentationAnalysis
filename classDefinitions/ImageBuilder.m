@@ -199,6 +199,7 @@ classdef ImageBuilder <  FigureBuilder & handle
         end
         
         function obj=createDefaultLayerData(obj) % TODO see if add if override version, in case we want to load or calculate different data..
+            obj.layers_data_={};
             [row, col]=size(obj.layer_arr_);
             for i=1:row
                 obj.layers_data_{i} = ImageLayerDrawData;

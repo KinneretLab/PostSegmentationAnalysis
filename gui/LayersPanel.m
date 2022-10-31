@@ -17,6 +17,8 @@ classdef LayersPanel <handle
         
         function create(obj, layers_data)
             [~, num_layers]=size(layers_data);
+            obj.deleteButtons();
+            obj.Buttons={};
             for i=1:num_layers
                 obj.grid_.RowHeight{i} = '1x';
                 obj.Buttons{i}=uibutton(obj.grid_, 'push');
@@ -30,6 +32,16 @@ classdef LayersPanel <handle
             obj.setShownLayer(obj.default_shown_layer_);
             obj.image_component_handler_.changeLayer(obj.default_shown_layer_);
 
+        end
+        
+        function deleteButtons(obj)
+            if(isempty(obj.Buttons))
+                return;
+            end
+            [~, col]=size(obj.Buttons);
+            for i=1:col
+                delete(obj.Buttons{i});
+            end
         end
         
         function changedLayer(obj,event,~)
