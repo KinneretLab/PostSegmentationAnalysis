@@ -32,6 +32,11 @@ classdef Frame < PhysicalEntity
         % you can access this using FRAME#TVERTICES
         % type: TRUEVERTEX[]
         t_vertices_ = Null.null;
+        % An internal vairblae listing the defects this frame contains.
+        % you can access this using FRAME#DEFECTS
+        % type: DEFECT[]
+        defects_ = Null.null;
+        
     end
     
     methods
@@ -101,8 +106,16 @@ classdef Frame < PhysicalEntity
             % Parameters:
             %   varargin: additional MATLAB builtin operations to apply on
             %   the result.
-            % Return type: VERTEX[]
+            % Return type: TVERTEX[]
             vertices = obj.getOrCalculate(class(TrueVertex), "t_vertices_", @(frames) frames.lookupByFrame(class(TrueVertex)), varargin{:});
+        end
+        function defects = defects(obj, varargin)
+            % DEFECTS searches for the defects contained in each frame in this array.
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            % Return type: DEFECT[]
+            defects = obj.getOrCalculate(class(Defect), "defects_", @(frames) frames.lookupByFrame(class(Defect)), varargin{:});
         end
     end
     

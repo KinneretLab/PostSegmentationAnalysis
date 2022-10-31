@@ -8,6 +8,11 @@ classdef ImageBuilder <  FigureBuilder & handle
         data_                   % {obj array...}
         layer_arr_              % cell array of double arrays
         save_format_
+        class_list_             % cell array of strings. These can be all classes that are properties of a frame: cells, bonds, vertices, tVertices, defects.
+        filter_list_            % cell array of strings/doubles/function handles
+        value_fun_list_         % cell array of strings/doubles/function handles
+        type_list_              % cell array of strings, specifying list, quiver or image.
+
     end
     
     properties (Access = public)
@@ -21,12 +26,17 @@ classdef ImageBuilder <  FigureBuilder & handle
         function obj = ImageBuilder(matlab_utility_funcs_path)
             obj@FigureBuilder()
             
-            obj.xy_calibration_         = 1;
+            obj.xy_calibration_          = 1;
             obj.z_calibration_           = 1;
             obj.image_size_              = [];
             obj.data_                    = {};
-            layers_data_                 = {};
-            image_data_                   = ImageDrawData;
+            obj.class_list_              = {};
+            obj.filter_list_             = {};
+            obj.value_fun_list_          = {};
+            obj.type_list_               = {};
+            obj.layers_data_             = {};
+            obj.image_data_              = ImageDrawData;
+
             addpath(matlab_utility_funcs_path);
         end
         
@@ -110,17 +120,24 @@ classdef ImageBuilder <  FigureBuilder & handle
         % This function arranges the data according to the desired layers,
         % to later be converted into graphical representation. MORE
         % DETAILED EXPLANATION TO BE ADDED
-        function [layer_arr] = calculate(obj,class_list,filter_list,value_fun_list,type_list,calibration_list, varargin)
+        function [obj,layer_arr] = calculate(obj,calibration_list, varargin)
             
             % Initiate output array
+
             layer_arr = {};
-            
+            class_list = obj.class_list_;
+            filter_list = obj.filter_list_;
+            value_fun_list = obj.value_fun_list_;
+            type_list = obj.type_list_;
+
             % Run over list of layers to calculate
+
             for i= 1:length(class_list)
                 
                 frame_arr = obj.data_{:};
                 
                 for j = 1:length(frame_arr)
+
                     % Get data arrays for frame, apply filter
                     phys_arr = frame_arr(j).(class_list{i});
                     
@@ -146,6 +163,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                     
                     % Apply calibration to values if specified (to convert
                     % pixels to microns)
+
                     if exist('calibration_list')
                         if strcmp(calibration_list{i}{1},'xy')
                             value_arr = value_arr*(obj.xy_calibration_^(calibration_list{i}{2}));
@@ -175,12 +193,6 @@ classdef ImageBuilder <  FigureBuilder & handle
                             end
 
                             layer_arr{i,j} = this_im;
-
-                            % TEMPORARILY HERE
-                            permuteMap = permute(this_im,[2 1]);
-                            imshow(permuteMap,[])
-                            colormap jet
-                            pause(1)
 
                         elseif strcmp(type_list{i},'list')
 
@@ -216,7 +228,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                     end
                 end
             end
-            obj.layer_arr_=layer_arr;
+            obj.layer_arr_ = layer_arr;
             obj.createDefaultLayerData(); % TODO see if needs to run here or where, or if it is only run by user...
         end
         
@@ -435,10 +447,34 @@ classdef ImageBuilder <  FigureBuilder & handle
                 obj.data_{1} = frame_arr;
             end
         end
-        
+
+
         function obj = image_size(obj,im_size)
             obj.image_size_ = im_size;
         end
+
+        function obj = class_list(obj,class_list)
+            obj.class_list_ = class_list;
+        end
+
+        function obj = filter_list(obj,filter_list)
+            obj.filter_list_ = filter_list;
+        end
+
+        function obj = value_fun_list(obj,value_fun_list)
+            obj.value_fun_list_ = value_fun_list;
+        end
+
+        function obj = type_list(obj,type_list)
+            obj.type_list_ = type_list;
+        end
+
+        function saveLayerArr(obj,save_path,save_name)
+            layer_arr = obj.layer_arr_;
+            save([save_path,'\',save_name],'layer_arr');
+        end
+
+
         function obj = xyCalibration(obj, calib)
             % XYCALIBRATION Micron to pixel calibration for the xy plane of
             % the image.
