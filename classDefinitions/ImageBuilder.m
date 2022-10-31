@@ -26,7 +26,7 @@ classdef ImageBuilder <  FigureBuilder & handle
         function obj = ImageBuilder(matlab_utility_funcs_path)
             obj@FigureBuilder()
             
-            obj.xy_calibration_          = 1;
+            obj.xy_calibration_         = 1;
             obj.z_calibration_           = 1;
             obj.image_size_              = [];
             obj.data_                    = {};
@@ -123,7 +123,6 @@ classdef ImageBuilder <  FigureBuilder & handle
         function [obj,layer_arr] = calculate(obj,calibration_list, varargin)
             
             % Initiate output array
-
             layer_arr = {};
             class_list = obj.class_list_;
             filter_list = obj.filter_list_;
@@ -131,13 +130,11 @@ classdef ImageBuilder <  FigureBuilder & handle
             type_list = obj.type_list_;
 
             % Run over list of layers to calculate
-
             for i= 1:length(class_list)
                 
                 frame_arr = obj.data_{:};
                 
                 for j = 1:length(frame_arr)
-
                     % Get data arrays for frame, apply filter
                     phys_arr = frame_arr(j).(class_list{i});
                     
@@ -163,7 +160,6 @@ classdef ImageBuilder <  FigureBuilder & handle
                     
                     % Apply calibration to values if specified (to convert
                     % pixels to microns)
-
                     if exist('calibration_list')
                         if strcmp(calibration_list{i}{1},'xy')
                             value_arr = value_arr*(obj.xy_calibration_^(calibration_list{i}{2}));
@@ -233,12 +229,20 @@ classdef ImageBuilder <  FigureBuilder & handle
         end
         
         function obj=createDefaultLayerData(obj) % TODO see if add if override version, in case we want to load or calculate different data..
-            [row, ~]=size(obj.layer_arr_);
+            [row, col]=size(obj.layer_arr_);
             for i=1:row
                 obj.layers_data_{i} = ImageLayerDrawData;
-                frame = obj.layer_arr_(:, 1);
+                j=1;
+                frame = obj.layer_arr_(:, j);
+                while isempty(frame{i}) && j<=col
+                    j=j+1;
+                    frame = obj.layer_arr_(:, j);
+                end
                 obj.layers_data_{i}.setIsMarkerLayer(obj.isMarkerLayer(frame{i}));
                 obj.layers_data_{i}.setIsMarkerQuiver(obj.isMarkerQuiver(frame{i}));
+%                 frame = obj.layer_arr_(:, 1);
+%                 obj.layers_data_{i}.setIsMarkerLayer(obj.isMarkerLayer(frame{i}));
+%                 obj.layers_data_{i}.setIsMarkerQuiver(obj.isMarkerQuiver(frame{i}));
             end
         end
         
@@ -264,7 +268,7 @@ classdef ImageBuilder <  FigureBuilder & handle
         end
         
         function figures = draw(obj, show_figures) %returns as many figures as there are frames, add order of layers
-            [~, col]=size(obj.layer_arr_);
+            [~, col]=size(obj.layer_arr_); 
             figures = {};
             for i= 1 : col
                 frame = obj.layer_arr_(:, i);
@@ -300,7 +304,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                 legend;
             end
             if(obj.image_data_.getShowColorbar())
-                cb=colorbar;
+                cb=colorbar; 
                 if(~isempty(obj.image_data_.getColorbarAxisScale()))
                     caxis(obj.image_data_.getColorbarAxisScale());
                 end
@@ -317,7 +321,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                 return;
             end
             if(~layer_data.getIsMarkerLayer() && ~layer_data.getIsMarkerQuiver())
-                obj.drawImageLayer(layer, layer_num, fig);
+                obj.drawImageLayer(layer, layer_num, fig);                
             elseif(layer_data.getIsMarkerLayer())
                 obj.drawMarkerLayer(layer, layer_num);
             else
@@ -351,7 +355,7 @@ classdef ImageBuilder <  FigureBuilder & handle
         
         function drawQuiverLayer(obj, layer, layer_num)
             layer_data=obj.layers_data_{layer_num};
-            x=layer(:,1);
+            x=layer(:,1); 
             y=layer(:, 2);
             rad=layer(:,3);
             length=layer(:,4);
@@ -390,7 +394,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                 image=obj.createBackground(size(layer),layer_data.getSolidColor());
             else
                 f_temp=figure;
-                set(gcf,'visible','off');
+                set(gcf,'visible','off'); 
                 image=ind2rgb(ind, colormap(layer_data.getColormap()));
                 close(f_temp, "force");
                 set(0, 'CurrentFigure', fig);
@@ -439,7 +443,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
             error("[ERROR] your layer_arr only contains markers. If you want to draw the image you need to add either image layer or background!");
         end
-
+        
         function obj = addData(obj, frame_arr)
             if ~strcmp(class(frame_arr),'Frame')
                 disp(sprint('Data must be an object or array of class frame'));
@@ -447,8 +451,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                 obj.data_{1} = frame_arr;
             end
         end
-
-
+        
         function obj = image_size(obj,im_size)
             obj.image_size_ = im_size;
         end
