@@ -14,6 +14,10 @@ classdef ImageBuilder <  FigureBuilder & handle
         type_list_              % cell array of strings, specifying list, quiver or image.
 
     end
+
+    properties (Constant)
+        logger = Logger('ImageBuilder');
+    end
     
     properties (Access = public)
         
@@ -125,7 +129,7 @@ classdef ImageBuilder <  FigureBuilder & handle
         % This function arranges the data according to the desired layers,
         % to later be converted into graphical representation. MORE
         % DETAILED EXPLANATION TO BE ADDED
-        function [obj,layer_arr] = calculate(obj,calibration_list, varargin)
+        function [obj,layer_arr] = calculate(obj, calibration_list, varargin)
             
             % Initiate output array
 
@@ -234,7 +238,6 @@ classdef ImageBuilder <  FigureBuilder & handle
                 end
             end
             obj.layer_arr_ = layer_arr;
-            obj.createDefaultLayerData(); % TODO see if needs to run here or where, or if it is only run by user...
         end
         
         function obj=createDefaultLayerData(obj) % TODO see if add if override version, in case we want to load or calculate different data..
@@ -447,7 +450,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                     return;
                 end
             end
-            error("[ERROR] your layer_arr only contains markers. If you want to draw the image you need to add either image layer or background!");
+            obj.logger.error('your layer_arr only contains markers. If you want to draw the image you need to add either image layer or background!');
         end
         
         function obj = addData(obj, frame_arr)

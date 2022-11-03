@@ -63,7 +63,7 @@ classdef ImageComponentHandler < handle
             back=Utilities.getBackground();
             obj.ImageBuilder.image_data_.setBackgroundImage(back);
             if(obj.canDeleteBackground())
-                obj.app_.DeleteBackgroundButton.Enable=True;
+                obj.app_.DeleteBackgroundButton.Enable=true;
             end
         end
         
