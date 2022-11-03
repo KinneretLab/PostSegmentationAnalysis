@@ -15,7 +15,7 @@ function [] = createDefectTable(mainDir,segDir,cellDir,frameList)
          x_pos = {};
          y_pos = {};
          type = {};
-         defectID = {};
+         defect_id = {};
          
          
          if isempty(frameList)
@@ -39,11 +39,11 @@ function [] = createDefectTable(mainDir,segDir,cellDir,frameList)
                  x_pos{defectCount,1} = defect(m).position(1);
                  y_pos{defectCount,1} = defect(m).position(2);
                  type{defectCount,1} = defect(m).type;
-                 defectID{defectCount,1} = defect(m).ID;
+                 defect_id{defectCount,1} = defect(m).ID;
              end
          end
-         defects = table(frame, x_pos, y_pos, type, defectID);
-         clear('frame', 'x_pos', 'y_pos', 'type', 'defectID');
+         defects = table(frame, x_pos, y_pos, type, defect_id);
+         clear('frame', 'x_pos', 'y_pos', 'type', 'defect_id');
          cd(cellDir); writetable(defects,'defects.csv')
 end
 

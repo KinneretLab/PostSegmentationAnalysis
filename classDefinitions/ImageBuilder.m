@@ -8,6 +8,11 @@ classdef ImageBuilder <  FigureBuilder & handle
         data_                   % {obj array...}
         layer_arr_              % cell array of double arrays
         save_format_
+        class_list_             % cell array of strings. These can be all classes that are properties of a frame: cells, bonds, vertices, tVertices, defects.
+        filter_list_            % cell array of strings/doubles/function handles
+        value_fun_list_         % cell array of strings/doubles/function handles
+        type_list_              % cell array of strings, specifying list, quiver or image.
+
     end
     
     properties (Access = public)
@@ -21,12 +26,17 @@ classdef ImageBuilder <  FigureBuilder & handle
         function obj = ImageBuilder()
             obj@FigureBuilder()
             
-            obj.xy_calibration_         = 1;
+            obj.xy_calibration_          = 1;
             obj.z_calibration_           = 1;
             obj.image_size_              = [];
             obj.data_                    = {};
-            layers_data_                 = {};
-            image_data_                   = ImageDrawData;
+            obj.class_list_              = {};
+            obj.filter_list_             = {};
+            obj.value_fun_list_          = {};
+            obj.type_list_               = {};
+            obj.layers_data_             = {};
+            obj.image_data_              = ImageDrawData;
+
             % generic global search for a particular folder; works independent of user
             search_path = '../*/matlab-utility-functions';
             while isempty(dir(search_path))
@@ -115,17 +125,24 @@ classdef ImageBuilder <  FigureBuilder & handle
         % This function arranges the data according to the desired layers,
         % to later be converted into graphical representation. MORE
         % DETAILED EXPLANATION TO BE ADDED
-        function [layer_arr] = calculate(obj,class_list,filter_list,value_fun_list,type_list,calibration_list, varargin)
+        function [obj,layer_arr] = calculate(obj,calibration_list, varargin)
             
             % Initiate output array
+
             layer_arr = {};
-            
+            class_list = obj.class_list_;
+            filter_list = obj.filter_list_;
+            value_fun_list = obj.value_fun_list_;
+            type_list = obj.type_list_;
+
             % Run over list of layers to calculate
+
             for i= 1:length(class_list)
                 
                 frame_arr = obj.data_{:};
                 
                 for j = 1:length(frame_arr)
+
                     % Get data arrays for frame, apply filter
                     phys_arr = frame_arr(j).(class_list{i});
                     
@@ -136,7 +153,11 @@ classdef ImageBuilder <  FigureBuilder & handle
                     
                     % Get value for each object using the specified value
                     % function for this layer.
-                    value_fun = ImageBuilder.objFunction(value_fun_list{i});
+                    if ~iscell(value_fun_list{i})
+                        value_fun = ImageBuilder.objFunction(value_fun_list{i});
+                    else
+                        value_fun = ImageBuilder.objFunction(value_fun_list{i}{1});
+                    end
                     value_arr = arrayfun(value_fun,filtered_arr);
                     
                     
@@ -147,6 +168,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                     
                     % Apply calibration to values if specified (to convert
                     % pixels to microns)
+
                     if exist('calibration_list')
                         if strcmp(calibration_list{i}{1},'xy')
                             value_arr = value_arr*(obj.xy_calibration_^(calibration_list{i}{2}));
@@ -156,50 +178,62 @@ classdef ImageBuilder <  FigureBuilder & handle
                             end
                         end
                     end
-                    
-                    % NEED TO ADD OPTIONS FOR CALIBRATION
-                    
-                    if strcmp(type_list{i},'image')
-                        
-                        image_size = obj.image_size_; % GET THIS FROM EXPERIMENT INFO, NEED TO IMPLEMENT THIS
-                        
-                        % Get relevant pixels (the function plot_pixels is
-                        % implemented in every relevant class)
-                        plot_pixels = filtered_arr.plot_pixels;
-                        
-                        this_im = NaN(image_size);
-                        
-                        for k=1:size(plot_pixels,2)
-                            for l=1:size(plot_pixels{k},1)
-                                this_im(plot_pixels{k}(l,1),plot_pixels{k}(l,2)) = value_arr(k); % MAKE THIS NOT NEED LOOP
+                    if ~isempty(filtered_arr)
+                        % NEED TO ADD OPTIONS FOR CALIBRATION
+
+                        if strcmp(type_list{i},'image')
+
+                            image_size = obj.image_size_; % GET THIS FROM EXPERIMENT INFO, NEED TO IMPLEMENT THIS
+
+                            % Get relevant pixels (the function plot_pixels is
+                            % implemented in every relevant class)
+                            plot_pixels = filtered_arr.plot_pixels;
+
+                            this_im = NaN(image_size);
+
+                            for k=1:size(plot_pixels,2)
+                                for l=1:size(plot_pixels{k},1)
+                                    this_im(plot_pixels{k}(l,1),plot_pixels{k}(l,2)) = value_arr(k); % MAKE THIS NOT NEED LOOP
+                                end
                             end
+
+                            layer_arr{i,j} = this_im;
+
+                        elseif strcmp(type_list{i},'list')
+
+                            % Get relevant pixels (the function list_pixels is
+                            % implemented in every relevant class). For cells,
+                            % this is the centre of the cell, for bonds the
+                            % middle point of the bond, and for vertices it is
+                            % the vertex location.
+                            list_pixels = filtered_arr.list_pixels;
+                            this_list = [list_pixels,value_arr'];
+                            layer_arr{i,j} = this_list;
+
+                        elseif strcmp(type_list{i},'quiver')
+                            % Get relevant pixels (the function list_pixels is
+                            % implemented in every relevant class). For cells,
+                            % this is the centre of the cell, for bonds the
+                            % middle point of the bond, and for vertices it is
+                            % the vertex location.
+                            list_pixels = filtered_arr.list_pixels;
+                            value_fun_dir = ImageBuilder.objFunction(value_fun_list{i}{1});
+                            value_arr_dir = arrayfun(value_fun_dir,filtered_arr);
+                            value_fun_size = ImageBuilder.objFunction(value_fun_list{i}{2});
+                            value_arr_size = arrayfun(value_fun_size,filtered_arr);
+                            this_list = [list_pixels,value_arr_dir',value_arr_size'];
+                            layer_arr{i,j} = this_list;
+
+                        else
+                            disp(sprintf('Typelist needs to specify image, list or quiver'));
                         end
-                        
-                        layer_arr{i,j} = this_im;
-                        
-                        % TEMPORARILY HERE
-                        permuteMap = permute(this_im,[2 1]);
-                        imshow(permuteMap,[])
-                        colormap jet
-                        pause(1)
-                        
-                    elseif strcmp(type_list{i},'list')
-                        
-                        % Get relevant pixels (the function list_pixels is
-                        % implemented in every relevant class). For cells,
-                        % this is the centre of the cell, for bonds the
-                        % middle point of the bond, and for vertices it is
-                        % the vertex location.
-                        list_pixels = filtered_arr.list_pixels;
-                        this_list = [list_pixels,value_arr'];
-                        layer_arr{i,j} = this_list;
+
                     else
-                        disp(sprintf('Typelist needs to specify image or list'));
+                        layer_arr{i,j} = {};
                     end
-                    
                 end
             end
-            obj.layer_arr_=layer_arr;
+            obj.layer_arr_ = layer_arr;
             obj.createDefaultLayerData(); % TODO see if needs to run here or where, or if it is only run by user...
         end
         
@@ -215,7 +249,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                     frame = obj.layer_arr_(:, j);
                 end
                 obj.layers_data_{i}.setIsMarkerLayer(obj.isMarkerLayer(frame{i}));
-                obj.layers_data_{i}.setIsMarkerQuiver(obj.isMarkerQuiver(frame{i}));                            
+                obj.layers_data_{i}.setIsMarkerQuiver(obj.isMarkerQuiver(frame{i}));
             end
         end
         
@@ -427,6 +461,29 @@ classdef ImageBuilder <  FigureBuilder & handle
         function obj = image_size(obj,im_size)
             obj.image_size_ = im_size;
         end
+
+        function obj = class_list(obj,class_list)
+            obj.class_list_ = class_list;
+        end
+
+        function obj = filter_list(obj,filter_list)
+            obj.filter_list_ = filter_list;
+        end
+
+        function obj = value_fun_list(obj,value_fun_list)
+            obj.value_fun_list_ = value_fun_list;
+        end
+
+        function obj = type_list(obj,type_list)
+            obj.type_list_ = type_list;
+        end
+
+        function saveLayerArr(obj,save_path,save_name)
+            layer_arr = obj.layer_arr_;
+            save([save_path,'\',save_name],'layer_arr');
+        end
+
+
         function obj = xyCalibration(obj, calib)
             % XYCALIBRATION Micron to pixel calibration for the xy plane of
             % the image.

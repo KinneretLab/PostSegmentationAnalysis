@@ -28,6 +28,8 @@ classdef (Abstract) PhysicalEntity < handle
         %   unique ID of a particular entity using the code
         %   <code>physical_entity.(physical_entity.uniqueID)</code>
         uniqueID(obj)
+        
+        logger(obj)
     end
     
     methods
@@ -95,10 +97,18 @@ classdef (Abstract) PhysicalEntity < handle
             if class(lhs) ~= class(rhs)
                 tf = zeros(size(lhs)) | zeros(size(rhs));
             else
-                tf = isnan(lhs) | isnan(rhs);
-                lhs = lhs(~tf);
-                rhs = rhs(~tf);
-                tf(~tf) = (reshape([lhs.(lhs.uniqueID)], size(lhs)) == reshape([rhs.(rhs.uniqueID)], size(rhs)) & ...
+                tf = ~(isnan(lhs) | isnan(rhs));
+                if length(lhs) == 1
+                    lhs = repmat(lhs, size(tf(tf)));
+                else
+                    lhs = lhs(tf);
+                end
+                if length(rhs) == 1
+                    rhs = repmat(rhs, size(tf(tf)));
+                else
+                    rhs = rhs(tf);
+                end
+                tf(tf) = (reshape([lhs.(lhs.uniqueID)], size(lhs)) == reshape([rhs.(rhs.uniqueID)], size(rhs)) & ...
                  reshape([lhs.experiment], size(lhs)) == reshape([rhs.experiment], size(rhs)));
             end
         end
@@ -232,7 +242,8 @@ classdef (Abstract) PhysicalEntity < handle
             %   varargin: additional MATLAB builtin operations to apply on
             %   the result.
             % Return type: clazz[]
-            phys_arr(size(obj, 1), size(obj, 2)) = feval(clazz);
+            size_obj = num2cell(size(obj));
+            phys_arr(size_obj{:}) = feval(clazz);
             if numel(obj) > 2
                 index = containers.Map;
                 for lookup_idx = 1:numel(obj)
@@ -304,7 +315,11 @@ classdef (Abstract) PhysicalEntity < handle
             %   the result.
             % Return type: clazz[]
             if length(obj) ~= numel(obj)
-                disp("multi-value lookup applied on a 2D matrix. This is illegal. Please flatten and re-apply.");
+                if length(size(obj)) > 3
+                    obj.logger.error("multi-value lookup applied on a 3D matrix, when the max possible dimension is 3D.");
+                else
+                    obj.logger.warn("multi-value lookup applied on a 2D matrix. This might be an error. Consider flattening the matrix before.");
+                end
             end
             lookup_result = cell(size(obj));
             if numel(obj) > 2
@@ -329,7 +344,11 @@ classdef (Abstract) PhysicalEntity < handle
                         end
                     end
                     % get all candidate results
-                    frame_filtered_phys = index(full_map_key);
+                    if index.isKey(full_map_key)
+                        frame_filtered_phys = index(full_map_key);
+                    else
+                        frame_filtered_phys = [];
+                    end
                     % run actual search on them
                     lookup_result{lookup_idx} = frame_filtered_phys([frame_filtered_phys.(target_prop)] == entity.(requester_prop));
                 end
@@ -347,9 +366,16 @@ classdef (Abstract) PhysicalEntity < handle
             % since the lookup was placed into a cell array, we need to
             % reshape it into a matrix.
             sizes = cellfun(@(result) (length(result)), lookup_result);
-            phys_arr(length(obj), max(sizes)) = feval(clazz);
-            for i=1:length(obj)
-                phys_arr(i, 1:sizes(i)) = lookup_result{i};
+            phys_arr(numel(obj), max(sizes)) = feval(clazz);
+            for i=1:numel(obj)
+                if sizes(i) > 0
+                    phys_arr(i, 1:sizes(i)) = lookup_result{i};
+                end
+            end
+            if length(obj) ~= numel(obj)
+                % reorganize the 2D array into a 3D array
+                size_obj = num2cell(size(obj));
+                phys_arr = reshape(phys_arr, size_obj{:}, []);
             end
             % filter result and put it into result_arr
             if nargin > 4
@@ -381,10 +407,10 @@ classdef (Abstract) PhysicalEntity < handle
             % Return type: clazz[]
             
             % check which objects needs to calculate stuff
-            index_flag = arrayfun(@(entity) isempty(entity.(prop)), obj);
+            index_flag = arrayfun(@(entity) ~isnan(entity) & Null.isNull(entity.(prop)), obj);
             obj_to_index = obj(index_flag);
             if ~isempty(obj_to_index)
-                fprintf("Indexing %s for %d %ss\n", prop, length(obj_to_index), class(obj_to_index(1)));
+                obj.logger.info("Indexing %s for %d %ss", prop, length(obj_to_index), class(obj_to_index(1)));
                 % apply calculation on the neccesary objects
                 index_result = lookup_func(obj_to_index);
                 if size(index_result, 1) ~= length(obj_to_index)
@@ -397,15 +423,17 @@ classdef (Abstract) PhysicalEntity < handle
                 end
             end
             % collect all the properties of the object into a tight matrix.
-            sizes = arrayfun(@(entity) length(entity.(prop)), obj);
+            sizes = arrayfun(@(entity) ~Null.isNull(entity.(prop)) * length(entity.(prop)), obj);
             if ismember(clazz, {'logical', 'double', 'single', 'uint8', ...
                     'uint16', 'uint32', 'uint64', 'int8', 'int16', 'int32', 'int64'})
                 phys_arr(numel(obj), max(sizes, [], 'all')) = feval(clazz, 0);
             else
                 phys_arr(numel(obj), max(sizes, [], 'all')) = feval(clazz);
             end
-            for i=1:length(obj)
-                phys_arr(i, 1:sizes(i)) = obj(i).(prop);
+            for i=1:numel(obj)
+                if sizes(i) > 0
+                    phys_arr(i, 1:sizes(i)) = obj(i).(prop);
+                end
             end
             % a reshape in case of a 1:1 function
             if numel(phys_arr) == numel(obj)

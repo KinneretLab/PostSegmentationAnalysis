@@ -27,6 +27,10 @@ classdef Vertex < PhysicalEntity
             id = "vertex_id";
         end
         
+        function logger = logger(~)
+            logger = Logger('Vertex');
+        end
+        
         function vertices = vertices(obj, varargin)
             % VERTICES the identity function
             % Parameters:
@@ -45,7 +49,7 @@ classdef Vertex < PhysicalEntity
             
             % the relevant DBonds here are both those that start from here
             % and those that point to it.
-            dbonds = [obj.dbonds, obj.lookupMany(class(DBond), "vertex_id", "vertex2_id")];
+            dbonds = [obj.dBonds, obj.lookupMany(class(DBond), "vertex_id", "vertex2_id")];
             bonds = dbonds.bonds;
             % unique value filtering
             for i=1:length(obj)
