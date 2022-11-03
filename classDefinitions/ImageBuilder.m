@@ -18,7 +18,7 @@ classdef ImageBuilder <  FigureBuilder & handle
     
     methods
         
-        function obj = ImageBuilder(matlab_utility_funcs_path)
+        function obj = ImageBuilder()
             obj@FigureBuilder()
             
             obj.xy_calibration_         = 1;
@@ -27,7 +27,12 @@ classdef ImageBuilder <  FigureBuilder & handle
             obj.data_                    = {};
             layers_data_                 = {};
             image_data_                   = ImageDrawData;
-            addpath(matlab_utility_funcs_path); 
+            % generic global search for a particular folder; works independent of user
+            search_path = '../*/matlab-utility-functions';
+            while isempty(dir(search_path))
+                search_path = ['../', search_path];
+            end
+            addpath(dir(search_path).folder)
         end
         
     end
@@ -210,10 +215,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                     frame = obj.layer_arr_(:, j);
                 end
                 obj.layers_data_{i}.setIsMarkerLayer(obj.isMarkerLayer(frame{i}));
-                obj.layers_data_{i}.setIsMarkerQuiver(obj.isMarkerQuiver(frame{i}));               
-%                 frame = obj.layer_arr_(:, 1);
-%                 obj.layers_data_{i}.setIsMarkerLayer(obj.isMarkerLayer(frame{i}));
-%                 obj.layers_data_{i}.setIsMarkerQuiver(obj.isMarkerQuiver(frame{i}));               
+                obj.layers_data_{i}.setIsMarkerQuiver(obj.isMarkerQuiver(frame{i}));                            
             end
         end
         
@@ -234,7 +236,6 @@ classdef ImageBuilder <  FigureBuilder & handle
                 figure=figures{i};
                 figure=tightfig(figure);
                 saveas(figure, fname);
-                %TODO make sure that at some point figures are closed...
             end
         end
         
