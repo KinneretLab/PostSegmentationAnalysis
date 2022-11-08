@@ -61,9 +61,10 @@ def main():
 
             print(f"completed image {i + 1} of {len(dataset)}")
 
-    print(f"total accuracy: {cells_correct/len(dataset)}")
-    print(f"false positives: {false_pos/len(dataset)}")
-    print(f"false negatives: {false_neg/len(dataset)}")
+    if len(dataset) > 0:
+        print(f"total accuracy: {cells_correct/len(dataset)}")
+        print(f"false positives: {false_pos/len(dataset)}")
+        print(f"false negatives: {false_neg/len(dataset)}")
 
     print("saving files...")
     for file in loaded_tables:
