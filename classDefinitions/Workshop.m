@@ -11,7 +11,7 @@ dir5 = 'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\Cel
 
 cellIMDir = 'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\Cells\AllSegmented';
 
-exp_arr = Experiment(dir3);
+exp_arr = Experiment(dir1);
 cell_arr = exp_arr.cells;
 bond_arr = exp_arr.bonds;
 frame_arr = exp_arr.frames;
@@ -154,8 +154,36 @@ builder = builder.type_list(type_list);
 builder = builder.calculate(calibration_list);
 
 builder.saveLayerArr('Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\Figures\Images\Data','layer_arr_multifoldV.mat');
+%% Mark multi-fold vertices - automatic segmentation
 
-%% Mark multi-fold vertices
+dir5 = 'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\Cells_auto\';
+
+exp5 = Experiment(dir5);
+frame_arr = exp5.frames;
+class_list = {'tVertices','tVertices','tVertices'};
+filter_list = {'(sum(~isnan(obj_arr.bonds),2)==4)','(sum(~isnan(obj_arr.bonds),2)==5)','(sum(~isnan(obj_arr.bonds),2)==6)'};
+value_fun_list = {1,1,1};
+calibration_list = {{'xy',0},{'xy',0},{'xy',0}};
+type_list = {'list','list','list'};
+image_size = [1024,1024];
+xyCalib = 0.52;
+
+
+builder = ImageBuilder(util_fun_path);
+builder = builder.addData(frame_arr);
+builder = builder.image_size(image_size);
+builder = builder.xyCalibration(xyCalib);
+builder = builder.class_list(class_list);
+builder = builder.filter_list(filter_list);
+builder = builder.value_fun_list(value_fun_list);
+builder = builder.type_list(type_list);
+builder = builder.calculate(calibration_list);
+
+mkdir('Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\Figures\Images_auto\Data');
+builder.saveLayerArr('Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\Figures\Images_auto\Data','layer_arr_multifoldV.mat');
+
+
+%% Cell reliability maps
 
 dir6 = 'Z:\Analysis\users\Yonit\Movie_Analysis\DefectLibrary\2020_09_01_18hr_set1\Cells_auto';
 

@@ -36,7 +36,11 @@ classdef Frame < PhysicalEntity
         % you can access this using FRAME#DEFECTS
         % type: DEFECT[]
         defects_ = Null.null;
-        
+        % An internal vairblae listing the defects this frame contains.
+        % you can access this using FRAME#CELLPAIRS
+        % type: CELLPAIRS[]
+        cell_pairs_ = Null.null;
+
     end
     
     methods
@@ -117,6 +121,15 @@ classdef Frame < PhysicalEntity
             % Return type: DEFECT[]
             defects = obj.getOrCalculate(class(Defect), "defects_", @(frames) frames.lookupByFrame(class(Defect)), varargin{:});
         end
+
+        function obj = cellPairsFrame(obj)
+            % Run over frames individually:
+            for i=1:length(obj)
+                cells = obj(i).cells;
+                obj(i).cell_pairs_ = cells.createNeihgborPairs;
+            end
+        end
+
     end
     
     methods(Access = protected)

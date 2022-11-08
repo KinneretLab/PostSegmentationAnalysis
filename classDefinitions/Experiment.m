@@ -287,6 +287,29 @@ classdef Experiment < handle
             defect_arr = obj.lookup(class(Defect), varargin{:});
         end
         
+        function defect_arr = defects(obj, varargin)
+            % DEFECTS Retrieves all defects from the experiment(s), and loads/constructs them if neccesary.
+            % Additional arguments can be applied to get select slices or a
+            % conditional filtering
+            % for example, exp.cells([exp.cells.confidence] > 0.5) will
+            % only yield cells with a confidence bigger than 0.5
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            % Return type: FRAME[] with size (1, ?)
+            defect_arr = obj.lookup(class(Defect), varargin{:});
+        end
+
+        function frame_arr = cellPairsExp(obj)
+
+            % Start with creating frame array for the experiment, becuase each pair list
+            % is going to be a property of the relevant frame. Then find
+            % pairs for each frame and save them as properties of the frame
+            % array.
+            frame_arr = obj.frames;
+            frame_arr = frame_arr.cellPairsFrame;
+        end
+
         function unique_name = uniqueName(obj)
             unique_name = Experiment.toUniqueName({obj.folder_});
         end

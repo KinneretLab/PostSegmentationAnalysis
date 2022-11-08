@@ -425,6 +425,8 @@ classdef (Abstract) PhysicalEntity < handle
                     result_row = index_result(i, :);
                     obj_to_index(i).(prop) = unique(result_row(~isnan(result_row)));
                 end
+            else
+                phys_arr = eval([clazz, '.empty(', num2str(length(obj)), ',0)']);
             end
             % collect all the properties of the object into a tight matrix.
             sizes = arrayfun(@(entity) ~Null.isNull(entity.(prop)) * length(entity.(prop)), obj);
