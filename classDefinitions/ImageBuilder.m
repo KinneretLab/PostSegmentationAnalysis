@@ -1,9 +1,10 @@
 classdef ImageBuilder <  FigureBuilder & handle
     
     properties (Access = protected)
-        data_                   % {obj array...}
-        layer_arr_              % cell array of double arrays
-        save_format_
+        data_ = {};                  % {obj array...}
+        layer_arr_   = {};           % cell array of double arrays
+        save_format_ = "png";
+        frame_to_draw_ = [];
 
     end
 
@@ -13,18 +14,14 @@ classdef ImageBuilder <  FigureBuilder & handle
     
     properties (Access = public)
         
-        layers_data_
-        image_data_
+        layers_data_ = {};
+        image_data_ = ImageDrawData;
     end
     
     methods
         
         function obj = ImageBuilder()
-            obj@FigureBuilder()
-            obj.data_                    = {};
-            obj.layers_data_             = {};
-            obj.save_format_             = "png";
-            obj.image_data_              = ImageDrawData;
+            obj@FigureBuilder()           
 
             % generic global search for a particular folder; works independent of user
             search_path = '../*/matlab-utility-functions';
@@ -119,10 +116,6 @@ classdef ImageBuilder <  FigureBuilder & handle
             % Initiate output array
 
             layer_arr = {};
-            class_list = obj.class_list_;
-            filter_list = obj.filter_list_;
-            value_fun_list = obj.value_fun_list_;
-            type_list = obj.type_list_;
 
             % Run over list of layers to calculate
 
@@ -260,12 +253,18 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
         end
         
-        function figures = draw(obj, show_figures) %returns as many figures as there are frames, add order of layers
+        function figures = draw(obj) %returns as many figures as there are frames, add order of layers
+            if(isempty(obj.frame_to_draw_))
+                frame = obj.layer_arr_(:, frame_num_to_draw);
+                figures{1} = obj.drawFrame(frame, true, frame_num_to_draw);
+                obj.frame_to_draw_=[];
+                return;
+            end
             [~, col]=size(obj.layer_arr_);
             figures = {};
             for i= 1 : col
                 frame = obj.layer_arr_(:, i);
-                figures{i} = obj.drawFrame(frame, show_figures, i);
+                figures{i} = obj.drawFrame(frame, true, i);
             end
         end
         
@@ -478,8 +477,12 @@ classdef ImageBuilder <  FigureBuilder & handle
             layer_data = obj.layers_data_{layer_num};
         end
 
-        function image_data=image_data(obj)
+        function image_data = image_data(obj)
             image_data = obj.image_data_;
+        end
+
+        function obj = frame_to_draw(obj, frame_to_draw)
+            obj.frame_to_draw_= frame_to_draw;
         end
 
         function saveLayerArr(obj,save_path,save_name)
