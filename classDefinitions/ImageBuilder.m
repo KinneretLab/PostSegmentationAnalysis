@@ -5,6 +5,7 @@ classdef ImageBuilder <  FigureBuilder & handle
         layer_arr_   = {};           % cell array of double arrays
         save_format_ = "png";
         frame_to_draw_ = [];
+        output_folder_="";
 
     end
 
@@ -28,7 +29,6 @@ classdef ImageBuilder <  FigureBuilder & handle
             while isempty(dir(search_path))
                 search_path = ['../', search_path];
             end
-            addpath(dir(search_path).folder)
         end
         
     end
@@ -243,7 +243,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             obj.image_data_=ImageDrawData;
         end
         
-        function save(~, figures, path, file_name)
+        function saveFigures(~, figures, path, file_name)
             [~, col]=size(figures);
             for i = 1:col
                 fname = fullfile(path, sprintf("%s%d.png",file_name,i));
@@ -252,19 +252,33 @@ classdef ImageBuilder <  FigureBuilder & handle
                 saveas(figure, fname);
             end
         end
+
+        function obj= saveBuilder(obj)
+            save(obj.output_folder_, 'obj');
+        end
         
-        function figures = draw(obj) %returns as many figures as there are frames, add order of layers
+        function figures = draw(obj, input) 
+            if(nargin==1)
+                input=[];
+            end
             if(isempty(obj.frame_to_draw_))
                 frame = obj.layer_arr_(:, frame_num_to_draw);
                 figures{1} = obj.drawFrame(frame, true, frame_num_to_draw);
                 obj.frame_to_draw_=[];
                 return;
             end
+            if(isempty(input))
+                if(isempty(obj.layer_arr_))
+                    obj.calculate;
+                end
+            else
+                %load
+            end
             [~, col]=size(obj.layer_arr_);
             figures = {};
             for i= 1 : col
                 frame = obj.layer_arr_(:, i);
-                figures{i} = obj.drawFrame(frame, true, i);
+                obj.drawFrame(frame, true, i);
             end
         end
         
@@ -443,30 +457,12 @@ classdef ImageBuilder <  FigureBuilder & handle
                 obj.data_{1} = frame_arr;
             end
         end
-        
-        function obj = image_size(obj,im_size)
-            obj.image_size_ = im_size;
-        end
-
-        function obj = class_list(obj,class_list)
-            obj.class_list_ = class_list;
-        end
-
-        function obj = filter_list(obj,filter_list)
-            obj.filter_list_ = filter_list;
-        end
-
-        function obj = value_fun_list(obj,value_fun_list)
-            obj.value_fun_list_ = value_fun_list;
-        end
-
-        function obj = type_list(obj,type_list)
-            obj.type_list_ = type_list;
-        end
 
         function obj = save_format(obj,format)
             obj.save_format_ = format;
         end
+
+
         
         function layer_data=layers_data(obj, layer_num)
             if(length(obj.layers_data_)<layer_num)
@@ -483,6 +479,10 @@ classdef ImageBuilder <  FigureBuilder & handle
 
         function obj = frame_to_draw(obj, frame_to_draw)
             obj.frame_to_draw_= frame_to_draw;
+        end
+
+        function obj = output_folder(obj, output_folder)
+            obj.output_folder_= output_folder;
         end
 
         function saveLayerArr(obj,save_path,save_name)
