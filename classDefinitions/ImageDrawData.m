@@ -14,6 +14,9 @@ classdef ImageDrawData < handle
         colorbar_axis_scale_
         image_title_
         legend_for_markers_
+        xy_calibration_         % double
+        z_calibration_          % double
+        image_size_             % double array
         crop_ %bool %TODO
         crop_size_ %TODO
         crop_center_point_ %TODO
@@ -32,7 +35,7 @@ classdef ImageDrawData < handle
         end
         
         
-        function setOverlay(obj, value)
+        function obj=setOverlay(obj, value)
             obj.overlay_ = value;
         end
         
@@ -40,7 +43,7 @@ classdef ImageDrawData < handle
             value = obj.overlay_;
         end
         
-        function setBackgroundImage(obj, value)
+        function obj=setBackgroundImage(obj, value)
             [row, ~]=size(value);
             if(row==1)
                 obj.setIsBackgroundPerFrame(true);
@@ -52,7 +55,7 @@ classdef ImageDrawData < handle
             value = obj.background_image_;
         end
         
-        function setColorForNaN(obj, value)
+        function obj=setColorForNaN(obj, value)
             obj.color_for_nan_ = value;
         end
         
@@ -60,7 +63,7 @@ classdef ImageDrawData < handle
             value = obj.color_for_nan_;
         end
         
-        function setShowColorbar(obj, value)
+        function obj=setShowColorbar(obj, value)
             obj.show_colorbar_ = value;
         end
         
@@ -68,7 +71,7 @@ classdef ImageDrawData < handle
             value = obj.show_colorbar_;
         end
         
-        function setColorbarTitle(obj, value)
+        function obj=setColorbarTitle(obj, value)
             obj.colorbar_title_ = value;
         end
         
@@ -76,7 +79,7 @@ classdef ImageDrawData < handle
             value = obj.colorbar_title_;
         end
         
-        function setColorbarAxisScale(obj, value)
+        function obj=setColorbarAxisScale(obj, value)
             obj.colorbar_axis_scale_ = value;
         end
         
@@ -84,7 +87,7 @@ classdef ImageDrawData < handle
             value = obj.colorbar_axis_scale_;
         end
         
-        function setImageTitle(obj, value)
+        function obj=setImageTitle(obj, value)
             obj.image_title_ = value;
         end
         
@@ -92,7 +95,7 @@ classdef ImageDrawData < handle
             value = obj.image_title_;
         end
         
-        function setLegendForMarkers(obj, value)
+        function obj=setLegendForMarkers(obj, value)
             obj.legend_for_markers_ = value;
         end
         
@@ -100,7 +103,7 @@ classdef ImageDrawData < handle
             value = obj.legend_for_markers_;
         end
         
-        function setCrop(obj, value)
+        function obj=setCrop(obj, value)
             obj.crop_ = value;
         end
         
@@ -108,7 +111,7 @@ classdef ImageDrawData < handle
             value = obj.crop_;
         end
         
-        function setCropSize(obj, value)
+        function obj=setCropSize(obj, value)
             obj.crop_size_ = value;
         end
         
@@ -116,7 +119,7 @@ classdef ImageDrawData < handle
             value = obj.crop_size_;
         end
         
-        function setCropCenterPoint(obj, value)
+        function obj=setCropCenterPoint(obj, value)
             obj.crop_center_point_ = value;
         end
         
@@ -124,12 +127,48 @@ classdef ImageDrawData < handle
             value = obj.crop_center_point_;
         end
         
-        function setIsBackgroundPerFrame(obj, value)
+        function obj=setIsBackgroundPerFrame(obj, value)
             obj.is_background_per_frame_ = value;
         end
         
         function value = getIsBackgroundPerFrame(obj)
             value = obj.is_background_per_frame_;
+        end
+
+        function obj = setXYCalibration(obj, calib)
+            % XYCALIBRATION Micron to pixel calibration for the xy plane of
+            % the image.
+            % Parameters:
+            %   calib: double
+            %      the scaling value to multiply the values by. That is,
+            %      final_value = calib * pixel_value;
+            obj.xy_calibration_ = calib;
+        end
+
+        function value = getXYCalibration(obj)
+            value = obj.xy_calibration_;
+        end
+        
+        function obj = setZCalibration(obj, calib)
+            % ZCALIBRATION Micron to pixel calibration for the z axis of
+            % the image stack.
+            % Parameters:
+            %   calib: double
+            %      the scaling value to multiply the values by. That is,
+            %      final_value = calib * pixel_value;
+            obj.z_calibration_ = calib;
+        end
+
+        function value = getZCalibration(obj)
+            value = obj.z_calibration_;
+        end
+
+        function obj = setImageSize(obj,im_size)
+            obj.image_size_ = im_size;
+        end
+
+        function value = getImageSize(obj)
+            value = obj.image_size_;
         end
     end
 end

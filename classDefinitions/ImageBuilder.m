@@ -1,43 +1,34 @@
 classdef ImageBuilder <  FigureBuilder & handle
     
     properties (Access = protected)
-        
-        xy_calibration_         % double
-        z_calibration_          % double
-        image_size_             % double array
-        data_                   % {obj array...}
-        layer_arr_              % cell array of double arrays
-        save_format_
-        class_list_             % cell array of strings. These can be all classes that are properties of a frame: cells, bonds, vertices, tVertices, defects.
-        filter_list_            % cell array of strings/doubles/function handles
-        value_fun_list_         % cell array of strings/doubles/function handles
-        type_list_              % cell array of strings, specifying list, quiver or image.
+        data_ = {};                  % {obj array...}
+        layer_arr_   = {};           % cell array of double arrays
+        save_format_ = "png";
+        frame_to_draw_ = [];
+        output_folder_="";
 
+    end
+
+    properties (Constant)
+        logger = Logger('ImageBuilder');
     end
     
     properties (Access = public)
         
-        layers_data_
-        image_data_
+        layers_data_ = {};
+        image_data_ = ImageDrawData;
     end
     
     methods
         
-        function obj = ImageBuilder(matlab_utility_funcs_path)
-            obj@FigureBuilder()
-            
-            obj.xy_calibration_         = 1;
-            obj.z_calibration_           = 1;
-            obj.image_size_              = [];
-            obj.data_                    = {};
-            obj.class_list_              = {};
-            obj.filter_list_             = {};
-            obj.value_fun_list_          = {};
-            obj.type_list_               = {};
-            obj.layers_data_             = {};
-            obj.image_data_              = ImageDrawData;
+        function obj = ImageBuilder()
+            obj@FigureBuilder()           
 
-            addpath(matlab_utility_funcs_path);
+            % generic global search for a particular folder; works independent of user
+            search_path = '../*/matlab-utility-functions';
+            while isempty(dir(search_path))
+                search_path = ['../', search_path];
+            end
         end
         
     end
@@ -104,7 +95,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                     filter_fun = @(obj_arr) (eval(func)); % WARNING: do NOT rename obj_arr!
                 end
                 if isa(func, 'logical') || isa(func, 'double')
-                    filter_fun = PlotBuilder.logical(logical(func));
+                    filter_fun = ImageBuilder.logical(logical(func));
                 end
                 if isa(func, 'function_handle') || isa(func, 'BulkFunc')
                     filter_fun = func;
@@ -120,37 +111,35 @@ classdef ImageBuilder <  FigureBuilder & handle
         % This function arranges the data according to the desired layers,
         % to later be converted into graphical representation. MORE
         % DETAILED EXPLANATION TO BE ADDED
-        function [obj,layer_arr] = calculate(obj,calibration_list, varargin)
+        function [obj,layer_arr] = calculate(obj)
             
             % Initiate output array
+
             layer_arr = {};
-            class_list = obj.class_list_;
-            filter_list = obj.filter_list_;
-            value_fun_list = obj.value_fun_list_;
-            type_list = obj.type_list_;
 
             % Run over list of layers to calculate
-            for i= 1:length(class_list)
-                
+
+            for i= 1:length(obj.layers_data_)
+                class=obj.layers_data_{i}.getClass;
+                filter_fun=obj.layers_data_{i}.getFilterFunction;
+                value_fun=obj.layers_data_{i}.getValueFunction;
+                type=obj.layers_data_{i}.getType;
+                calibration_fun=obj.layers_data_{i}.getCalibrationFunction;
                 frame_arr = obj.data_{:};
                 
                 for j = 1:length(frame_arr)
+
                     % Get data arrays for frame, apply filter
-                    phys_arr = frame_arr(j).(class_list{i});
+                    phys_arr = frame_arr(j).(class);
                     
                     % Apply filter to each entity
                     
-                    filter_fun = ImageBuilder.filterFunction(filter_list{i});
                     filtered_arr =  phys_arr(filter_fun(phys_arr));
                     
                     % Get value for each object using the specified value
                     % function for this layer.
-                    if ~iscell(value_fun_list{i})
-                        value_fun = ImageBuilder.objFunction(value_fun_list{i});
-                    else
-                        value_fun = ImageBuilder.objFunction(value_fun_list{i}{1});
-                    end
-                    value_arr = arrayfun(value_fun,filtered_arr);
+
+                    value_arr = arrayfun(value_fun{1},filtered_arr);
                     
                     
                     % Option for normalization by frame average
@@ -160,21 +149,22 @@ classdef ImageBuilder <  FigureBuilder & handle
                     
                     % Apply calibration to values if specified (to convert
                     % pixels to microns)
+
                     if exist('calibration_list')
-                        if strcmp(calibration_list{i}{1},'xy')
-                            value_arr = value_arr*(obj.xy_calibration_^(calibration_list{i}{2}));
+                        if strcmp(calibration_fun{1},'xy')
+                            value_arr = value_arr*(obj.image_data.getXYCalibration^(calibration_fun{2}));
                             
-                        else if strcmp(calibration_list{i}{1},'z')
-                                value_arr = value_arr*(obj.z_calibration_^(calibration_list{i}{2}));
+                        else if strcmp(calibration_fun{1},'z')
+                                value_arr = value_arr*(obj.image_data.getZCalibration^(calibration_fun{2}));
                             end
                         end
                     end
                     if ~isempty(filtered_arr)
                         % NEED TO ADD OPTIONS FOR CALIBRATION
 
-                        if strcmp(type_list{i},'image')
+                        if strcmp(type,'image')
 
-                            image_size = obj.image_size_; % GET THIS FROM EXPERIMENT INFO, NEED TO IMPLEMENT THIS
+                            image_size = obj.image_data_.getImageSize; % GET THIS FROM EXPERIMENT INFO, NEED TO IMPLEMENT THIS
 
                             % Get relevant pixels (the function plot_pixels is
                             % implemented in every relevant class)
@@ -208,9 +198,9 @@ classdef ImageBuilder <  FigureBuilder & handle
                             % middle point of the bond, and for vertices it is
                             % the vertex location.
                             list_pixels = filtered_arr.list_pixels;
-                            value_fun_dir = ImageBuilder.objFunction(value_fun_list{i}{1});
+                            value_fun_dir = value_fun{1};
                             value_arr_dir = arrayfun(value_fun_dir,filtered_arr);
-                            value_fun_size = ImageBuilder.objFunction(value_fun_list{i}{2});
+                            value_fun_size = value_fun{2};
                             value_arr_size = arrayfun(value_fun_size,filtered_arr);
                             this_list = [list_pixels,value_arr_dir',value_arr_size'];
                             layer_arr{i,j} = this_list;
@@ -225,53 +215,70 @@ classdef ImageBuilder <  FigureBuilder & handle
                 end
             end
             obj.layer_arr_ = layer_arr;
-            obj.createDefaultLayerData(); % TODO see if needs to run here or where, or if it is only run by user...
         end
         
         function obj=createDefaultLayerData(obj) % TODO see if add if override version, in case we want to load or calculate different data..
+            obj.layers_data_={};
             [row, col]=size(obj.layer_arr_);
             for i=1:row
                 obj.layers_data_{i} = ImageLayerDrawData;
                 j=1;
                 frame = obj.layer_arr_(:, j);
-                while isempty(frame{i}) && j< vcol
+                while isempty(frame{i}) && j<=col
                     j=j+1;
                     frame = obj.layer_arr_(:, j);
                 end
                 obj.layers_data_{i}.setIsMarkerLayer(obj.isMarkerLayer(frame{i}));
                 obj.layers_data_{i}.setIsMarkerQuiver(obj.isMarkerQuiver(frame{i}));
-%                 frame = obj.layer_arr_(:, 1);
-%                 obj.layers_data_{i}.setIsMarkerLayer(obj.isMarkerLayer(frame{i}));
-%                 obj.layers_data_{i}.setIsMarkerQuiver(obj.isMarkerQuiver(frame{i}));
             end
         end
         
-        function obj = load(obj, path, file_name) %todo maybe add option to if dispose of layer and image data
+        function obj = load(obj, path, file_name) 
             fname = fullfile(path, file_name);
             struct = load(fname);
             fieldNames = fieldnames(struct);
             obj.layer_arr_ = getfield(struct, fieldNames{1});
             obj.createDefaultLayerData(); % TODO see if needs to run here or where, or if it is only run by user...
+
             obj.image_data_=ImageDrawData;
         end
         
-        function save(~, figures, path, file_name)
+        function saveFigures(~, figures, path, file_name)
             [~, col]=size(figures);
             for i = 1:col
                 fname = fullfile(path, sprintf("%s%d.png",file_name,i));
                 figure=figures{i};
                 figure=tightfig(figure);
                 saveas(figure, fname);
-                %TODO make sure that at some point figures are closed...
             end
         end
+
+        function obj= saveBuilder(obj)
+            save(obj.output_folder_, 'obj');
+        end
         
-        function figures = draw(obj, show_figures) %returns as many figures as there are frames, add order of layers
-            [~, col]=size(obj.layer_arr_); 
+        function figures = draw(obj, input) 
+            if(nargin==1)
+                input=[];
+            end
+            if(isempty(obj.frame_to_draw_))
+                frame = obj.layer_arr_(:, frame_num_to_draw);
+                figures{1} = obj.drawFrame(frame, true, frame_num_to_draw);
+                obj.frame_to_draw_=[];
+                return;
+            end
+            if(isempty(input))
+                if(isempty(obj.layer_arr_))
+                    obj.calculate;
+                end
+            else
+                %load
+            end
+            [~, col]=size(obj.layer_arr_);
             figures = {};
             for i= 1 : col
                 frame = obj.layer_arr_(:, i);
-                figures{i} = obj.drawFrame(frame, show_figures, i);
+                obj.drawFrame(frame, true, i);
             end
         end
         
@@ -440,7 +447,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                     return;
                 end
             end
-            error("[ERROR] your layer_arr only contains markers. If you want to draw the image you need to add either image layer or background!");
+            obj.logger.error('your layer_arr only contains markers. If you want to draw the image you need to add either image layer or background!');
         end
         
         function obj = addData(obj, frame_arr)
@@ -450,54 +457,38 @@ classdef ImageBuilder <  FigureBuilder & handle
                 obj.data_{1} = frame_arr;
             end
         end
+
+        function obj = save_format(obj,format)
+            obj.save_format_ = format;
+        end
+
+
         
-        function obj = image_size(obj,im_size)
-            obj.image_size_ = im_size;
+        function layer_data=layers_data(obj, layer_num)
+            if(length(obj.layers_data_)<layer_num)
+               obj.layers_data_{layer_num}=ImageLayerDrawData;
+            elseif(isempty(obj.layers_data_{layer_num}))
+                obj.layers_data_{layer_num}=ImageLayerDrawData;
+            end
+            layer_data = obj.layers_data_{layer_num};
         end
 
-        function obj = class_list(obj,class_list)
-            obj.class_list_ = class_list;
+        function image_data = image_data(obj)
+            image_data = obj.image_data_;
         end
 
-        function obj = filter_list(obj,filter_list)
-            obj.filter_list_ = filter_list;
+        function obj = frame_to_draw(obj, frame_to_draw)
+            obj.frame_to_draw_= frame_to_draw;
         end
 
-        function obj = value_fun_list(obj,value_fun_list)
-            obj.value_fun_list_ = value_fun_list;
-        end
-
-        function obj = type_list(obj,type_list)
-            obj.type_list_ = type_list;
+        function obj = output_folder(obj, output_folder)
+            obj.output_folder_= output_folder;
         end
 
         function saveLayerArr(obj,save_path,save_name)
             layer_arr = obj.layer_arr_;
             save([save_path,'\',save_name],'layer_arr');
         end
-
-
-        function obj = xyCalibration(obj, calib)
-            % XYCALIBRATION Micron to pixel calibration for the xy plane of
-            % the image.
-            % Parameters:
-            %   calib: double
-            %      the scaling value to multiply the values by. That is,
-            %      final_value = calib * pixel_value;
-            obj.xy_calibration_ = calib;
-        end
-        
-        function obj = zCalibration(obj, calib)
-            % ZCALIBRATION Micron to pixel calibration for the z axis of
-            % the image stack.
-            % Parameters:
-            %   calib: double
-            %      the scaling value to multiply the values by. That is,
-            %      final_value = calib * pixel_value;
-            obj.z_calibration_ = calib;
-        end
-        
-        
     end
     
     
