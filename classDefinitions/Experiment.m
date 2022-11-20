@@ -274,19 +274,7 @@ classdef Experiment < handle
             bond_pixels_arr = obj.lookup(class(BondPixelList), varargin{:});
         end
         
-        function defect_arr = defects(obj, varargin)
-            % DEFECTS Retrieves all defects from the experiment(s), and loads/constructs them if neccesary.
-            % Additional arguments can be applied to get select slices or a
-            % conditional filtering
-            % for example, exp.cells([exp.cells.confidence] > 0.5) will
-            % only yield cells with a confidence bigger than 0.5
-            % Parameters:
-            %   varargin: additional MATLAB builtin operations to apply on
-            %   the result.
-            % Return type: FRAME[] with size (1, ?)
-            defect_arr = obj.lookup(class(Defect), varargin{:});
-        end
-        
+
         function defect_arr = defects(obj, varargin)
             % DEFECTS Retrieves all defects from the experiment(s), and loads/constructs them if neccesary.
             % Additional arguments can be applied to get select slices or a

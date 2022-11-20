@@ -234,7 +234,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                 obj.layers_data_{i} = ImageLayerDrawData;
                 j=1;
                 frame = obj.layer_arr_(:, j);
-                while isempty(frame{i}) && j<=col
+                while isempty(frame{i}) && j< vcol
                     j=j+1;
                     frame = obj.layer_arr_(:, j);
                 end
@@ -252,7 +252,6 @@ classdef ImageBuilder <  FigureBuilder & handle
             fieldNames = fieldnames(struct);
             obj.layer_arr_ = getfield(struct, fieldNames{1});
             obj.createDefaultLayerData(); % TODO see if needs to run here or where, or if it is only run by user...
-
             obj.image_data_=ImageDrawData;
         end
         

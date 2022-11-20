@@ -237,7 +237,7 @@ classdef Cell < PhysicalEntity
                 end
             end
 
-        end
+        end    
 
         function plot_pixels = plot_pixels(obj)
             plot_pixels = {};

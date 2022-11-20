@@ -189,7 +189,7 @@ classdef Frame < PhysicalEntity
                     end
                 end
             else
-                phys_arr = eval(clazz, '.empty(', num2str(length(obj)), ',0)');
+                phys_arr = eval([clazz, '.empty(', num2str(length(obj)), ',0)']);
             end
             % filter result and put it into result_arr
             if nargin > 4

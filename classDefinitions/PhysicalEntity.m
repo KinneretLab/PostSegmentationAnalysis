@@ -443,7 +443,7 @@ classdef (Abstract) PhysicalEntity < handle
                     end
                 end
             else
-                phys_arr = eval(clazz, '.empty(', num2str(length(obj)), ',0)');
+                phys_arr = eval([clazz, '.empty(', num2str(length(obj)), ',0)']);
             end
             % a reshape in case of a 1:1 function
             if numel(phys_arr) == numel(obj)
