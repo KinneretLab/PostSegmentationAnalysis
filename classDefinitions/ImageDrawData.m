@@ -3,7 +3,6 @@ classdef ImageDrawData < handle
     %   Detailed explanation goes here
     
     properties (Access=private)
-        overlay_ %todo: ask! see how
         background_image_
         is_background_per_frame_
         color_for_nan_ %in rgb, if there is a background image this setting is disregarded

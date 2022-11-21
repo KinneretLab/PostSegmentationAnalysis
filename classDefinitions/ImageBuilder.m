@@ -34,7 +34,6 @@ classdef ImageBuilder <  FigureBuilder & handle
     end
     
     methods(Static)
-        
         function func = property(prop_name)
             func = @(obj) (obj.(prop_name));
         end
@@ -43,68 +42,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             % MISSING DOCUMENTATION
             func = BulkFunc(@(entity_arr) const_value & true(size(entity_arr)));
         end
-        
-        function this_funct = objFunction(func)
-            if isa(func, 'char') || isa(func, 'string')
-                this_funct = ImageBuilder.property(func);
-            end
-            if isa(func, 'double')
-                this_funct = @(obj) (func);
-            end
-            if isa(func, 'function_handle')
-                this_funct = func;
-            end
-        end
-        
-        function filter_fun = filterFunction(func)
-            % FILTERFUNCTION Add a filter to apply on the data before starting the calculation at all.
-            % This is not neccesary (you can apply this beforehand in ADDDATA,
-            % but is a very useful utility.
-            % Parameters:
-            %   func: char[], string, double, function, BulkFunc
-            %      The function (or property name) to use to determine the
-            %      data to keep for the calculation (1 is keep, 0 is
-            %      ignore).
-            %      All types will be translated into some form of
-            %      boolean[](PhysicalEntity[]).
-            %      no args: the true function: @(entity_arr) ones(size(entity_arr))
-            %      logical or double: this is translated into the constant function.
-            %      For example, for f = FILTERFUNCTION(false):
-            %         f(entity_arr) = false(size(entity_arr))
-            %      char[] or string: this is translated into a function as
-            %      if it is literal MATLAB code. You can refer to the input
-            %      array using "obj_arr".
-            %      For example, for f = FILTERFUNCTION("[obj_arr.confidence] > 0.5"):
-            %         f(entity_arr) = [entity_arr.confidence] > 0.5
-            %      function or BulkFunc: this is simply set. Function must accept a
-            %      PhysicalEntity[] array and return a boolean[].
-            %      For example, for f = FILTERFUNCTION(myFunction):
-            %         f(entity_arr) = myFunction(entity_arr)
-            %      Default: the true function: @(entity_arr) ones(size(entity_arr))
-            
-            if isempty(func)
-                filter_fun = ImageBuilder.logical(true);
-            else
-                if isa(func, 'char') || isa(func, 'string')
-                    if ~contains(func, "obj_arr")
-                        warning("[WARN] your filter string does not contain obj_arr. This probably will lead to errors.");
-                    end
-                    if ~contains(func, "[")
-                        warning("[WARN] your filter string does not contain square brackets for working on array. This probably will lead to errors.");
-                    end
-                    filter_fun = @(obj_arr) (eval(func)); % WARNING: do NOT rename obj_arr!
-                end
-                if isa(func, 'logical') || isa(func, 'double')
-                    filter_fun = ImageBuilder.logical(logical(func));
-                end
-                if isa(func, 'function_handle') || isa(func, 'BulkFunc')
-                    filter_fun = func;
-                end
-            end
-        end
-        
-    end
-    
+    end 
     
     methods
         
@@ -461,8 +399,6 @@ classdef ImageBuilder <  FigureBuilder & handle
         function obj = save_format(obj,format)
             obj.save_format_ = format;
         end
-
-
         
         function layer_data=layers_data(obj, layer_num)
             if(length(obj.layers_data_)<layer_num)
