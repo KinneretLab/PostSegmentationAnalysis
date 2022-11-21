@@ -23,6 +23,7 @@ classdef ImageLayerDrawData < handle
         value_fun_
         type_
         calibration_fun_
+        dialation_
 
         %todo add option to if there are lines make them bolder
     end
@@ -49,6 +50,7 @@ classdef ImageLayerDrawData < handle
             obj.filter_fun_=obj.setFilterFunction("");
             obj.value_fun_={1};
             obj.calibration_fun_={'xy', 0};
+            obj.dialation_=[];
 
         end
 
@@ -118,6 +120,14 @@ classdef ImageLayerDrawData < handle
 
         function obj = setMarkersSizeByValue(obj, value)
             obj.markers_size_by_value_ = value;
+        end
+
+        function value = getDialation(obj)
+            value = obj.dialation_;
+        end
+
+        function obj = setDialation(obj, value)
+            obj.dialation_ = value;
         end
 
         function value = getMarkersSizeByValue(obj)

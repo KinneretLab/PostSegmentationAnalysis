@@ -169,10 +169,16 @@ classdef ImageBuilder <  FigureBuilder & handle
 %         end
         
         function saveFigure(obj, figure, frame_num)
-            name=obj.data_{frame_num}.frame_name;
-            fname = fullfile(obj.output_folder_, sprintf("%s.png",name));
+            frame=obj.data_{1}(frame_num);
+            name=frame.frame_name;
+            fname = fullfile(obj.output_folder_, sprintf("%s.%s",name,obj.save_format_));
             figure=tightfig(figure);
-            saveas(figure, fname);
+            switch obj.save_format_
+                case "png"
+                    saveas(figure, fname);
+                case "fig"
+                    savefig(figure, fname)
+            end
         end
 
         function loadBuilder(obj, input)
@@ -210,7 +216,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                 frame = obj.layer_arr_(:, i);
                 fig=obj.drawFrame(frame, false, i);
                 obj.saveFigure(fig, i);
-                close(fig);logg
+                close(fig);
             end
         end
         
@@ -342,6 +348,10 @@ classdef ImageBuilder <  FigureBuilder & handle
             %creates the image
             alpha_mask=zeros(size(layer));
             alpha_mask(~isnan(layer)) = 1; %creates regular mask
+            if(~isempty(layer_data.getDialation))
+%                 se=strel('line',layer_data.getDialation,0);
+%                 alpha_mask=imdilate(alpha_mask,se);
+            end
             alpha_mask=alpha_mask.*layer_data.getOpacity();
             layer_im = imshow(image);
             layer_im.AlphaData = alpha_mask;
