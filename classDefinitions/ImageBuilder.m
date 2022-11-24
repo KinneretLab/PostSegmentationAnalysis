@@ -121,7 +121,7 @@ classdef ImageBuilder <  FigureBuilder & handle
 
                             layer_arr{i,j} = this_im;
 
-                        elseif strcmp(type_list{i},'list')
+                        elseif strcmp(type,'list')
 
                             % Get relevant pixels (the function list_pixels is
                             % implemented in every relevant class). For cells,
@@ -132,7 +132,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                             this_list = [list_pixels,value_arr'];
                             layer_arr{i,j} = this_list;
 
-                        elseif strcmp(type_list{i},'quiver')
+                        elseif strcmp(type,'quiver')
                             % Get relevant pixels (the function list_pixels is
                             % implemented in every relevant class). For cells,
                             % this is the centre of the cell, for bonds the
