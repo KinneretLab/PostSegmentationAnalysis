@@ -17,7 +17,6 @@ classdef ImageBuilder <  FigureBuilder & handle
     end
     
     properties (Access = public)
-        
         layers_data_ = {};
         image_data_ = ImageDrawData;
     end
@@ -32,6 +31,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             while isempty(dir(search_path))
                 search_path = ['../', search_path];
             end
+            addpath(dir(search_path).folder)
         end
         
     end
@@ -158,25 +158,18 @@ classdef ImageBuilder <  FigureBuilder & handle
             obj.layer_arr_ = layer_arr;
         end
         
-%         function obj = load(obj, path, file_name) 
-%             fname = fullfile(path, file_name);
-%             struct = load(fname);
-%             fieldNames = fieldnames(struct);
-%             obj.layer_arr_ = getfield(struct, fieldNames{1});
-%             obj.createDefaultLayerData(); % TODO see if needs to run here or where, or if it is only run by user...
-% 
-%             obj.image_data_=ImageDrawData;
-%         end
-        
-        function saveFigure(obj, figure, frame_num)
+        function saveFigure(obj, figure, frame_num, xlims, ylims)
             frame=obj.data_{1}(frame_num);
-            name=frame.frame_name;
+            name=frame.frame_name;      
             fname = fullfile(obj.output_folder_, sprintf("%s.%s",name,obj.save_format_));
-            figure=tightfig(figure);
+            xlim(xlims);
+            ylim(ylims);
+            figure= tightfig(figure);
             switch obj.save_format_
                 case "png"
                     saveas(figure, fname);
                 case "fig"
+                    set(gcf,'visible','on');
                     savefig(figure, fname)
             end
         end
@@ -205,17 +198,28 @@ classdef ImageBuilder <  FigureBuilder & handle
             else
                 obj.loadBuilder(input);
             end
+            [~, col]=size(obj.layer_arr_);
+            mask=[];
+            for i= 1:col
+                frame_data=obj.data_{1}(i);
+                new_mask=obj.fixImageAxes(frame_data.mask);
+                if(isempty(mask))
+                    mask=new_mask;
+                else
+                    mask=mask+new_mask;
+                end
+            end
+            [xlims, ylims]=obj.getAxisLims(mask);
             if(~isempty(obj.frame_to_draw_))
                 frame = obj.layer_arr_(:, obj.frame_to_draw_);
                 figures{1} = obj.drawFrame(frame, true, obj.frame_to_draw_);
                 obj.frame_to_draw_=[];
                 return;
             end
-            [~, col]=size(obj.layer_arr_);
             for i= 1 : col
                 frame = obj.layer_arr_(:, i);
                 fig=obj.drawFrame(frame, false, i);
-                obj.saveFigure(fig, i);
+                obj.saveFigure(fig, i, xlims, ylims);
                 close(fig);
             end
         end
@@ -324,6 +328,15 @@ classdef ImageBuilder <  FigureBuilder & handle
                 q.ShowArrowHead="off";
             end
         end
+
+        function [xlims,ylims]= getAxisLims(~, mask)
+            [x,y]=find(mask);
+            lengths=[abs(max(x)-min(x)),abs(max(y)-min(y))];
+            center=[(max(x)+ min(x))/2, (max(y)+ min(y))/2];
+            max_length=max(lengths)+64;
+            xlims = [center(1)-max_length/2,center(1)+max_length/2 ];  
+            ylims = [center(2)-max_length/2,center(2)+max_length/2 ];  
+        end
         
         function drawImageLayer(obj, layer, layer_num,fig)
             layer_data=obj.layers_data_{layer_num};
@@ -332,8 +345,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                 ma=max(layer(:));
                 layer_data.setScale([mi ma]);
             end
-            fliplr(layer);
-            layer=layer';
+            layer=obj.fixImageAxes(layer);
             image=mat2gray(layer, layer_data.getScale());
             ind=gray2ind(image, 256);
             if(layer_data.getIsSolidColor())
@@ -355,6 +367,11 @@ classdef ImageBuilder <  FigureBuilder & handle
             alpha_mask=alpha_mask.*layer_data.getOpacity();
             layer_im = imshow(image);
             layer_im.AlphaData = alpha_mask;
+        end
+
+        function image = fixImageAxes(~, im)
+            fliplr(im);
+            image=im';
         end
         
         function back_image = createBackground(~, size, color)
