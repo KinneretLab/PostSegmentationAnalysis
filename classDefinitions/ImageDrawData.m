@@ -31,6 +31,7 @@ classdef ImageDrawData < handle
             obj.image_title_="";
             obj.colorbar_title_="";
             obj.legend_for_markers_=false;
+            obj.crop_=false;
         end
         
         

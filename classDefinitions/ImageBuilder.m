@@ -167,7 +167,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             figure= tightfig(figure);
             switch obj.save_format_
                 case "png"
-                    saveas(figure, fname);
+                    exportgraphics(figure,fname,'Resolution',max(obj.image_data_.getImageSize))
                 case "fig"
                     set(gcf,'visible','on');
                     savefig(figure, fname)
@@ -209,7 +209,12 @@ classdef ImageBuilder <  FigureBuilder & handle
                     mask=mask+new_mask;
                 end
             end
-            [xlims, ylims]=obj.getAxisLims(mask);
+            if(obj.image_data.getCrop)
+                [xlims, ylims]=obj.getAxisLims(mask);
+            else 
+                xlims=[1, image_size(1)];
+                ylims=[1, image_size(2)];
+            end
             if(~isempty(obj.frame_to_draw_))
                 frame = obj.layer_arr_(:, obj.frame_to_draw_);
                 figures{1} = obj.drawFrame(frame, true, obj.frame_to_draw_);
