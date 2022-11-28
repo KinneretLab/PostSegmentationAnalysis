@@ -3,6 +3,7 @@ classdef ImageLayerDrawData < handle
     %   Detailed explanation goes here
 
     properties (Access=private)
+        image_builder_
         scale_
         colormap_
         is_solid_color_
@@ -23,13 +24,12 @@ classdef ImageLayerDrawData < handle
         value_fun_
         type_
         calibration_fun_
-        dialation_
-
-        %todo add option to if there are lines make them bolder
+        colorbar_
+        dialation_ %need to add full fuctionality
     end
 
     methods (Access=public)
-        function obj = ImageLayerDrawData()
+        function obj = ImageLayerDrawData(image_builder)
             obj.scale_=[];
             obj.colormap_="jet";
             obj.opacity_=1;
@@ -51,6 +51,8 @@ classdef ImageLayerDrawData < handle
             obj.value_fun_={1};
             obj.calibration_fun_={'xy', 0};
             obj.dialation_=[];
+            obj.image_builder_=image_builder;
+            obj.colorbar_=false;
 
         end
 
@@ -68,6 +70,14 @@ classdef ImageLayerDrawData < handle
 
         function value = getColormap(obj)
             value = obj.colormap_;
+        end
+
+        function obj = setColorbar(obj, value)
+            obj.colorbar_ = value;
+        end
+
+        function value = getColorbar(obj)
+            value = obj.colorbar_;
         end
 
         function obj = setOpacity(obj, value)
@@ -281,6 +291,10 @@ classdef ImageLayerDrawData < handle
 
         function value = getCalibrationFunction(obj)
             value = obj.calibration_fun_;
+        end
+
+        function builder=close(obj)
+            builder=obj.image_builder_;
         end
     end
 end

@@ -3,6 +3,7 @@ classdef ImageDrawData < handle
     %   Detailed explanation goes here
     
     properties (Access=private)
+        image_builder_
         background_image_
         is_background_per_frame_
         color_for_nan_ %in rgb, if there is a background image this setting is disregarded
@@ -22,7 +23,7 @@ classdef ImageDrawData < handle
     end
     
     methods
-        function obj = ImageDrawData()
+        function obj = ImageDrawData(image_builder)
             obj.color_for_nan_= [0 0 0];
             obj.background_image_=[];
             obj.is_background_per_frame_=false;
@@ -32,15 +33,8 @@ classdef ImageDrawData < handle
             obj.colorbar_title_="";
             obj.legend_for_markers_=false;
             obj.crop_=false;
-        end
-        
-        
-        function obj=setOverlay(obj, value)
-            obj.overlay_ = value;
-        end
-        
-        function value = getOverlay(obj)
-            value = obj.overlay_;
+            obj.image_builder_=image_builder;
+            obj.crop_size_=64; %when crop is enabled: if center point is given will prodice an image of obj.crop_size_Xobj.crop_size_ around it, if not, wwill automatically crop around center point of image, will include all of it, and this will be length outside
         end
         
         function obj=setBackgroundImage(obj, value)
@@ -169,6 +163,10 @@ classdef ImageDrawData < handle
 
         function value = getImageSize(obj)
             value = obj.image_size_;
+        end
+
+        function builder=close(obj)
+            builder=obj.image_builder_;
         end
     end
 end

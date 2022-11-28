@@ -7,6 +7,8 @@ classdef ImageBuilder <  FigureBuilder & handle
         frame_to_draw_ = [];
         output_folder_="";
         builder_file_name_="builder";
+        layers_data_ = {};
+        image_data_ = [];
     end
 
     properties (Constant)
@@ -14,11 +16,6 @@ classdef ImageBuilder <  FigureBuilder & handle
         image_type="image";
         marker_type="list";
         quiver_type="quiver";
-    end
-    
-    properties (Access = public)
-        layers_data_ = {};
-        image_data_ = ImageDrawData;
     end
     
     methods
@@ -199,19 +196,10 @@ classdef ImageBuilder <  FigureBuilder & handle
                 obj.loadBuilder(input);
             end
             [~, col]=size(obj.layer_arr_);
-            mask=[];
-            for i= 1:col
-                frame_data=obj.data_{1}(i);
-                new_mask=obj.fixImageAxes(frame_data.mask);
-                if(isempty(mask))
-                    mask=new_mask;
-                else
-                    mask=mask+new_mask;
-                end
-            end
             if(obj.image_data.getCrop)
-                [xlims, ylims]=obj.getAxisLims(mask);
+                [xlims, ylims]=obj.getAxisLims;
             else 
+                image_size=obj.image_data.getImageSize;
                 xlims=[1, image_size(1)];
                 ylims=[1, image_size(2)];
             end
@@ -255,15 +243,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             title(obj.image_data_.getImageTitle());
             if(obj.image_data_.getLegendForMarkers())
                 legend;
-            end
-            if(obj.image_data_.getShowColorbar())
-                cb=colorbar; 
-                if(~isempty(obj.image_data_.getColorbarAxisScale()))
-                    caxis(obj.image_data_.getColorbarAxisScale());
-                end
-                cb.Label.String=obj.image_data_.getColorbarTitle();
-            end
-            
+            end          
         end
         
         function drawLayer(obj, layer, layer_num, fig)
@@ -334,18 +314,34 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
         end
 
-        function [xlims,ylims]= getAxisLims(~, mask)
-            [x,y]=find(mask);
-            lengths=[abs(max(x)-min(x)),abs(max(y)-min(y))];
-            center=[(max(x)+ min(x))/2, (max(y)+ min(y))/2];
-            max_length=max(lengths)+64;
-            xlims = [center(1)-max_length/2,center(1)+max_length/2 ];  
-            ylims = [center(2)-max_length/2,center(2)+max_length/2 ];  
+        function [xlims,ylims]= getAxisLims(obj)
+            [~, col]=size(obj.layer_arr_);
+            if(~isempty(obj.image_data.getCropCenterPoint))
+                max_length=obj.image_data.getCropSize;
+                center=obj.image_data.getCropCenterPoint;
+            else 
+                mask=[];
+                for i= 1:col
+                    frame_data=obj.data_{1}(i);
+                    new_mask=obj.fixImageAxes(frame_data.mask);
+                    if(isempty(mask))
+                        mask=new_mask;
+                    else
+                        mask=mask+new_mask;
+                    end
+                end
+                [x,y]=find(mask);
+                lengths=[abs(max(x)-min(x)),abs(max(y)-min(y))];
+                center=[(max(x)+ min(x))/2, (max(y)+ min(y))/2];
+                max_length=max(lengths)+obj.image_data.getCropSize;
+            end
+                xlims = [center(1)-max_length/2,center(1)+max_length/2 ];
+                ylims = [center(2)-max_length/2,center(2)+max_length/2 ];
         end
-        
+      
         function drawImageLayer(obj, layer, layer_num,fig)
             layer_data=obj.layers_data_{layer_num};
-            if isempty(layer_data.getScale()) %TODO:fix because if i want scale to be set dina,ically it only sets it on the first frame!!
+            if isempty(layer_data.getScale()) 
                 mi=min(layer(:));
                 ma=max(layer(:));
                 layer_data.setScale([mi ma]);
@@ -353,14 +349,23 @@ classdef ImageBuilder <  FigureBuilder & handle
             layer=obj.fixImageAxes(layer);
             image=mat2gray(layer, layer_data.getScale());
             ind=gray2ind(image, 256);
+%             freezeColors;
             if(layer_data.getIsSolidColor())
                 image=obj.createBackground(size(layer),layer_data.getSolidColor());
             else
-                f_temp=figure;
-                set(gcf,'visible','off'); 
+                %                 f_temp=figure;
+                %                 set(gcf,'visible','off');
                 image=ind2rgb(ind, colormap(layer_data.getColormap()));
-                close(f_temp, "force");
-                set(0, 'CurrentFigure', fig);
+                if(obj.image_data_.getShowColorbar && layer_data.getColorbar)
+%                     cb.Label.String=obj.image_data_.getColorbarTitle();
+%                     freezeColors;
+                    freezeColors(colorbar);
+                    caxis(layer_data.getScale);
+
+                end
+
+                %                 close(f_temp, "force");
+                %                 set(0, 'CurrentFigure', fig);
             end
             %creates the image
             alpha_mask=zeros(size(layer));
@@ -372,6 +377,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             alpha_mask=alpha_mask.*layer_data.getOpacity();
             layer_im = imshow(image);
             layer_im.AlphaData = alpha_mask;
+            freezeColors;
         end
 
         function image = fixImageAxes(~, im)
@@ -416,14 +422,17 @@ classdef ImageBuilder <  FigureBuilder & handle
                 return;
             end
             if(length(obj.layers_data_)<layer_num)
-               obj.layers_data_{layer_num}=ImageLayerDrawData;
+               obj.layers_data_{layer_num}=ImageLayerDrawData(obj);
             elseif(isempty(obj.layers_data_{layer_num}))
-                obj.layers_data_{layer_num}=ImageLayerDrawData;
+                obj.layers_data_{layer_num}=ImageLayerDrawData(obj);
             end
             layer_data = obj.layers_data_{layer_num};
         end
 
         function image_data = image_data(obj)
+            if(isempty(obj.image_data_))
+                obj.image_data_=ImageDrawData(obj);
+            end
             image_data = obj.image_data_;
         end
 
