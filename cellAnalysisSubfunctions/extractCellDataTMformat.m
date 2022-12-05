@@ -488,11 +488,11 @@ end
   save([thisFolder,'_DBondData'],'frame_dBonds');
   
   disp(['Done with frame ',num2str(k)])
-    catch
-
-        disp(['Skipped frame ',num2str(k)])
-
-    end
+%   %  catch
+% 
+%         disp(['Skipped frame ',num2str(k)])
+% 
+%     end
 end
 
 end

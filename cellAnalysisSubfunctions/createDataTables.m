@@ -51,9 +51,10 @@ for i = 1:length(sortedDatasets)
     frame = {thisVertexData.frame}';   
     x_pos = {thisVertexData.x_pos}';    
     y_pos = {thisVertexData.y_pos}';    
+    z_pos = {thisVertexData.z_pos}';    
 
-    frame_vertices = table(vertex_id,frame, x_pos, y_pos);
-    clear('vertex_id','frame', 'x_pos', 'y_pos');
+    frame_vertices = table(vertex_id,frame, x_pos, y_pos, z_pos);
+    clear('vertex_id','frame', 'x_pos', 'y_pos','z_pos');
     
     % Cells table
     cell_id = {thisCellData.cell_id}';
