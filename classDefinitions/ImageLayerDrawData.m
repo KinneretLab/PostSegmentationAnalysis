@@ -3,6 +3,7 @@ classdef ImageLayerDrawData < handle
     %   Detailed explanation goes here
 
     properties (Access=private)
+        image_builder_
         scale_
         colormap_
         is_solid_color_
@@ -14,21 +15,19 @@ classdef ImageLayerDrawData < handle
         markers_size_
         markers_color_by_value_ %bool TODO: for quiver- not an option
         markers_size_by_value_ %bool
-        is_marker_quiver_
-        is_marker_layer_
-        quiver_line_width_
+        line_width_
         quiver_show_arrow_head_
         class_
         filter_fun_
         value_fun_
         type_
         calibration_fun_
-
-        %todo add option to if there are lines make them bolder
+        colorbar_
+        dialation_ %need to add full fuctionality
     end
 
     methods (Access=public)
-        function obj = ImageLayerDrawData()
+        function obj = ImageLayerDrawData(image_builder)
             obj.scale_=[];
             obj.colormap_="jet";
             obj.opacity_=1;
@@ -42,13 +41,16 @@ classdef ImageLayerDrawData < handle
             obj.markers_size_by_value_= false; %bool
             obj.is_marker_quiver_=false;
             obj.is_marker_layer_=false;
-            obj.quiver_line_width_=0.5;
+            obj.line_width_=0.5;
             obj.quiver_show_arrow_head_=false;
             obj.is_solid_color_=false;
             obj.solid_color_ = [1 1 1];
             obj.filter_fun_=obj.setFilterFunction("");
             obj.value_fun_={1};
             obj.calibration_fun_={'xy', 0};
+            obj.dialation_=[];
+            obj.image_builder_=image_builder;
+            obj.colorbar_=false;
 
         end
 
@@ -66,6 +68,14 @@ classdef ImageLayerDrawData < handle
 
         function value = getColormap(obj)
             value = obj.colormap_;
+        end
+
+        function obj = setColorbar(obj, value)
+            obj.colorbar_ = value;
+        end
+
+        function value = getColorbar(obj)
+            value = obj.colorbar_;
         end
 
         function obj = setOpacity(obj, value)
@@ -120,32 +130,24 @@ classdef ImageLayerDrawData < handle
             obj.markers_size_by_value_ = value;
         end
 
+        function value = getDialation(obj)
+            value = obj.dialation_;
+        end
+
+        function obj = setDialation(obj, value)
+            obj.dialation_ = value;
+        end
+
         function value = getMarkersSizeByValue(obj)
             value = obj.markers_size_by_value_;
         end
 
-        function obj = setIsMarkerQuiver(obj, value)
-            obj.is_marker_quiver_ = value;
+        function obj = setLineWidth(obj, value)
+            obj.line_width_ = value;
         end
 
-        function value = getIsMarkerQuiver(obj)
-            value = obj.is_marker_quiver_;
-        end
-
-        function obj = setIsMarkerLayer(obj, value)
-            obj.is_marker_layer_ = value;
-        end
-
-        function value = getIsMarkerLayer(obj)
-            value = obj.is_marker_layer_;
-        end
-
-        function obj = setQuiverLineWidth(obj, value)
-            obj.quiver_line_width_ = value;
-        end
-
-        function value = getQuiverLineWidth(obj)
-            value = obj.quiver_line_width_;
+        function value = getLineWidth(obj)
+            value = obj.line_width_;
         end
 
         function obj = setQuiverShowArrowHead(obj, value)
@@ -271,6 +273,10 @@ classdef ImageLayerDrawData < handle
 
         function value = getCalibrationFunction(obj)
             value = obj.calibration_fun_;
+        end
+
+        function builder=close(obj)
+            builder=obj.image_builder_;
         end
     end
 end

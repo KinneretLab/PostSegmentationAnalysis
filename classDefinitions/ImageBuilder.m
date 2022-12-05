@@ -6,17 +6,16 @@ classdef ImageBuilder <  FigureBuilder & handle
         save_format_ = "png";
         frame_to_draw_ = [];
         output_folder_="";
-
+        builder_file_name_="builder";
+        layers_data_ = {};
+        image_data_ = [];
     end
 
     properties (Constant)
         logger = Logger('ImageBuilder');
-    end
-    
-    properties (Access = public)
-        
-        layers_data_ = {};
-        image_data_ = ImageDrawData;
+        image_type="image";
+        marker_type="list";
+        quiver_type="quiver";
     end
     
     methods
@@ -25,16 +24,21 @@ classdef ImageBuilder <  FigureBuilder & handle
             obj@FigureBuilder()           
 
             % generic global search for a particular folder; works independent of user
-            search_path = '../*/MatlabGeneralFunctions';
+            search_path = '../*/matlab-utility-functions';
             while isempty(dir(search_path))
                 search_path = ['../', search_path];
             end
+            addpath(dir(search_path).folder)
+            search_path = '../*/freezeColors';
+            while isempty(dir(search_path))
+                search_path = ['../', search_path];
+            end
+            addpath(dir(search_path).folder)
         end
         
     end
     
     methods(Static)
-        
         function func = property(prop_name)
             func = @(obj) (obj.(prop_name));
         end
@@ -43,69 +47,8 @@ classdef ImageBuilder <  FigureBuilder & handle
             % MISSING DOCUMENTATION
             func = BulkFunc(@(entity_arr) const_value & true(size(entity_arr)));
         end
-        
-        function this_funct = objFunction(func)
-            if isa(func, 'char') || isa(func, 'string')
-                this_funct = ImageBuilder.property(func);
-            end
-            if isa(func, 'double')
-                this_funct = @(obj) (func);
-            end
-            if isa(func, 'function_handle')
-                this_funct = func;
-            end
-        end
-        
-        function filter_fun = filterFunction(func)
-            % FILTERFUNCTION Add a filter to apply on the data before starting the calculation at all.
-            % This is not neccesary (you can apply this beforehand in ADDDATA,
-            % but is a very useful utility.
-            % Parameters:
-            %   func: char[], string, double, function, BulkFunc
-            %      The function (or property name) to use to determine the
-            %      data to keep for the calculation (1 is keep, 0 is
-            %      ignore).
-            %      All types will be translated into some form of
-            %      boolean[](PhysicalEntity[]).
-            %      no args: the true function: @(entity_arr) ones(size(entity_arr))
-            %      logical or double: this is translated into the constant function.
-            %      For example, for f = FILTERFUNCTION(false):
-            %         f(entity_arr) = false(size(entity_arr))
-            %      char[] or string: this is translated into a function as
-            %      if it is literal MATLAB code. You can refer to the input
-            %      array using "obj_arr".
-            %      For example, for f = FILTERFUNCTION("[obj_arr.confidence] > 0.5"):
-            %         f(entity_arr) = [entity_arr.confidence] > 0.5
-            %      function or BulkFunc: this is simply set. Function must accept a
-            %      PhysicalEntity[] array and return a boolean[].
-            %      For example, for f = FILTERFUNCTION(myFunction):
-            %         f(entity_arr) = myFunction(entity_arr)
-            %      Default: the true function: @(entity_arr) ones(size(entity_arr))
-            
-            if isempty(func)
-                filter_fun = ImageBuilder.logical(true);
-            else
-                if isa(func, 'char') || isa(func, 'string')
-                    if ~contains(func, "obj_arr")
-                        warning("[WARN] your filter string does not contain obj_arr. This probably will lead to errors.");
-                    end
-                    if ~contains(func, "[")
-                        warning("[WARN] your filter string does not contain square brackets for working on array. This probably will lead to errors.");
-                    end
-                    filter_fun = @(obj_arr) (eval(func)); % WARNING: do NOT rename obj_arr!
-                end
-                if isa(func, 'logical') || isa(func, 'double')
-                    filter_fun = ImageBuilder.logical(logical(func));
-                end
-                if isa(func, 'function_handle') || isa(func, 'BulkFunc')
-                    filter_fun = func;
-                end
-            end
-        end
-        
     end
-    
-    
+
     methods
         
         % This function arranges the data according to the desired layers,
@@ -127,11 +70,6 @@ classdef ImageBuilder <  FigureBuilder & handle
                 calibration_fun=obj.layers_data_{i}.getCalibrationFunction;
                 frame_arr = obj.data_{:};
 
-                % Option for normalization by frame average
-                 %  norm_fun = plotUtils.xNormalize(value_fun_list{i},"frame");
-
-
-                
                 for j = 1:length(frame_arr)
 
                     % Get data arrays for frame, apply filter
@@ -146,8 +84,8 @@ classdef ImageBuilder <  FigureBuilder & handle
 
                    %  value_arr = arrayfun(value_fun{1},filtered_arr);
                     value_arr = BulkFunc.apply(value_fun{1},filtered_arr,obj,phys_arr);
-                   
-                    
+
+
                     % Apply calibration to values if specified (to convert
                     % pixels to microns)
 
@@ -218,44 +156,33 @@ classdef ImageBuilder <  FigureBuilder & handle
             obj.layer_arr_ = layer_arr;
         end
         
-        function obj=createDefaultLayerData(obj) % TODO see if add if override version, in case we want to load or calculate different data..
-            obj.layers_data_={};
-            [row, col]=size(obj.layer_arr_);
-            for i=1:row
-                obj.layers_data_{i} = ImageLayerDrawData;
-                j=1;
-                frame = obj.layer_arr_(:, j);
-                while isempty(frame{i}) && j<=col
-                    j=j+1;
-                    frame = obj.layer_arr_(:, j);
-                end
-                obj.layers_data_{i}.setIsMarkerLayer(obj.isMarkerLayer(frame{i}));
-                obj.layers_data_{i}.setIsMarkerQuiver(obj.isMarkerQuiver(frame{i}));
+        function saveFigure(obj, figure, frame_num, xlims, ylims)
+            frame=obj.data_{1}(frame_num);
+            name=frame.frame_name;
+            fname = fullfile(obj.output_folder_, sprintf("%s.%s",name,obj.save_format_));
+            xlim(xlims);
+            ylim(ylims);
+            figure= tightfig(figure);
+            switch obj.save_format_
+                case "png"
+                    exportgraphics(figure,fname,'Resolution',max(obj.image_data_.getImageSize))
+                case "fig"
+                    set(gcf,'visible','on');
+                    savefig(figure, fname)
             end
         end
-        
-        function obj = load(obj, path, file_name) 
-            fname = fullfile(path, file_name);
-            struct = load(fname);
-            fieldNames = fieldnames(struct);
-            obj.layer_arr_ = getfield(struct, fieldNames{1});
-            obj.createDefaultLayerData(); % TODO see if needs to run here or where, or if it is only run by user...
 
-            obj.image_data_=ImageDrawData;
-        end
-        
-        function saveFigures(~, figures, path, file_name)
-            [~, col]=size(figures);
-            for i = 1:col
-                fname = fullfile(path, sprintf("%s%d.png",file_name,i));
-                figure=figures{i};
-                figure=tightfig(figure);
-                saveas(figure, fname);
-            end
+        function loadBuilder(obj, input)
+            load(input, 'saved_builder');
+            obj.layer_arr_=saved_builder.layer_arr;
+            obj.data_=saved_builder.data;
+            obj.image_data_=saved_builder.image_data;
+            obj.layers_data_=saved_builder.layers_data;
         end
 
         function obj= saveBuilder(obj)
-            save(obj.output_folder_, 'obj');
+            saved_builder=obj;
+            save(fullfile(obj.output_folder_, obj.builder_file_name_), 'saved_builder');
         end
         
         function figures = draw(obj, input) 
@@ -273,13 +200,27 @@ classdef ImageBuilder <  FigureBuilder & handle
                     obj.calculate;
                 end
             else
-                %load
+                obj.loadBuilder(input);
             end
             [~, col]=size(obj.layer_arr_);
-            figures = {};
+            if(obj.image_data.getCrop)
+                [xlims, ylims]=obj.getAxisLims;
+            else
+                image_size=obj.image_data.getImageSize;
+                xlims=[1, image_size(1)];
+                ylims=[1, image_size(2)];
+            end
+            if(~isempty(obj.frame_to_draw_))
+                frame = obj.layer_arr_(:, obj.frame_to_draw_);
+                figures{1} = obj.drawFrame(frame, true, obj.frame_to_draw_);
+                obj.frame_to_draw_=[];
+                return;
+            end
             for i= 1 : col
                 frame = obj.layer_arr_(:, i);
-                obj.drawFrame(frame, true, i);
+                fig=obj.drawFrame(frame, false, i);
+                obj.saveFigure(fig, i, xlims, ylims);
+                close(fig);
             end
         end
         
@@ -300,7 +241,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             hold on;
             [row, ~]=size(frame);
             for i = 1 : row
-                obj.drawLayer(frame{i}, i,fig);
+                obj.drawLayer(frame{i}, i);
                 if i == row
                     hold off;
                 end
@@ -310,16 +251,9 @@ classdef ImageBuilder <  FigureBuilder & handle
             if(obj.image_data_.getLegendForMarkers())
                 legend;
             end
-            if(obj.image_data_.getShowColorbar())
-                cb=colorbar; 
-                if(~isempty(obj.image_data_.getColorbarAxisScale()))
-                    caxis(obj.image_data_.getColorbarAxisScale());
-                end
-                cb.Label.String=obj.image_data_.getColorbarTitle();
-            end
         end
         
-        function drawLayer(obj, layer, layer_num, fig)
+        function drawLayer(obj, layer, layer_num)
             if(isempty(layer))
                 return;
             end
@@ -327,12 +261,14 @@ classdef ImageBuilder <  FigureBuilder & handle
             if(~layer_data.getShow())
                 return;
             end
-            if(~layer_data.getIsMarkerLayer() && ~layer_data.getIsMarkerQuiver())
-                obj.drawImageLayer(layer, layer_num, fig);                
-            elseif(layer_data.getIsMarkerLayer())
-                obj.drawMarkerLayer(layer, layer_num);
-            else
-                obj.drawQuiverLayer(layer, layer_num);
+            type=layer_data.getType();
+            switch type
+                case obj.image_type
+                    obj.drawImageLayer(layer, layer_num);
+                case obj.marker_type
+                    obj.drawMarkerLayer(layer, layer_num);
+                case obj.quiver_type
+                    obj.drawQuiverLayer(layer, layer_num);
             end
         end
         
@@ -341,21 +277,21 @@ classdef ImageBuilder <  FigureBuilder & handle
             x=layer(:,1);
             y=layer(:, 2);
             value=layer(:,3);
-            rescaled_value=rescale(value);
             if(layer_data.getMarkersSizeByValue())
-                marker_size=rescaled_value;
+                marker_size=value;
                 marker_size(marker_size==0)=nan;
                 marker_size=marker_size.*layer_data.getMarkersSize();
             else
                 marker_size=ones(size(value)).*layer_data.getMarkersSize();
             end
             if(layer_data.getMarkersColorByValue())
-                s=scatter(x,y, marker_size, "CData" , rescaled_value);
+                s=scatter(x,y, marker_size, "CData" , value);
                 colormap(gca, layer_data.getColormap());
             else
                 s=scatter(x,y, marker_size, layer_data.getMarkersColor());
             end
             s.Marker=layer_data.getMarkersShape();
+            s.LineWidth=layer_data.getLineWidth();
             s.MarkerEdgeAlpha=layer_data.getOpacity();
             s.MarkerFaceAlpha=layer_data.getOpacity();
         end
@@ -368,7 +304,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             length=layer(:,4);
             if(layer_data.getMarkersSizeByValue())
                 q=layer_data.getMarkersSize();
-                size_q=rescale(length).*q;
+                size_q=length.*q;
             else
                 q=layer_data.getMarkersSize();
                 size_q=ones(size(length)).*q;
@@ -377,7 +313,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             x=x-u./2;
             y=y-v./2;
             q=quiver(x,y,u,v, layer_data.getMarkersColor());
-            q.LineWidth=layer_data.getQuiverLineWidth();
+            q.LineWidth=layer_data.getLineWidth();
             q.AutoScale="off";
             if(layer_data.getQuiverShowArrowHead())
                 q.ShowArrowHead="on";
@@ -385,51 +321,67 @@ classdef ImageBuilder <  FigureBuilder & handle
                 q.ShowArrowHead="off";
             end
         end
-        
-        function drawImageLayer(obj, layer, layer_num,fig)
+
+        function [xlims,ylims]= getAxisLims(obj)
+            [~, col]=size(obj.layer_arr_);
+            if(~isempty(obj.image_data.getCropCenterPoint))
+                max_length=obj.image_data.getCropSize;
+                center=obj.image_data.getCropCenterPoint;
+            else
+                mask=[];
+                for i= 1:col
+                    frame_data=obj.data_{1}(i);
+                    new_mask=obj.fixImageAxes(frame_data.mask);
+                    if(isempty(mask))
+                        mask=new_mask;
+                    else
+                        mask=mask+new_mask;
+                    end
+                end
+                [x,y]=find(mask);
+                lengths=[abs(max(x)-min(x)),abs(max(y)-min(y))];
+                center=[(max(x)+ min(x))/2, (max(y)+ min(y))/2];
+                max_length=max(lengths)+obj.image_data.getCropSize;
+            end
+                xlims = [center(1)-max_length/2,center(1)+max_length/2 ];
+                ylims = [center(2)-max_length/2,center(2)+max_length/2 ];
+        end
+
+        function drawImageLayer(obj, layer, layer_num)
             layer_data=obj.layers_data_{layer_num};
-            if isempty(layer_data.getScale()) %TODO:fix because if i want scale to be set dina,ically it only sets it on the first frame!!
+            if isempty(layer_data.getScale())
                 mi=min(layer(:));
                 ma=max(layer(:));
                 layer_data.setScale([mi ma]);
             end
-            fliplr(layer);
-            layer=layer';
+            layer=obj.fixImageAxes(layer);
             image=mat2gray(layer, layer_data.getScale());
             ind=gray2ind(image, 256);
             if(layer_data.getIsSolidColor())
                 image=obj.createBackground(size(layer),layer_data.getSolidColor());
             else
-                f_temp=figure;
-                set(gcf,'visible','off'); 
                 image=ind2rgb(ind, colormap(layer_data.getColormap()));
-                close(f_temp, "force");
-                set(0, 'CurrentFigure', fig);
+                if(obj.image_data.getShowColorbar && layer_data.getColorbar)
+                    freezeColors(colorbar);
+                    caxis(layer_data.getScale);
+                end
             end
             %creates the image
             alpha_mask=zeros(size(layer));
             alpha_mask(~isnan(layer)) = 1; %creates regular mask
+            if(~isempty(layer_data.getDialation))
+%                 se=strel('line',layer_data.getDialation,0);
+%                 alpha_mask=imdilate(alpha_mask,se);
+            end
             alpha_mask=alpha_mask.*layer_data.getOpacity();
             layer_im = imshow(image);
             layer_im.AlphaData = alpha_mask;
+            freezeColors;
         end
-        
-        function is_marker = isMarkerLayer(~, layer)
-            [~, col]=size(layer);
-            if(col==3)
-                is_marker=true;
-            else
-                is_marker=false;
-            end
-        end
-        
-        function is_marker_quiver = isMarkerQuiver(~, layer)
-            [~, col]=size(layer);
-            if(col==4)
-                is_marker_quiver=true;
-            else
-                is_marker_quiver=false;
-            end
+
+        function image = fixImageAxes(~, im)
+            fliplr(im);
+            image=im';
         end
         
         function back_image = createBackground(~, size, color)
@@ -443,7 +395,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             [row, ~]=size(frame);
             for i = 1:row
                 layer_data=obj.layers_data_{i};
-                if(~isempty(frame) && ~layer_data.getIsMarkerLayer() && ~layer_data.getIsMarkerQuiver())
+                if(~isempty(frame) && layer_data.getType()==obj.image_type)
                     s=size(frame{i});
                     return;
                 end
@@ -462,45 +414,48 @@ classdef ImageBuilder <  FigureBuilder & handle
         function obj = save_format(obj,format)
             obj.save_format_ = format;
         end
-
-
         
-        function layer_data=layers_data(obj, layer_num)
+        function layer_data=layers_data(obj, layer_num, data)
+            if(nargin==1)
+                layer_data=obj.layers_data_;
+                return;
+            elseif(nargin==3)
+                obj.layers_data_{layer_num}=data;
+            end
             if(length(obj.layers_data_)<layer_num)
-               obj.layers_data_{layer_num}=ImageLayerDrawData;
+               obj.layers_data_{layer_num}=ImageLayerDrawData(obj);
             elseif(isempty(obj.layers_data_{layer_num}))
-                obj.layers_data_{layer_num}=ImageLayerDrawData;
+                obj.layers_data_{layer_num}=ImageLayerDrawData(obj);
             end
             layer_data = obj.layers_data_{layer_num};
         end
 
+
         function image_data = image_data(obj)
+            if(isempty(obj.image_data_))
+                obj.image_data_=ImageDrawData(obj);
+            end
             image_data = obj.image_data_;
+        end
+
+        function layer_arr = layer_arr(obj)
+            layer_arr = obj.layer_arr_;
+        end
+
+        function data = data(obj)
+            data = obj.data_;
         end
 
         function obj = frame_to_draw(obj, frame_to_draw)
             obj.frame_to_draw_= frame_to_draw;
         end
 
+        function obj = builder_file_name(obj, builder_file_name)
+            obj.builder_file_name_= builder_file_name;
+        end
+
         function obj = output_folder(obj, output_folder)
             obj.output_folder_= output_folder;
         end
-
-        function saveLayerArr(obj,save_path,save_name)
-            layer_arr = obj.layer_arr_;
-            save([save_path,'\',save_name],'layer_arr');
-        end
     end
-    
-    
 end
-
-% Function for converting output of layer array for 3D paraView, relevant
-% for layers of type marker and quiver. Images do not need any further
-% processing, and will be treated in paraview like an image of the
-% cells/fibres.
-
-% For marker layer, need to add z coordinates. Need to decide whether to
-% get from the heightmaps or from the data tables. For quiver layer, need to add z
-% coordinates for location, and also give the orientation and magnitude as
-% three x,y,z vector components.

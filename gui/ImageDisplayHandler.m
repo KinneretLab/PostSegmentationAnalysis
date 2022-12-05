@@ -3,40 +3,49 @@ classdef ImageDisplayHandler < handle
     %   Detailed explanation goes here
     
     properties (Access=private)
-        figures_={};
-        displayed_frame_num_=1
+        figure_=[];
+        displayed_frame_num_=1;
+        image_builder_
+        app_
     end
     
-    methods
-        function show(obj, app)
-            figure=obj.figures_{obj.displayed_frame_num_};
-            set(figure,'CloseRequestFcn',[]);
-            set(figure,'visible','on');
+    methods (Access=public)
+
+        function obj = ImageDisplayHandler(app, imageBuilder)
+            obj.image_builder_=imageBuilder;
+            obj.app_=app;
+        end
+
+        function show(obj)
+            obj.figure_=obj.image_builder_.frame_to_draw(obj.displayed_frame_num_).draw{1};
+            set(obj.figure_,'CloseRequestFcn',[]);
         end
         
-        function setFrame(obj, app, frameNum)
-            obj.hide();
+        function setFrame(obj, frameNum)
+            obj.closeFigure;
             obj.displayed_frame_num_=frameNum;
             obj.show();
         end
         
-        function hide(obj, app)
-            set(obj.figures_{obj.displayed_frame_num_},'visible','off');
-        end
-        
-        function forceCloseFigures(obj)
-            if(~isempty(obj.figures_))
-                [~, col]=size(obj.figures_);
-                for i= 1:col
-                    close(obj.figures_{i}, "force");
-                end
-                obj.figures_={};
+        function closeFigure(obj)
+            if(~isempty(obj.figure_))
+                close(obj.figure_, "force")
             end
         end
         
-        function setFigures(obj, figures)
-            obj.figures_=figures;
-        end
+%         function forceCloseFigures(obj)
+%             if(~isempty(obj.figures_))
+%                 [~, col]=size(obj.figures_);
+%                 for i= 1:col
+%                     close(obj.figures_{i}, "force");
+%                 end
+%                 obj.figures_={};
+%             end
+%         end
+        
+%         function setFigures(obj, figures)
+%             obj.figures_=figures;
+%         end
     end
 end
 
