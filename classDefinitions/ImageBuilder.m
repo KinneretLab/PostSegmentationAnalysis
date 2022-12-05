@@ -29,6 +29,11 @@ classdef ImageBuilder <  FigureBuilder & handle
                 search_path = ['../', search_path];
             end
             addpath(dir(search_path).folder)
+            search_path = '../*/freezeColors';
+            while isempty(dir(search_path))
+                search_path = ['../', search_path];
+            end
+            addpath(dir(search_path).folder)
         end
         
     end
@@ -234,7 +239,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             hold on;
             [row, ~]=size(frame);
             for i = 1 : row
-                obj.drawLayer(frame{i}, i,fig);
+                obj.drawLayer(frame{i}, i);
                 if i == row
                     hold off;
                 end
@@ -246,7 +251,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             end          
         end
         
-        function drawLayer(obj, layer, layer_num, fig)
+        function drawLayer(obj, layer, layer_num)
             if(isempty(layer))
                 return;
             end
@@ -257,7 +262,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             type=layer_data.getType();
             switch type
                 case obj.image_type
-                    obj.drawImageLayer(layer, layer_num, fig);
+                    obj.drawImageLayer(layer, layer_num);
                 case obj.marker_type
                     obj.drawMarkerLayer(layer, layer_num);
                 case obj.quiver_type
@@ -284,6 +289,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                 s=scatter(x,y, marker_size, layer_data.getMarkersColor());
             end
             s.Marker=layer_data.getMarkersShape();
+            s.LineWidth=layer_data.getLineWidth();
             s.MarkerEdgeAlpha=layer_data.getOpacity();
             s.MarkerFaceAlpha=layer_data.getOpacity();
         end
@@ -305,7 +311,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             x=x-u./2;
             y=y-v./2;
             q=quiver(x,y,u,v, layer_data.getMarkersColor());
-            q.LineWidth=layer_data.getQuiverLineWidth();
+            q.LineWidth=layer_data.getLineWidth();
             q.AutoScale="off";
             if(layer_data.getQuiverShowArrowHead())
                 q.ShowArrowHead="on";
@@ -339,7 +345,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                 ylims = [center(2)-max_length/2,center(2)+max_length/2 ];
         end
       
-        function drawImageLayer(obj, layer, layer_num,fig)
+        function drawImageLayer(obj, layer, layer_num)
             layer_data=obj.layers_data_{layer_num};
             if isempty(layer_data.getScale()) 
                 mi=min(layer(:));
@@ -349,23 +355,14 @@ classdef ImageBuilder <  FigureBuilder & handle
             layer=obj.fixImageAxes(layer);
             image=mat2gray(layer, layer_data.getScale());
             ind=gray2ind(image, 256);
-%             freezeColors;
             if(layer_data.getIsSolidColor())
                 image=obj.createBackground(size(layer),layer_data.getSolidColor());
             else
-                %                 f_temp=figure;
-                %                 set(gcf,'visible','off');
                 image=ind2rgb(ind, colormap(layer_data.getColormap()));
-                if(obj.image_data_.getShowColorbar && layer_data.getColorbar)
-%                     cb.Label.String=obj.image_data_.getColorbarTitle();
-%                     freezeColors;
+                if(obj.image_data.getShowColorbar && layer_data.getColorbar)
                     freezeColors(colorbar);
                     caxis(layer_data.getScale);
-
                 end
-
-                %                 close(f_temp, "force");
-                %                 set(0, 'CurrentFigure', fig);
             end
             %creates the image
             alpha_mask=zeros(size(layer));
@@ -416,10 +413,12 @@ classdef ImageBuilder <  FigureBuilder & handle
             obj.save_format_ = format;
         end
         
-        function layer_data=layers_data(obj, layer_num)
+        function layer_data=layers_data(obj, layer_num, data)
             if(nargin==1)
                 layer_data=obj.layers_data_;
                 return;
+            elseif(nargin==3)
+                obj.layers_data_{layer_num}=data;
             end
             if(length(obj.layers_data_)<layer_num)
                obj.layers_data_{layer_num}=ImageLayerDrawData(obj);
@@ -428,6 +427,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
             layer_data = obj.layers_data_{layer_num};
         end
+
 
         function image_data = image_data(obj)
             if(isempty(obj.image_data_))

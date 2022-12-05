@@ -17,7 +17,7 @@ classdef ImageLayerDrawData < handle
         markers_size_by_value_ %bool
         is_marker_quiver_
         is_marker_layer_
-        quiver_line_width_
+        line_width_
         quiver_show_arrow_head_
         class_
         filter_fun_
@@ -43,7 +43,7 @@ classdef ImageLayerDrawData < handle
             obj.markers_size_by_value_= false; %bool
             obj.is_marker_quiver_=false;
             obj.is_marker_layer_=false;
-            obj.quiver_line_width_=0.5;
+            obj.line_width_=0.5;
             obj.quiver_show_arrow_head_=false;
             obj.is_solid_color_=false;
             obj.solid_color_ = [1 1 1];
@@ -160,12 +160,12 @@ classdef ImageLayerDrawData < handle
             value = obj.is_marker_layer_;
         end
 
-        function obj = setQuiverLineWidth(obj, value)
-            obj.quiver_line_width_ = value;
+        function obj = setLineWidth(obj, value)
+            obj.line_width_ = value;
         end
 
-        function value = getQuiverLineWidth(obj)
-            value = obj.quiver_line_width_;
+        function value = getLineWidth(obj)
+            value = obj.line_width_;
         end
 
         function obj = setQuiverShowArrowHead(obj, value)

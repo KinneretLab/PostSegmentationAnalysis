@@ -17,9 +17,9 @@ classdef ImageDrawData < handle
         xy_calibration_         % double
         z_calibration_          % double
         image_size_             % double array
-        crop_ %bool %TODO
-        crop_size_ %TODO
-        crop_center_point_ %TODO
+        crop_ %bool
+        crop_size_ 
+        crop_center_point_
     end
     
     methods
