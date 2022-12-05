@@ -21,6 +21,10 @@ classdef ImageBuilder3D <ImageBuilder
            
       end 
 
+      function saveLayerArr(obj,save_path,save_name)
+          saveLayerArr@ImageBuilder(obj,save_path,save_name)
+      end
+
       function obj = setHMSubfolder(obj,subfolder)
           obj.hm_subfolder_ = subfolder;
       end

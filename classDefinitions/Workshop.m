@@ -55,6 +55,8 @@ end
 
 builder3d.layers_data(1).setIsMarkerQuiver(1);
 builder3d.calculate;
+
+builder3d.saveLayerArr('Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\3d','layer_arr_3d_test');
 %%
 % Area maps for short movie clips
 
