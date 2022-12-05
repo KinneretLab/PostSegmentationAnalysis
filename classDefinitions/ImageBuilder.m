@@ -25,7 +25,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             obj@FigureBuilder()           
 
             % generic global search for a particular folder; works independent of user
-            search_path = '../*/matlab-utility-functions';
+            search_path = '../*/MatlabGeneralFunctions';
             while isempty(dir(search_path))
                 search_path = ['../', search_path];
             end
@@ -126,6 +126,11 @@ classdef ImageBuilder <  FigureBuilder & handle
                 type=obj.layers_data_{i}.getType;
                 calibration_fun=obj.layers_data_{i}.getCalibrationFunction;
                 frame_arr = obj.data_{:};
+
+                % Option for normalization by frame average
+                 %  norm_fun = plotUtils.xNormalize(value_fun_list{i},"frame");
+
+
                 
                 for j = 1:length(frame_arr)
 
@@ -139,13 +144,9 @@ classdef ImageBuilder <  FigureBuilder & handle
                     % Get value for each object using the specified value
                     % function for this layer.
 
-                    value_arr = arrayfun(value_fun{1},filtered_arr);
-                    
-                    
-                    % Option for normalization by frame average
-                    %                     norm_fun = plotUtils.xNormalize(value_fun_list{i},"frame");
-                    % NEED TO UNDERSTAND WHAT THIS RUNS ON, AND IN WHAT
-                    % ORDER TO APPLY FILTERING AND CALCULATING VALUE.
+                   %  value_arr = arrayfun(value_fun{1},filtered_arr);
+                    value_arr = BulkFunc.apply(value_fun{1},filtered_arr,obj,phys_arr);
+                   
                     
                     % Apply calibration to values if specified (to convert
                     % pixels to microns)
@@ -180,7 +181,7 @@ classdef ImageBuilder <  FigureBuilder & handle
 
                             layer_arr{i,j} = this_im;
 
-                        elseif strcmp(type_list{i},'list')
+                        elseif strcmp(type,'list')
 
                             % Get relevant pixels (the function list_pixels is
                             % implemented in every relevant class). For cells,
@@ -191,7 +192,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                             this_list = [list_pixels,value_arr'];
                             layer_arr{i,j} = this_list;
 
-                        elseif strcmp(type_list{i},'quiver')
+                        elseif strcmp(type,'quiver')
                             % Get relevant pixels (the function list_pixels is
                             % implemented in every relevant class). For cells,
                             % this is the centre of the cell, for bonds the
@@ -261,7 +262,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             if(nargin==1)
                 input=[];
             end
-            if(isempty(obj.frame_to_draw_))
+            if(~isempty(obj.frame_to_draw_))
                 frame = obj.layer_arr_(:, frame_num_to_draw);
                 figures{1} = obj.drawFrame(frame, true, frame_num_to_draw);
                 obj.frame_to_draw_=[];
@@ -493,3 +494,13 @@ classdef ImageBuilder <  FigureBuilder & handle
     
     
 end
+
+% Function for converting output of layer array for 3D paraView, relevant
+% for layers of type marker and quiver. Images do not need any further
+% processing, and will be treated in paraview like an image of the
+% cells/fibres.
+
+% For marker layer, need to add z coordinates. Need to decide whether to
+% get from the heightmaps or from the data tables. For quiver layer, need to add z
+% coordinates for location, and also give the orientation and magnitude as
+% three x,y,z vector components.

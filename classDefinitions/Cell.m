@@ -266,6 +266,8 @@ classdef Cell < PhysicalEntity
             obj = flatten(obj);
             list_pixels(:,1) = [obj.center_x];
             list_pixels(:,2) = [obj.center_y];
+  %         list_pixels(:,3) = [obj.center_z];
+
         end
 
         function pair_arr = createNeihgborPairs(obj)

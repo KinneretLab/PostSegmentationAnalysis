@@ -1,5 +1,4 @@
 addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\GroupCodes\July2021'));
-util_fun_path = 'Z:\Analysis\users\Yonit\MatlabCodes\GroupCodes\July2021\MatlabGeneralFunctions';
 
 dir1 = 'Z:\Analysis\users\Yonit\Movie_Analysis\DefectLibrary\2020_09_01_18hr_set1\Cells';
 dir2 = 'Z:\Analysis\users\Yonit\Movie_Analysis\DefectLibrary\2020_09_08_18hr_set1\Cells';
@@ -28,7 +27,7 @@ image_size = [512,512];
 %% Data for presentation:
 
 % Quiver images of defect example with cell orientation
-dir1 = 'Z:\Analysis\users\Yonit\Movie_Analysis\DefectLibrary\2020_09_01_18hr_set1\Cells';
+dir1 = 'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\Cells\';
 
 exp = Experiment(dir1);
 frame_arr = exp.frames;
@@ -38,19 +37,24 @@ value_fun_list = {{@(cell)( mod(atan([cell.elong_yy]./[cell.elong_xx])+pi,pi)),'
 calibration_list = {{'xy',0}};
 type_list = {'quiver'};
 image_size = [512,512];
-xyCalib = 0.65;
+xyCalib = 0.52;
 
+exp.HMfolder('Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\Layer_Separation\Output');
+exp.calibrationXY(0.52).calibrationZ(3);
 
-builder = ImageBuilder(util_fun_path);
-builder = builder.addData(frame_arr);
-builder = builder.image_size(image_size);
-builder = builder.xyCalibration(xyCalib);
-builder = builder.class_list(class_list);
-builder = builder.filter_list(filter_list);
-builder = builder.value_fun_list(value_fun_list);
-builder = builder.type_list(type_list);
-layer_arr = builder.calculate(calibration_list);
+% builder.output_folder("Z:\Analysis\users\Yonit\MatlabCodes\Workspace\test").draw;
 
+builder3d = ImageBuilder3D;
+builder3d.addData(frame_arr);
+builder3d.setHMSubfolder("Smooth_Height_Maps_1");
+
+builder3d.image_data.setXYCalibration(xyCalib).setImageSize(image_size);
+for i=1:length(class_list)
+    builder3d.layers_data(i).setClass(class_list{i}).setFilterFunction(filter_list{i}).setValueFunction(value_fun_list{i}).setCalibrationFunction(calibration_list{i}).setType(type_list{i});
+end 
+
+builder3d.layers_data(1).setIsMarkerQuiver(1);
+builder3d.calculate;
 %%
 % Area maps for short movie clips
 
@@ -206,3 +210,52 @@ builder = builder.filter_list(filter_list);
 builder = builder.value_fun_list(value_fun_list);
 builder = builder.type_list(type_list);
 layer_arr = builder.calculate(calibration_list);
+%% Test new version
+
+dir6 = 'Z:\Analysis\users\Liora\Movie_Analysis\2021_07_26\2021_07_26_pos3\Cells';
+
+
+exp6 = Experiment(dir6);
+frame_arr = exp6.frames;
+class_list = {'tVertices','tVertices','tVertices'};
+filter_list = {'(sum(~isnan(obj_arr.bonds),2)==4)','(sum(~isnan(obj_arr.bonds),2)==5)','(sum(~isnan(obj_arr.bonds),2)==6)'};
+value_fun_list = {1,1,1};
+calibration_list = {{'xy',0},{'xy',0},{'xy',0}};
+type_list = {'list','list','list'};
+image_size = [1024,1024];
+xyCalib = 0.52;
+
+
+builder = ImageBuilder;
+builder = builder.addData(frame_arr);
+builder.image_data.setXYCalibration(xyCalib).setImageSize(image_size);
+for i=1:length(class_list)
+    builder.layers_data(i).setClass(class_list{i}).setFilterFunction(filter_list{i}).setValueFunction(value_fun_list{i}).setCalibrationFunction(calibration_list{i}).setType(type_list{i});
+end 
+[~,layer_arr] = builder.calculate;
+%%
+
+
+
+dir2 = 'Z:\Analysis\users\Liora\Movie_Analysis\2021_07_26\2021_07_26_pos3\Cells_presentation';
+
+exp2 = Experiment(dir2);
+frame_arr = exp2.frames;
+class_list = {'cells','bonds','vertices'};
+filter_list = {'','',''};
+value_fun_list = {PlotUtils.xNormalize("area","frame"),1,1};
+calibration_list = {{'xy',2},{'xy',0},{'xy',0}};
+type_list = {'image','image','image'};
+image_size = [1024,1024];
+xyCalib = 0.52;
+
+builder = ImageBuilder;
+builder.addData(frame_arr);
+builder.image_data.setXYCalibration(xyCalib).setImageSize(image_size);
+for i=1:length(class_list)
+    builder.layers_data(i).setClass(class_list{i}).setFilterFunction(filter_list{i}).setValueFunction(value_fun_list{i}).setCalibrationFunction(calibration_list{i}).setType(type_list{i});
+end 
+
+
+builder.output_folder("Z:\Analysis\users\Yonit\MatlabCodes\Workspace\test").draw;
+
