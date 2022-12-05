@@ -24,8 +24,12 @@ classdef BulkFunc
         function result = apply(func_or_bulk, varargin)
             if isa(func_or_bulk, 'BulkFunc')
                 result = func_or_bulk.f(varargin{1:nargin(func_or_bulk)});
-            else
-                result = arrayfun(func_or_bulk, varargin{1:nargin(func_or_bulk)});
+            else 
+                if isempty(varargin)  
+                    result = func_or_bulk();
+                else
+                    result = arrayfun(@(obj) func_or_bulk(obj, varargin{2:nargin(func_or_bulk)}), varargin{1});
+                end
             end
         end
     end
