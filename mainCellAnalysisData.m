@@ -50,7 +50,7 @@ for n=1:length(mainDirList)
    %% 1. Initialize parameters for each movie
     disp(['Analyzing movie/dataset ',num2str(n)])
     mainDir = mainDirList{n};
-    cellDir = [mainDir,'\Cells\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
+    cellDir = [mainDir,'\Cells_auto\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
     segDir = [cellDir,'AllSegmented\']; % Segmentation folder.
     maskDir =  [mainDir,'\Display\Masks'];
     outlineDir = [cellDir,'\Outlines'];
