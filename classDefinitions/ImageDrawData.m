@@ -14,9 +14,6 @@ classdef ImageDrawData < handle
         colorbar_axis_scale_
         image_title_
         legend_for_markers_
-        xy_calibration_         % double
-        z_calibration_          % double
-        image_size_             % double array
         crop_ %bool
         crop_size_ 
         crop_center_point_
@@ -127,42 +124,6 @@ classdef ImageDrawData < handle
         
         function value = getIsBackgroundPerFrame(obj)
             value = obj.is_background_per_frame_;
-        end
-
-        function obj = setXYCalibration(obj, calib)
-            % XYCALIBRATION Micron to pixel calibration for the xy plane of
-            % the image.
-            % Parameters:
-            %   calib: double
-            %      the scaling value to multiply the values by. That is,
-            %      final_value = calib * pixel_value;
-            obj.xy_calibration_ = calib;
-        end
-
-        function value = getXYCalibration(obj)
-            value = obj.xy_calibration_;
-        end
-        
-        function obj = setZCalibration(obj, calib)
-            % ZCALIBRATION Micron to pixel calibration for the z axis of
-            % the image stack.
-            % Parameters:
-            %   calib: double
-            %      the scaling value to multiply the values by. That is,
-            %      final_value = calib * pixel_value;
-            obj.z_calibration_ = calib;
-        end
-
-        function value = getZCalibration(obj)
-            value = obj.z_calibration_;
-        end
-
-        function obj = setImageSize(obj,im_size)
-            obj.image_size_ = im_size;
-        end
-
-        function value = getImageSize(obj)
-            value = obj.image_size_;
         end
 
         function builder=close(obj)

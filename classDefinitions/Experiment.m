@@ -31,6 +31,8 @@ classdef Experiment < handle
         calibration_xy_
         % Micron/pixel calibration for the experiment in z axis
         calibration_z_
+        % Image size in pixels, [rows,columns]
+        image_size_
     end
     
     properties (Constant)
@@ -128,6 +130,10 @@ classdef Experiment < handle
 
         function obj = calibrationZ(obj,calibration)
             obj.calibration_z_ = calibration;
+        end
+
+        function obj = imageSize(obj,size)
+            obj.image_size_ = size;
         end
 
         function obj = HMfolder(obj,folder)

@@ -69,6 +69,9 @@ classdef ImageBuilder <  FigureBuilder & handle
                 type=obj.layers_data_{i}.getType;
                 calibration_fun=obj.layers_data_{i}.getCalibrationFunction;
                 frame_arr = obj.data_{:};
+                calibration_xy =  obj.data_{1}(1).experiment.calibration_xy_; % Get calibration from experiment
+                calibration_z = obj.data_{1}(1).experiment.calibration_z_; % Get calibration from experiment
+
 
                 for j = 1:length(frame_arr)
 
@@ -89,21 +92,22 @@ classdef ImageBuilder <  FigureBuilder & handle
                     % Apply calibration to values if specified (to convert
                     % pixels to microns)
 
+
+
                     if exist('calibration_list')
                         if strcmp(calibration_fun{1},'xy')
-                            value_arr = value_arr*(obj.image_data.getXYCalibration^(calibration_fun{2}));
+                            value_arr = value_arr*(calibration_xy^(calibration_fun{2}));
                             
                         else if strcmp(calibration_fun{1},'z')
-                                value_arr = value_arr*(obj.image_data.getZCalibration^(calibration_fun{2}));
+                                value_arr = value_arr*(calibration_z^(calibration_fun{2}));
                             end
                         end
                     end
                     if ~isempty(filtered_arr)
-                        % NEED TO ADD OPTIONS FOR CALIBRATION
 
                         if strcmp(type,'image')
 
-                            image_size = obj.image_data_.getImageSize; % GET THIS FROM EXPERIMENT INFO, NEED TO IMPLEMENT THIS
+                            image_size = obj.data_{1}(1).experiment.image_size_; % GET THIS FROM EXPERIMENT INFO, NEED TO IMPLEMENT THIS
 
                             % Get relevant pixels (the function plot_pixels is
                             % implemented in every relevant class)
@@ -165,7 +169,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             figure= tightfig(figure);
             switch obj.save_format_
                 case "png"
-                    exportgraphics(figure,fname,'Resolution',max(obj.image_data_.getImageSize))
+                    exportgraphics(figure,fname,'Resolution',max(obj.data_{1}(1).experiment.image_size_))
                 case "fig"
                     set(gcf,'visible','on');
                     savefig(figure, fname)
@@ -206,7 +210,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             if(obj.image_data.getCrop)
                 [xlims, ylims]=obj.getAxisLims;
             else
-                image_size=obj.image_data.getImageSize;
+                image_size=obj.data_{1}(1).experiment.image_size_;
                 xlims=[1, image_size(1)];
                 ylims=[1, image_size(2)];
             end
