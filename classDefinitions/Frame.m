@@ -36,7 +36,11 @@ classdef Frame < PhysicalEntity
         % you can access this using FRAME#DEFECTS
         % type: DEFECT[]
         defects_ = Null.null;
-        
+        % An internal vairblae listing the defects this frame contains.
+        % you can access this using FRAME#CELLPAIRS
+        % type: CELLPAIRS[]
+        cell_pairs_ = Null.null;
+
     end
     
     methods
@@ -117,6 +121,15 @@ classdef Frame < PhysicalEntity
             % Return type: DEFECT[]
             defects = obj.getOrCalculate(class(Defect), "defects_", @(frames) frames.lookupByFrame(class(Defect)), varargin{:});
         end
+
+        function obj = cellPairsFrame(obj)
+            % Run over frames individually:
+            for i=1:length(obj)
+                cells = obj(i).cells;
+                obj(i).cell_pairs_ = cells.createNeihgborPairs;
+            end
+        end
+
     end
     
     methods(Access = protected)
@@ -168,11 +181,15 @@ classdef Frame < PhysicalEntity
             % since the lookup was placed into a cell array, we need to
             % reshape it into a matrix.
             sizes = cellfun(@(result) (length(result)), lookup_result);
-            phys_arr(length(obj), max(sizes)) = feval(clazz);
-            for i=1:length(obj)
-                if sizes(i) > 0
-                    phys_arr(i, 1:sizes(i)) = lookup_result{i};
+            if max(sizes) > 0
+                phys_arr(length(obj), max(sizes)) = feval(clazz);
+                for i=1:length(obj)
+                    if sizes(i) > 0
+                        phys_arr(i, 1:sizes(i)) = lookup_result{i};
+                    end
                 end
+            else
+                phys_arr = eval([clazz, '.empty(', num2str(length(obj)), ',0)']);
             end
             % filter result and put it into result_arr
             if nargin > 4

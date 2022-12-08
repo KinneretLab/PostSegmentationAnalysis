@@ -7,7 +7,7 @@ while isempty(dir(search_path))
 end
 addpath(dir(search_path).folder)
 
-mainDir='\\phhydra\phhydraB\Analysis\users\Yonit\Movie_Analysis\DefectLibrary\2020_09_01_18hr_set1\'; % Main directory for movie you are analysing.
+mainDir='Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\SD1_2021_05_06_pos9\'; % Main directory for movie you are analysing.
 cellDir = [mainDir,'\Cells\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
 segDir = [cellDir,'AllSegmented\']; % Segmentation folder.
 

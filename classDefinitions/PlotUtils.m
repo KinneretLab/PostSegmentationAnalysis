@@ -177,6 +177,20 @@ classdef PlotUtils
         end
         
         function y_func = correlation(func, mean_on_pairs, var_on_all_pairs)
+            % CORRELATION calculate the autocorrelation for a particular aspect of a physical entity.end
+            % this works for any physical entity: cells, bonds, etc.
+            % Parameters:
+            %   func: char[], string, double(PhysicalEntity), or BulkFunc
+            %      this is the aspect of the entity we want to find a correlation for.
+            %   mean_on_pairs (optional): boolean
+            %      one base aspect of the autocorrelation function is to use a reference mean, that each entry deviates from
+            %      true (default): the statistical mean take into account the number of appearences of an entity in all pairs
+            %      false: the statisticla mean should ignore the number of appearences of each entity, but intead give any participant a weight of 1.
+            %   var_on_all_pairs (optional): boolean
+            %      another important aspect of autocorrelation is to normalize by the variance
+            %      true (default): the variance should be calculated globally, that is, for all pairs provided
+            %      false: the variance should be calculated per distance, that is, each entry uses all the pairs that have the same distance.
+            % Return: a yFunction on Pair, which the pair type being the same one used for func.
             if nargin < 2
                 mean_on_pairs = true;
             end

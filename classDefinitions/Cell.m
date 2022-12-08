@@ -164,7 +164,7 @@ classdef Cell < PhysicalEntity
             % you can retrieve them from the variable CELL#outline_.
             % Currently runs on a 1-dimensional list, if multidiemnsional array is given, it is first flattened.
             obj = flatten(obj);
-            fprintf('Getting directed bonds ');
+            fprintf('Getting directed bonds');
             theseDBonds = dBonds(obj); % Currently runs on a 1-dimensional list
             dbArray = [obj.experiment];
             dbFolderArray = {dbArray.folder_};
@@ -236,9 +236,9 @@ classdef Cell < PhysicalEntity
                     obj(i).outline_ = thisOutline;
                 end
             end
-            
-        end
-        
+
+        end    
+
         function plot_pixels = plot_pixels(obj)
             plot_pixels = {};
             obj = flatten(obj);
@@ -254,21 +254,56 @@ classdef Cell < PhysicalEntity
                     [xq,yq] = meshgrid([minX:maxX],[minY:maxY]);
                     [in,on] = inpolygon(xq,yq,obj(i).outline_(:,1),obj(i).outline_(:,2));
                     obj(i).plot_pixels_ = [xq(in & (~on)),yq(in & (~on))];
-                    
+
                  end
                 plot_pixels{i} = obj(i).plot_pixels_;
             end
-            
+
         end
-        
+
         function list_pixels = list_pixels(obj)
             list_pixels = [];
             obj = flatten(obj);
             list_pixels(:,1) = [obj.center_x];
             list_pixels(:,2) = [obj.center_y];
-        end
-        
-    end
-    
-end
+  %         list_pixels(:,3) = [obj.center_z];
 
+        end
+
+        function pair_arr = createNeihgborPairs(obj)
+            pair_arr = [];
+            obj.neighbors;
+            for i=1:length(obj)
+                fprintf('Finding pairs for cell #%d \n', i);
+                % Create first rank neihgbour pairs
+                if ~isnan(obj(i).neighbors_)
+                    cell_pairs = {};
+                    cell_pairs{1} = Pair([repmat(obj(i),length(obj(i).neighbors_),1), obj(i).neighbors_'],ones(length(obj(i).neighbors_),1));
+                    % Proceed to further ranks:
+                    stopCount = 0;
+                    rank = 1;
+                    allNeighbors = [];
+                    while ~stopCount
+                        theseNeighbors = unique(arrayfun( @(arr) arr.elements(2), cell_pairs{rank}));
+                        allNeighbors = [allNeighbors,theseNeighbors];
+                        rank = rank+1;
+                        cell_pairs{rank} = {};
+                        for j=1:length(theseNeighbors)
+                            new_neighbors = unique(theseNeighbors(j).neighbors_);
+                            new_neighbors = new_neighbors(ne(new_neighbors,obj(i)));
+                            new_neighbors = setdiff(new_neighbors,allNeighbors);
+                            if ~isnan(new_neighbors)
+                                new_pairs = Pair([repmat(obj(i),length(new_neighbors),1), new_neighbors'],rank*ones(length(new_neighbors),1));
+                                cell_pairs{rank} = [cell_pairs{rank},new_pairs];
+                            end
+                        end
+                        stopCount = isempty(cell_pairs{rank});
+                    end
+                    pair_arr = [pair_arr,[cell_pairs{1,:}]];
+                end
+            end
+        end
+
+    end
+
+end

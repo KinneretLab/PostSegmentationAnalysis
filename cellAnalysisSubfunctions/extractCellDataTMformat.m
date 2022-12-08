@@ -21,8 +21,8 @@ end
 
 % Run over all prescribed frames:
 
-for k = frames
-    try
+ for k = frames
+  %  try
     thisFolder = sortedFolderNames{k};
     cd([segDir,'\',thisFolder]);
     
@@ -333,7 +333,7 @@ for k = frames
             
         else if ~isempty(frameCellData(s).vertices)
                 verts = frameCellData(s).vertices;
-                if length(verts)==2
+                if or(length(verts)== 2 ,length(verts)== 1)
                     ordered_verts = verts;
                 else
                     % Choose the first vertex in the list as the starting
@@ -488,11 +488,11 @@ for k = frames
   save([thisFolder,'_DBondData'],'frame_dBonds');
   
   disp(['Done with frame ',num2str(k)])
-    catch
-        
-        disp(['Skipped frame ',num2str(k)])
-        
-    end
+%   %  catch
+% 
+%         disp(['Skipped frame ',num2str(k)])
+% 
+%     end
 end
 
 end

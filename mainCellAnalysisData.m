@@ -1,14 +1,14 @@
- n %% 0. Initialization:
+%% 0. Initialization:
 clear all; close all;
 addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\GroupCodes\July2021'));
 
 %% 0.1 Define mainDirList
 
 % Locations of original data - needed only for timestamps
-topMainDir = '\\phhydra\phhydraB\SD\2021\Liora\2021_07\'; % main folder of original files
+topMainDir = '\\phhydra\phhydraB\SD2\2021\Yonit\2021_05\'; % main folder of original files
 rawMainAnalysisDirList= { ... % enter in the following line all sub-directories for movie analysis.
 
-'\2021_07_26\', ...
+'\2021_05_06\', ...
 
 
 
@@ -16,10 +16,10 @@ rawMainAnalysisDirList= { ... % enter in the following line all sub-directories 
 for i=1:length(rawMainAnalysisDirList),rawMainDirList{i}=[topMainDir,rawMainAnalysisDirList{i}];end
 
 
-topAnalysisDir='Z:\Analysis\users\Liora\Movie_Analysis\2021_07_26\'; % main folder for movie analysis
+topAnalysisDir='Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\'; % main folder for movie analysis
 mainAnalysisDirList= { ... % enter in the following line all sub-directories for movie analysis.
 
-'2021_07_26_pos3\', ...
+'2021_05_06_pos6\', ...
 
 
 };
@@ -50,7 +50,7 @@ for n=1:length(mainDirList)
    %% 1. Initialize parameters for each movie
     disp(['Analyzing movie/dataset ',num2str(n)])
     mainDir = mainDirList{n};
-    cellDir = [mainDir,'\Cells_presentation\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
+    cellDir = [mainDir,'\Cells_auto\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
     segDir = [cellDir,'AllSegmented\']; % Segmentation folder.
     maskDir =  [mainDir,'\Display\Masks'];
     outlineDir = [cellDir,'\Outlines'];

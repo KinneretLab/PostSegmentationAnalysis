@@ -14,6 +14,8 @@ classdef Vertex < PhysicalEntity
         x_pos
         % the pixel Y coordinate of the vertex in the image
         y_pos
+        % the pixel Z coordinate of the vertex in the image
+        z_pos
     end
     
     methods
@@ -101,6 +103,8 @@ classdef Vertex < PhysicalEntity
             obj = flatten(obj);
             list_pixels(:,1) = [obj.x_pos];
             list_pixels(:,2) = [obj.y_pos];
+          %  list_pixels(:,3) = [obj.z_pos];
+
         end
         
     end

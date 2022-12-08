@@ -366,11 +366,15 @@ classdef (Abstract) PhysicalEntity < handle
             % since the lookup was placed into a cell array, we need to
             % reshape it into a matrix.
             sizes = cellfun(@(result) (length(result)), lookup_result);
-            phys_arr(numel(obj), max(sizes)) = feval(clazz);
-            for i=1:numel(obj)
-                if sizes(i) > 0
-                    phys_arr(i, 1:sizes(i)) = lookup_result{i};
+            if max(sizes) > 0
+                phys_arr(numel(obj), max(sizes)) = feval(clazz);
+                for i=1:numel(obj)
+                    if sizes(i) > 0
+                        phys_arr(i, 1:sizes(i)) = lookup_result{i};
+                    end
                 end
+            else
+                phys_arr = eval(clazz, '.empty(', num2str(length(obj)), ',0)');
             end
             if length(obj) ~= numel(obj)
                 % reorganize the 2D array into a 3D array
@@ -421,19 +425,25 @@ classdef (Abstract) PhysicalEntity < handle
                     result_row = index_result(i, :);
                     obj_to_index(i).(prop) = unique(result_row(~isnan(result_row)));
                 end
+            else
+                phys_arr = eval([clazz, '.empty(', num2str(length(obj)), ',0)']);
             end
             % collect all the properties of the object into a tight matrix.
             sizes = arrayfun(@(entity) ~Null.isNull(entity.(prop)) * length(entity.(prop)), obj);
-            if ismember(clazz, {'logical', 'double', 'single', 'uint8', ...
-                    'uint16', 'uint32', 'uint64', 'int8', 'int16', 'int32', 'int64'})
-                phys_arr(numel(obj), max(sizes, [], 'all')) = feval(clazz, 0);
-            else
-                phys_arr(numel(obj), max(sizes, [], 'all')) = feval(clazz);
-            end
-            for i=1:numel(obj)
-                if sizes(i) > 0
-                    phys_arr(i, 1:sizes(i)) = obj(i).(prop);
+            if max(sizes) > 0
+                if ismember(clazz, {'logical', 'double', 'single', 'uint8', ...
+                        'uint16', 'uint32', 'uint64', 'int8', 'int16', 'int32', 'int64'})
+                    phys_arr(numel(obj), max(sizes, [], 'all')) = feval(clazz, 0);
+                else
+                    phys_arr(numel(obj), max(sizes, [], 'all')) = feval(clazz);
                 end
+                for i=1:numel(obj)
+                    if sizes(i) > 0
+                        phys_arr(i, 1:sizes(i)) = obj(i).(prop);
+                    end
+                end
+            else
+                phys_arr = eval([clazz, '.empty(', num2str(length(obj)), ',0)']);
             end
             % a reshape in case of a 1:1 function
             if numel(phys_arr) == numel(obj)
