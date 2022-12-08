@@ -39,8 +39,6 @@ classdef ImageLayerDrawData < handle
             obj.markers_size_=2;
             obj.markers_color_by_value_= false; %bool
             obj.markers_size_by_value_= false; %bool
-            obj.is_marker_quiver_=false;
-            obj.is_marker_layer_=false;
             obj.line_width_=0.5;
             obj.quiver_show_arrow_head_=false;
             obj.is_solid_color_=false;

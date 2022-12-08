@@ -29,7 +29,10 @@ classdef ImageDisplayHandler < handle
         
         function closeFigure(obj)
             if(~isempty(obj.figure_))
-                close(obj.figure_, "force")
+                try
+                    close(obj.figure_, "force")
+                catch
+                end 
             end
         end
         

@@ -45,15 +45,17 @@ classdef LayerDataPanel<handle
         
         function create(obj, layer_data)
             obj.hide();
-            if(~layer_data.getIsMarkerLayer() && ~layer_data.getIsMarkerQuiver())
-                obj.showImageLayerPanel();
-                obj.setImageLayerSettings(layer_data);
-            elseif(layer_data.getIsMarkerLayer())
-                obj.showMarkerLayerPanel();
-                obj.setMarkerLayerSettings(layer_data);
-            elseif(layer_data.getIsMarkerQuiver())
-                obj.showQuiverLayerPanel();
-                obj.setQuiverLayerSettings(layer_data);
+            type=layer_data.getType();
+            switch(type)
+                case obj.image_component_handler_.image_type
+                    obj.showImageLayerPanel();
+                    obj.setImageLayerSettings(layer_data);
+                case obj.image_component_handler_.marker_type
+                    obj.showMarkerLayerPanel();
+                    obj.setMarkerLayerSettings(layer_data);
+                case obj.image_component_handler_.quiver_type
+                    obj.showQuiverLayerPanel();
+                    obj.setQuiverLayerSettings(layer_data);
             end
         end
         
@@ -406,12 +408,15 @@ classdef LayerDataPanel<handle
         end
         
         function layer_data =getLayerData(obj, layer_data)
-            if(~layer_data.getIsMarkerLayer() && ~layer_data.getIsMarkerQuiver())
-                layer_data=obj.getImageLayerSettings(layer_data);
-            elseif(layer_data.getIsMarkerLayer())
-                layer_data=obj.getMarkerLayerSettings(layer_data);
-            else
-                layer_data=obj.getQuiverLayerSettings(layer_data);
+            type=layer_data.getType;
+            switch(type)
+                case obj.image_component_handler_.image_type
+                    layer_data=obj.getImageLayerSettings(layer_data);
+                case obj.image_component_handler_.marker_type
+                    layer_data=obj.getMarkerLayerSettings(layer_data);
+
+                case obj.image_component_handler_.quiver_type
+                    layer_data=obj.getQuiverLayerSettings(layer_data);
             end
         end
         
