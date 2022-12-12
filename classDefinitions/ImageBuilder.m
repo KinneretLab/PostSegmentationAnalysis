@@ -6,7 +6,6 @@ classdef ImageBuilder <  FigureBuilder & handle
         save_format_ = "png";
         frame_to_draw_ = [];
         output_folder_="";
-        builder_file_name_="builder";
         layers_data_ = {};
         image_data_ = [];
     end
@@ -166,11 +165,14 @@ classdef ImageBuilder <  FigureBuilder & handle
             ylim(ylims);
             switch obj.save_format_
                 case "png"
-                    %exportgraphics(figure,fname,'Resolution',239)
+                    if(obj.image_data.getShowColorbar)
+                        exportgraphics(figure,fname,'Resolution',600)
+                        return;
+                    end
                     ax=findall(figure,'type','axes');
                     frame=getframe(ax);
                     image=frame.cdata;
-                    %image=imresize(image,obj.image_data.getImageSize);
+                    image=obj.fixBorders(image);
                     imwrite(image, fname);
                 case "fig"
                     set(gcf,'visible','on');
@@ -178,11 +180,13 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
         end
 
-        function check_imsize(obj,figure)
-            ax=findall(figure,'type','axes');
-            frame=getframe(ax);
-            image=frame.cdata;
-            disp(size(image));
+        function image = fixBorders(obj, image)
+            [rows ,cols, ~]=size(image);
+            if([rows, cols]~=obj.data_{1}(1).experiment.image_size_)
+                image(end,:, :)=[];
+                image(1,:, :)=[];
+                image(:,1, :)=[];
+            end
         end
 
         function loadBuilder(obj, input)
@@ -193,9 +197,9 @@ classdef ImageBuilder <  FigureBuilder & handle
             obj.layers_data_=saved_builder.layers_data;
         end
 
-        function obj= saveBuilder(obj)
+        function obj= saveBuilder(obj, file_name)
             saved_builder=obj;
-            save(fullfile(obj.output_folder_, obj.builder_file_name_), 'saved_builder');
+            save(fullfile(obj.output_folder_, file_name), 'saved_builder');
         end
         
         function figures = draw(obj, input) 
@@ -237,7 +241,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                 set(gcf,'visible','off');
             end
             if(isempty(obj.image_data_.getBackgroundImage())) %if the marker layer is the only layer then there must be a background image
-                background=obj.createBackground(obj.image_data.getImageSize, obj.image_data_.getColorForNaN());
+                background=obj.createBackground(obj.data_{1}(1).experiment.image_size_, obj.image_data_.getColorForNaN());
             else
                 background=obj.image_data_.getBackgroundImage();
                 if(obj.image_data_.getIsBackgroundPerFrame())
@@ -246,12 +250,11 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
             imshow(background);
             %axis off;
-            obj.check_imsize(fig);
+
             hold on;
             [row, ~]=size(frame);
             for i = 1 : row
                 obj.drawLayer(frame{i}, i);
-                obj.check_imsize(fig);
                 if i == row
                     hold off;
                 end
@@ -368,7 +371,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             image=mat2gray(layer, layer_data.getScale());
             ind=gray2ind(image, 256);
             if(layer_data.getIsSolidColor())
-                image=obj.createBackground(image_data.getImageSize,layer_data.getSolidColor());
+                image=obj.createBackground(obj.data_{1}(1).experiment.image_size_,layer_data.getSolidColor());
             else
                 image=ind2rgb(ind, colormap(layer_data.getColormap()));
                 if(obj.image_data.getShowColorbar && layer_data.getColorbar)
