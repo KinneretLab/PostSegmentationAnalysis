@@ -63,7 +63,7 @@ classdef ImageComponentHandler < handle
         
         function loadBackground(obj)
             back=Utilities.getBackground();
-            obj.ImageBuilder.image_data_.setBackgroundImage(back);
+            obj.ImageBuilder.image_data.setBackgroundImage(back);
             if(obj.canDeleteBackground())
                 obj.app_.DeleteBackgroundButton.Enable=true;
             end
@@ -80,7 +80,7 @@ classdef ImageComponentHandler < handle
         end
         
         function deleteBackground(obj)
-            obj.ImageBuilder.image_data_.setBackgroundImage({});
+            obj.ImageBuilder.image_data.setBackgroundImage({});
         end
         
     end
@@ -133,11 +133,12 @@ classdef ImageComponentHandler < handle
                 return;
             end
             for i=1:col
-                can_delete=(~obj.ImageBuilder.layers_data(i).getType()==obj.image_type);
-                if(can_delete)
+                if(obj.ImageBuilder.layers_data(i).getType()==obj.image_type)
+                    can_delete=true;
                     return;
                 end
             end
+            can_delete=false;
         end
         
         function showLayers(obj, ~)

@@ -69,7 +69,7 @@ classdef LayerDataPanel<handle
         end
 
         function showMarkerLayerPanel(obj)
-            obj.grid_.RowHeight = { '1x', '1x', '1x', '1x', '1x', '1x', '1x', '1x', '1x'};
+            obj.grid_.RowHeight = { '1x', '1x', '1x', '1x', '1x', '1x', '1x', '1x', '1x', '1x'};
             obj.ShowCheckBox.Parent=obj.grid_;
             obj.ShowCheckBox.Layout.Row = 2;
             obj.ShowCheckBox.Layout.Column = 1;
@@ -141,6 +141,23 @@ classdef LayerDataPanel<handle
             obj.LineWidthSpinner.Parent=obj.grid_;
             obj.LineWidthSpinner.Layout.Row=9;
             obj.LineWidthSpinner.Layout.Column=2;
+
+            obj.ScaleGrid.Parent=obj.grid_;
+            obj.ScaleGrid.Layout.Row = 10;
+            obj.ScaleGrid.Layout.Column = 2;
+
+            obj.ScaleMin.Parent=obj.ScaleGrid;
+            obj.ScaleMin.Layout.Row = 1;
+            obj.ScaleMin.Layout.Column = 1;
+
+            obj.ScaleMax.Parent=obj.ScaleGrid;
+            obj.ScaleMax.Layout.Row = 1;
+            obj.ScaleMax.Layout.Column = 2;
+
+            obj.ScaleLabel.Parent = obj.grid_;
+            obj.ScaleLabel.Layout.Row = 10;
+            obj.ScaleLabel.Layout.Column = 1;
+
         end
 
         function showImageLayerPanel(obj)
@@ -268,10 +285,10 @@ classdef LayerDataPanel<handle
         end
 
         function hideImageLayerPanel(obj)
-            obj.ScaleGrid.Parent=[];
-            obj.ScaleMin.Parent=[];
-            obj.ScaleMax.Parent=[];
-            obj.ScaleLabel.Parent = [];
+%             obj.ScaleGrid.Parent=[];
+%             obj.ScaleMin.Parent=[];
+%             obj.ScaleMax.Parent=[];
+%             obj.ScaleLabel.Parent = [];
             obj.ColorLabel.Parent = [];
             obj.FillCheckBox.Parent = [];
             obj.ColorGrid.Parent = [];
@@ -297,6 +314,10 @@ classdef LayerDataPanel<handle
         end
 
         function hideSharedLayerPanel(obj)
+            obj.ScaleGrid.Parent=[];
+            obj.ScaleMin.Parent=[];
+            obj.ScaleMax.Parent=[];
+            obj.ScaleLabel.Parent = [];
             obj.ShowCheckBox.Parent=[];
             obj.ColorbarCheckBox.Parent=[];
             obj.ColormapDropDownLabel.Parent=[];
@@ -318,6 +339,12 @@ classdef LayerDataPanel<handle
         end
 
         function createSharedLayerData(obj)
+            obj.ScaleGrid = uigridlayout(obj.grid_);
+            obj.ScaleMin = uieditfield(obj.ScaleGrid, 'numeric');
+            obj.ScaleMax = uieditfield(obj.ScaleGrid, 'numeric');
+            obj.ScaleLabel = uilabel(obj.grid_);
+            obj.ScaleGrid.RowHeight = {'1x'};
+            obj.ScaleLabel.Text = 'Scale';
             obj.ShowCheckBox=uicheckbox(obj.grid_);
             obj.ColorbarCheckBox=uicheckbox(obj.grid_);
             obj.ColormapDropDownLabel=uilabel(obj.grid_);
@@ -350,18 +377,18 @@ classdef LayerDataPanel<handle
         end
 
         function createImageLayerData(obj)
-            obj.ScaleGrid = uigridlayout(obj.grid_);
-            obj.ScaleMin = uieditfield(obj.ScaleGrid, 'numeric');
-            obj.ScaleMax = uieditfield(obj.ScaleGrid, 'numeric');
-            obj.ScaleLabel = uilabel(obj.grid_);
+%             obj.ScaleGrid = uigridlayout(obj.grid_);
+%             obj.ScaleMin = uieditfield(obj.ScaleGrid, 'numeric');
+%             obj.ScaleMax = uieditfield(obj.ScaleGrid, 'numeric');
+%             obj.ScaleLabel = uilabel(obj.grid_);
             obj.ColorLabel = uilabel(obj.grid_);
             obj.FillCheckBox = uicheckbox(obj.grid_);
             obj.ColorGrid = uigridlayout(obj.grid_);
             obj.RValue = uispinner(obj.ColorGrid);
             obj.GValue = uispinner(obj.ColorGrid);
             obj.BValue = uispinner(obj.ColorGrid);
-            obj.ScaleGrid.RowHeight = {'1x'};
-            obj.ScaleLabel.Text = 'Scale';
+%             obj.ScaleGrid.RowHeight = {'1x'};
+%             obj.ScaleLabel.Text = 'Scale';
             obj.ColorLabel.Text = 'Color';
             obj.FillCheckBox.Text = 'Fill';
             obj.ColorGrid.ColumnWidth = {'1x', '1x', '1x'};
@@ -419,6 +446,9 @@ classdef LayerDataPanel<handle
 
         function setMarkerLayerSettings(obj, layer_data)
             obj.ShowCheckBox.Value=layer_data.getShow();
+            scale=layer_data.getScale();
+            obj.ScaleMax.Value=scale(2);
+            obj.ScaleMin.Value=scale(1);
             obj.ColorbarCheckBox.Value=layer_data.getColorbar();
             obj.OpacitySpinner.Value=layer_data.getOpacity();
             obj.ColorbyValueCheckBox.Value = layer_data.getMarkersColorByValue();
@@ -457,6 +487,7 @@ classdef LayerDataPanel<handle
             layer_data.setShow(obj.ShowCheckBox.Value);
             layer_data.setColorbar(obj.ColorbarCheckBox.Value);
             layer_data.setOpacity(obj.OpacitySpinner.Value);
+            layer_data.setScale([obj.ScaleMin.Value obj.ScaleMax.Value]);
             layer_data.setMarkersColorByValue(obj.ColorbyValueCheckBox.Value);
             layer_data.setMarkersSizeByValue(obj.SizeByValueCheckBox.Value);
             layer_data.setMarkersSize(obj.SizeSpinner.Value);

@@ -290,6 +290,13 @@ classdef ImageBuilder <  FigureBuilder & handle
             x=layer(:,1);
             y=layer(:, 2);
             value=layer(:,3);
+            if isempty(layer_data.getScale())
+                mi=min(value);
+                ma=max(value);
+                scale=[mi ma];
+                scale(isnan(scale))=0;
+                layer_data.setScale(scale);
+            end
             if(layer_data.getMarkersSizeByValue())
                 marker_size=value;
                 marker_size(marker_size==0)=nan;
@@ -299,7 +306,15 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
             if(layer_data.getMarkersColorByValue())
                 s=scatter(x,y, marker_size, "CData" , value);
-                colormap(gca, layer_data.getColormap());
+                colormap(layer_data.getColormap());                    
+                if(obj.image_data.getShowColorbar && layer_data.getColorbar)
+                    freezeColors;
+                    freezeColors(colorbar);
+%                     try
+%                         caxis(layer_data.getScale);
+%                     catch
+%                     end
+                end
             else
                 s=scatter(x,y, marker_size, layer_data.getMarkersColor());
             end
@@ -365,7 +380,9 @@ classdef ImageBuilder <  FigureBuilder & handle
             if isempty(layer_data.getScale())
                 mi=min(layer(:));
                 ma=max(layer(:));
-                layer_data.setScale([mi ma]);
+                scale=[mi ma];
+                scale(isnan(scale))=0;
+                layer_data.setScale(scale);
             end
             layer=obj.fixImageAxes(layer);
             image=mat2gray(layer, layer_data.getScale());
@@ -376,7 +393,10 @@ classdef ImageBuilder <  FigureBuilder & handle
                 image=ind2rgb(ind, colormap(layer_data.getColormap()));
                 if(obj.image_data.getShowColorbar && layer_data.getColorbar)
                     freezeColors(colorbar);
-                    caxis(layer_data.getScale);
+                    try
+                        caxis(layer_data.getScale);
+                    catch
+                    end
                 end
             end
             %creates the image
