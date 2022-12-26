@@ -11,7 +11,6 @@ classdef ImageDrawData < handle
         %will be validated
         show_colorbar_ %bool
         colorbar_title_
-        colorbar_axis_scale_
         image_title_
         legend_for_markers_
         crop_ %bool
@@ -25,13 +24,13 @@ classdef ImageDrawData < handle
             obj.background_image_=[];
             obj.is_background_per_frame_=false;
             obj.show_colorbar_= true;
-            obj.colorbar_axis_scale_ = [];
             obj.image_title_="";
             obj.colorbar_title_="";
             obj.legend_for_markers_=false;
             obj.crop_=false;
             obj.image_builder_=image_builder;
             obj.crop_size_=64; %when crop is enabled: if center point is given will prodice an image of obj.crop_size_Xobj.crop_size_ around it, if not, wwill automatically crop around center point of image, will include all of it, and this will be length outside
+            obj.crop_center_point_=[0 0];
         end
         
         function obj=setBackgroundImage(obj, value)
@@ -68,14 +67,6 @@ classdef ImageDrawData < handle
         
         function value = getColorbarTitle(obj)
             value = obj.colorbar_title_;
-        end
-        
-        function obj=setColorbarAxisScale(obj, value)
-            obj.colorbar_axis_scale_ = value;
-        end
-        
-        function value = getColorbarAxisScale(obj)
-            value = obj.colorbar_axis_scale_;
         end
         
         function obj=setImageTitle(obj, value)

@@ -182,10 +182,21 @@ classdef ImageBuilder <  FigureBuilder & handle
 
         function image = fixBorders(obj, image)
             [rows ,cols, ~]=size(image);
-            if([rows, cols]~=obj.data_{1}(1).experiment.image_size_)
-                image(end,:, :)=[];
-                image(1,:, :)=[];
-                image(:,1, :)=[];
+            border_color=[240 240 240];
+            if(~all([rows, cols]~=obj.data_{1}(1).experiment.image_size_))
+                if(image(1,2,:)==border_color)
+                    image(1,:, :)=[];
+                end
+                if(image(end, 2, :)==border_color)
+                    image(end,:, :)=[];
+                end
+                if(image(2,1, :)==border_color)
+                    image(:,1, :)=[];
+                end
+                if(image(2,end, :)==border_color)
+                    image(:,end, :)=[];
+                end 
+
             end
         end
 
@@ -225,6 +236,8 @@ classdef ImageBuilder <  FigureBuilder & handle
                 frame = obj.layer_arr_(:, obj.frame_to_draw_);
                 figures{1} = obj.drawFrame(frame, true, obj.frame_to_draw_);
                 obj.frame_to_draw_=[];
+                xlim(xlims);
+                ylim(ylims);
                 return;
             end
             for i= 1 : col
@@ -308,13 +321,13 @@ classdef ImageBuilder <  FigureBuilder & handle
                 s=scatter(x,y, marker_size, "CData" , value);
                 colormap(layer_data.getColormap());                    
                 if(obj.image_data.getShowColorbar && layer_data.getColorbar)
-                    freezeColors;
                     freezeColors(colorbar);
-%                     try
-%                         caxis(layer_data.getScale);
-%                     catch
-%                     end
+                    try
+                        caxis(layer_data.getScale);
+                    catch
+                    end
                 end
+                freezeColors;
             else
                 s=scatter(x,y, marker_size, layer_data.getMarkersColor());
             end

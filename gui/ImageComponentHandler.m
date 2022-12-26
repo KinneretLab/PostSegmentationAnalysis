@@ -7,7 +7,7 @@ classdef ImageComponentHandler < handle
         ImageBuilder
         frame_default_value_=1
         shown_layer_
-        app_ %TODO: remove app from functions that recieve it
+        app_ 
         layer_data_panel_
         is_layer_first_loaded_=false
         figures_
@@ -30,35 +30,36 @@ classdef ImageComponentHandler < handle
         end
         
         function show(obj)
-            obj.renderFromImageBuilder(obj.app_);
+            obj.renderFromImageBuilder(true);
             obj.app_.ImageTab.Parent=obj.app_.TabGroup;
             obj.showLayers(obj.app_);
             obj.setImageSettings(obj.app_);
         end
         
         function saveFigures(obj)
-            [~, path] = uiputfile("*.*");
+            path = uigetdir;
             if(path ==0)
                 return;
             end
             obj.ImageBuilder.output_folder(path).draw();
         end
         
-        function renderFromInput(obj, app)
-            obj.setImageData(app);
+        function renderFromInput(obj)
+            obj.setImageData;
             obj.ImageBuilder.layers_data(obj.shown_layer_,obj.layer_data_panel_.getLayerData(obj.ImageBuilder.layers_data(obj.shown_layer_)))
-            obj.renderFromImageBuilder(app);
+            obj.renderFromImageBuilder(false);
             if(~obj.canDeleteBackground())
                 obj.app_.DeleteBackgroundButton.Enable=false;
             end
         end
         
-        function renderFromImageBuilder(obj, app)
+        function renderFromImageBuilder(obj, is_new_image)
             obj.is_layer_first_loaded_=false;
             obj.ImageDisplayHandler.closeFigure;
             obj.ImageDisplayHandler.show;
-            app.ChooseFrameSlider.Value=obj.frame_default_value_;
-            obj.setNumOfFrames(app, length(obj.ImageBuilder.layer_arr));
+            if(is_new_image)
+                obj.setNumOfFrames( length(obj.ImageBuilder.layer_arr));
+            end
         end
         
         function loadBackground(obj)
@@ -67,6 +68,10 @@ classdef ImageComponentHandler < handle
             if(obj.canDeleteBackground())
                 obj.app_.DeleteBackgroundButton.Enable=true;
             end
+        end
+
+        function setDisplayedFrameNumber(obj, frame_num)
+            obj.app_.FrameNumLabel.Text = sprintf("%d",frame_num);
         end
         
         function changeLayer(obj, layer_num)
@@ -86,24 +91,27 @@ classdef ImageComponentHandler < handle
     end
     
     methods (Access=private)     
-        function setNumOfFrames(~, app, num)
+        function setNumOfFrames(obj, num)
             if(num==1)
-                app.ChooseFrameSlider.Visible=false;
+                obj.app_.ChooseFrameSlider.Visible=false;
                 return;
             end
-            app.ChooseFrameSlider.Visible=true;
-            app.ChooseFrameSlider.Limits= [1 num];
+            obj.app_.ChooseFrameSlider.Visible=true;
+            obj.app_.ChooseFrameSlider.Limits= [1 num];
+            obj.app_.ChooseFrameSlider.Value=obj.frame_default_value_;
         end
         
-        function setImageData(obj, app)
-            obj.ImageBuilder.image_data.setImageTitle(app.ImageTitleEditField.Value);
-            color = [app.RValue.Value app.GValue.Value app.BValue.Value];
+        function setImageData(obj)
+            obj.ImageBuilder.image_data.setImageTitle(obj.app_.ImageTitleEditField.Value);
+            color = [obj.app_.RValue.Value obj.app_.GValue.Value obj.app_.BValue.Value];
             obj.ImageBuilder.image_data.setColorForNaN(color);
-            obj.ImageBuilder.image_data.setShowColorbar(app.ShowColorbarCheckBox.Value);
-            obj.ImageBuilder.image_data.setColorbarTitle(app.ColorbarTitleEditField.Value);
-            scale=[app.ColorbarAxisMin.Value app.ColorbarAxisMax.Value];
-            obj.ImageBuilder.image_data.setColorbarAxisScale(scale);
-            obj.ImageBuilder.image_data.setLegendForMarkers(app.ShowLegendCheckBox.Value);
+            obj.ImageBuilder.image_data.setShowColorbar(obj.app_.ShowColorbarCheckBox.Value);
+            obj.ImageBuilder.image_data.setColorbarTitle(obj.app_.ColorbarTitleEditField.Value);
+            obj.ImageBuilder.image_data.setLegendForMarkers(obj.app_.ShowLegendCheckBox.Value);
+            obj.ImageBuilder.image_data.setCrop(obj.app_.CropCheckBox.Value);
+            obj.ImageBuilder.image_data.setCropSize(obj.app_.CropSizeEditField.Value);
+            crop_center_point=[obj.app_.CropC_X.Value obj.app_.CropC_Y.Value];
+            obj.ImageBuilder.image_data.setCropCenterPoint(crop_center_point);
         end
         
         function setImageSettings(obj, ~)
@@ -114,16 +122,17 @@ classdef ImageComponentHandler < handle
             obj.app_.BValue.Value=color(3);
             obj.app_.ShowColorbarCheckBox.Value =obj.ImageBuilder.image_data.getShowColorbar();
             obj.app_.ColorbarTitleEditField.Value=obj.ImageBuilder.image_data.getColorbarTitle();
-            colorbar_scale=obj.ImageBuilder.image_data.getColorbarAxisScale();
-            if(~isempty(colorbar_scale))
-                obj.app_.ColorbarAxisMin.Value=colorbar_scale(1);
-                obj.app_.ColorbarAxisMax.Value=colorbar_scale(2);
-            end
             obj.app_.ShowLegendCheckBox.Value=obj.ImageBuilder.image_data.getLegendForMarkers();
             obj.app_.DeleteBackgroundButton.Enable=true;
             if(~obj.canDeleteBackground())
                 obj.app_.DeleteBackgroundButton.Enable=false;
             end
+            obj.app_.CropCheckBox.Value=obj.ImageBuilder.image_data.getCrop;
+            obj.app_.CropSizeEditField.Value=obj.ImageBuilder.image_data.getCropSize;
+            crop_c_point=obj.ImageBuilder.image_data.getCropCenterPoint;
+            obj.app_.CropC_X.Value=crop_c_point(1);
+            obj.app_.CropC_Y.Value=crop_c_point(2);
+
         end
         
         function can_delete= canDeleteBackground(obj)
@@ -146,7 +155,7 @@ classdef ImageComponentHandler < handle
         end 
         
         function showLayerData(obj)
-            obj.layer_data_panel_.create(obj.ImageBuilder.layers_data(obj.shown_layer_))
+            obj.layer_data_panel_.create(obj.ImageBuilder.layers_data(obj.shown_layer_));
         end 
     end
 end

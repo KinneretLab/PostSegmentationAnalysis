@@ -374,21 +374,18 @@ classdef LayerDataPanel<handle
             obj.LineWidthSpinnerLabel= uilabel(obj.grid_);
             obj.LineWidthSpinnerLabel.Text="Line Width";
             obj.LineWidthSpinner=uispinner(obj.grid_);
+            obj.ScaleGrid.Padding = [1, 1, 1,1];
         end
 
         function createImageLayerData(obj)
-%             obj.ScaleGrid = uigridlayout(obj.grid_);
-%             obj.ScaleMin = uieditfield(obj.ScaleGrid, 'numeric');
-%             obj.ScaleMax = uieditfield(obj.ScaleGrid, 'numeric');
-%             obj.ScaleLabel = uilabel(obj.grid_);
             obj.ColorLabel = uilabel(obj.grid_);
             obj.FillCheckBox = uicheckbox(obj.grid_);
             obj.ColorGrid = uigridlayout(obj.grid_);
+            obj.ColorGrid.Padding = [1, 1, 1,1];
+            obj.ColorGrid.ColumnSpacing = 5;
             obj.RValue = uispinner(obj.ColorGrid);
             obj.GValue = uispinner(obj.ColorGrid);
             obj.BValue = uispinner(obj.ColorGrid);
-%             obj.ScaleGrid.RowHeight = {'1x'};
-%             obj.ScaleLabel.Text = 'Scale';
             obj.ColorLabel.Text = 'Color';
             obj.FillCheckBox.Text = 'Fill';
             obj.ColorGrid.ColumnWidth = {'1x', '1x', '1x'};
