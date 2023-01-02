@@ -46,7 +46,7 @@ classdef ImageComponentHandler < handle
         
         function renderFromInput(obj)
             obj.setImageData;
-            obj.ImageBuilder.layers_data(obj.shown_layer_,obj.layer_data_panel_.getLayerData(obj.ImageBuilder.layers_data(obj.shown_layer_)))
+            obj.ImageBuilder.layers_data(obj.shown_layer_,obj.layer_data_panel_.getLayerData(obj.ImageBuilder.layers_data(obj.shown_layer_)));
             obj.renderFromImageBuilder(false);
             if(~obj.canDeleteBackground())
                 obj.app_.DeleteBackgroundButton.Enable=false;

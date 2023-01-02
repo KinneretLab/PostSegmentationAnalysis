@@ -1,12 +1,36 @@
 classdef ImageBuilder <  FigureBuilder & handle
-    
+    % IMAGEBUILDER A tool used to draw, display and save the data from the cell database in
+    % layers on top of each other.
     properties (Access = protected)
-        data_ = {};                  % {obj array...}
-        layer_arr_   = {};           % cell array of double arrays
+        %Stores the metadata of the frames that will be drawn.
+        % type: {obj array...}
+        data_ = {};
+        %Stores the graphic data for each layer of the frames that will be
+        %drawn. if the layer is an image layer it contains a matrix, if the
+        %layer is a marker or quiver layer it contains a list of
+        %coordinates
+        % type: cell array of double arrays
+        layer_arr_   = {};
+        %The save format of the images when there is an output_folder_ and
+        %frame_to_draw_ is empty can be png or fig
+        % type: str
         save_format_ = "png";
+        %The frame that will be drawn and displayed. after each run it is
+        %restored to the default value, when set the draw function will
+        %only draw this frame and will not save the images even if output
+        %folder exists.
+        % type: int
         frame_to_draw_ = [];
+        %The path of the folder that will contain all the saved images
+        %(image per frame) and if the builder is saved it will also be
+        %saved into this folder
+        % type: str
         output_folder_="";
+        %The data for calculating and drawing each layer in a cell array
+        % type: ImageLayerDrawData{}
         layers_data_ = {};
+        %The data for calculating and drawing the image - all the data that isn't layer specific.
+        % type: ImageDrawData
         image_data_ = [];
     end
 
@@ -16,11 +40,11 @@ classdef ImageBuilder <  FigureBuilder & handle
         marker_type="list";
         quiver_type="quiver";
     end
-    
+
     methods
-        
+
         function obj = ImageBuilder()
-            obj@FigureBuilder()           
+            obj@FigureBuilder()
 
             % generic global search for a particular folder; works independent of user
             search_path = '../*/matlab-utility-functions';
@@ -34,27 +58,27 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
             addpath(dir(search_path).folder)
         end
-        
+
     end
-    
+
     methods(Static)
         function func = property(prop_name)
             func = @(obj) (obj.(prop_name));
         end
-        
+
         function func = logical(const_value)
             % MISSING DOCUMENTATION
             func = BulkFunc(@(entity_arr) const_value & true(size(entity_arr)));
         end
-    end 
+    end
 
-    methods
-        
-        % This function arranges the data according to the desired layers,
-        % to later be converted into graphical representation. MORE
-        % DETAILED EXPLANATION TO BE ADDED
+    methods (Access=public)
+
+
         function [obj,layer_arr] = calculate(obj)
-            
+            %CALCULATE   This function arranges the data according to the desired layers,
+            % to later be converted into graphical representation.
+
             % Initiate output array
 
             layer_arr = {};
@@ -76,15 +100,15 @@ classdef ImageBuilder <  FigureBuilder & handle
 
                     % Get data arrays for frame, apply filter
                     phys_arr = frame_arr(j).(class);
-                    
+
                     % Apply filter to each entity
-                    
+
                     filtered_arr =  phys_arr(filter_fun(phys_arr));
-                    
+
                     % Get value for each object using the specified value
                     % function for this layer.
 
-                   %  value_arr = arrayfun(value_fun{1},filtered_arr);
+                    %  value_arr = arrayfun(value_fun{1},filtered_arr);
                     value_arr = BulkFunc.apply(value_fun{1},filtered_arr,obj,phys_arr);
 
 
@@ -94,10 +118,10 @@ classdef ImageBuilder <  FigureBuilder & handle
                     if exist('calibration_list')
                         if strcmp(calibration_fun{1},'xy')
                             value_arr = value_arr*(calibration_xy^(calibration_fun{2}));
-                            
+
                         else if strcmp(calibration_fun{1},'z')
                                 value_arr = value_arr*(calibration_z^(calibration_fun{2}));
-                            end
+                        end
                         end
                     end
                     if ~isempty(filtered_arr)
@@ -156,51 +180,12 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
             obj.layer_arr_ = layer_arr;
         end
-        
-        function saveFigure(obj, figure, frame_num, xlims, ylims)
-            frame=obj.data_{1}(frame_num);
-            name=frame.frame_name;
-            fname = fullfile(obj.output_folder_, sprintf("%s.%s",name,obj.save_format_));
-            xlim(xlims);
-            ylim(ylims);
-            switch obj.save_format_
-                case "png"
-                    if(obj.image_data.getShowColorbar)
-                        exportgraphics(figure,fname,'Resolution',600)
-                        return;
-                    end
-                    ax=findall(figure,'type','axes');
-                    frame=getframe(ax);
-                    image=frame.cdata;
-                    image=obj.fixBorders(image);
-                    imwrite(image, fname);
-                case "fig"
-                    set(gcf,'visible','on');
-                    savefig(figure, fname)
-            end
-        end
-
-        function image = fixBorders(obj, image)
-            [rows ,cols, ~]=size(image);
-            border_color=[240 240 240];
-            if(~all([rows, cols]~=obj.data_{1}(1).experiment.image_size_))
-                if(image(1,2,:)==border_color)
-                    image(1,:, :)=[];
-                end
-                if(image(end, 2, :)==border_color)
-                    image(end,:, :)=[];
-                end
-                if(image(2,1, :)==border_color)
-                    image(:,1, :)=[];
-                end
-                if(image(2,end, :)==border_color)
-                    image(:,end, :)=[];
-                end 
-
-            end
-        end
 
         function loadBuilder(obj, input)
+            % LOADBUILDER loads an image builder into current builder from the path indicated in input, the
+            % builder is saved in a .mat file and the format is the one the
+            % function saveBuilder generates.
+            % input: str - the path of the saved image builder.
             load(input, 'saved_builder');
             obj.layer_arr_=saved_builder.layer_arr;
             obj.data_=saved_builder.data;
@@ -209,20 +194,33 @@ classdef ImageBuilder <  FigureBuilder & handle
         end
 
         function obj= saveBuilder(obj, file_name)
+            % SAVEBUILDER saves the current image builder into a .mat file.
+            % saves it to the folder indicated by output_folder and with
+            % the file name file_name that is the input of the function
+            % input: str - the file name of the image builder .mat file.
             saved_builder=obj;
             save(fullfile(obj.output_folder_, file_name), 'saved_builder');
         end
-        
-        function figures = draw(obj, input) 
+
+        function figures = draw(obj, input)
+            % DRAW draws and saves the images.
+            % if frame_num_to_draw is given will draw and will only display
+            % the image without saving. after each time it is given the
+            % frame num to draw will be reset and the next time you will
+            % need to give it again. 
+            %if input is given the function will load the saved image
+            %builder and will later do all the other functionalities
+            % if layer_arr is empty the function will call calculate and
+            % will later do all the othe functionalities.
+            % input: (optional) str - the path of the saved image builder. 
             if(nargin==1)
                 input=[];
             end
-            if(isempty(input))
-                if(isempty(obj.layer_arr_))
-                    obj.calculate;
-                end
-            else
+            if(~isempty(input))
                 obj.loadBuilder(input);
+            end
+            if(isempty(obj.layer_arr_))
+                obj.calculate;
             end
             [~, col]=size(obj.layer_arr_);
             if(obj.image_data.getCrop)
@@ -248,6 +246,85 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
         end
 
+        function obj = addData(obj, frame_arr)
+            if ~strcmp(class(frame_arr),'Frame')
+                disp(sprint('Data must be an object or array of class frame'));
+            else
+                obj.data_{1} = frame_arr;
+            end
+        end
+
+        function obj = save_format(obj,format)
+            obj.save_format_ = format;
+        end
+
+        function layer_data=layers_data(obj, layer_num, data)
+            if(nargin==1)
+                layer_data=obj.layers_data_;
+                return;
+            elseif(nargin==3)
+                obj.layers_data_{layer_num}=data;
+            end
+            if(length(obj.layers_data_)<layer_num)
+                obj.layers_data_{layer_num}=ImageLayerDrawData(obj);
+            elseif(isempty(obj.layers_data_{layer_num}))
+                obj.layers_data_{layer_num}=ImageLayerDrawData(obj);
+            end
+            layer_data = obj.layers_data_{layer_num};
+        end
+
+
+        function image_data = image_data(obj)
+            if(isempty(obj.image_data_))
+                obj.image_data_=ImageDrawData(obj);
+            end
+            image_data = obj.image_data_;
+        end
+
+        function layer_arr = layer_arr(obj)
+            layer_arr = obj.layer_arr_;
+        end
+
+        function data = data(obj)
+            data = obj.data_;
+        end
+
+        function obj = frame_to_draw(obj, frame_to_draw)
+            obj.frame_to_draw_= frame_to_draw;
+        end
+
+        function obj = builder_file_name(obj, builder_file_name)
+            obj.builder_file_name_= builder_file_name;
+        end
+
+        function obj = output_folder(obj, output_folder)
+            obj.output_folder_= output_folder;
+        end
+    end
+
+    methods (Access=private)
+        function saveFigure(obj, figure, frame_num, xlims, ylims)
+            frame=obj.data_{1}(frame_num);
+            name=frame.frame_name;
+            fname = fullfile(obj.output_folder_, sprintf("%s.%s",name,obj.save_format_));
+            xlim(xlims);
+            ylim(ylims);
+            switch obj.save_format_
+                case "png"
+                    if(obj.image_data.getShowColorbar || ~isempty(obj.image_data.getImageTitle))
+                        exportgraphics(figure,fname,'Resolution',600)
+                        return;
+                    end
+                    ax=findall(figure,'type','axes');
+                    frame=getframe(ax);
+                    image=frame.cdata;
+                    image=obj.fixBorders(image);
+                    imwrite(image, fname);
+                case "fig"
+                    set(gcf,'visible','on');
+                    savefig(figure, fname)
+            end
+        end
         function fig = drawFrame(obj, frame, show_figures, frame_num)
             fig=figure;
             if(~show_figures)
@@ -276,9 +353,9 @@ classdef ImageBuilder <  FigureBuilder & handle
             title(obj.image_data_.getImageTitle());
             if(obj.image_data_.getLegendForMarkers())
                 legend;
-            end          
+            end
         end
-        
+
         function drawLayer(obj, layer, layer_num)
             if(isempty(layer))
                 return;
@@ -319,7 +396,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
             if(layer_data.getMarkersColorByValue())
                 s=scatter(x,y, marker_size, "CData" , value);
-                colormap(layer_data.getColormap());                    
+                colormap(layer_data.getColormap());
                 if(obj.image_data.getShowColorbar && layer_data.getColorbar)
                     freezeColors(colorbar);
                     try
@@ -429,14 +506,33 @@ classdef ImageBuilder <  FigureBuilder & handle
             fliplr(im);
             image=im';
         end
-        
+
         function back_image = createBackground(~, size, color)
             back_image = ones(size);
             for i = 1:3
                 back_image(:,:,i)=color(i);
             end
         end
-        
+        function image = fixBorders(obj, image)
+            [rows ,cols, ~]=size(image);
+            border_color=[240 240 240];
+            if(~all([rows, cols]~=obj.data_{1}(1).experiment.image_size_))
+                if(image(1,2,:)==border_color)
+                    image(1,:, :)=[];
+                end
+                if(image(end, 2, :)==border_color)
+                    image(end,:, :)=[];
+                end
+                if(image(2,1, :)==border_color)
+                    image(:,1, :)=[];
+                end
+                if(image(2,end, :)==border_color)
+                    image(:,end, :)=[];
+                end
+
+            end
+        end
+
         function s = getBackgroundSize(obj, frame)
             [row, ~]=size(frame);
             for i = 1:row
@@ -448,60 +544,5 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
             obj.logger.error('your layer_arr only contains markers. If you want to draw the image you need to add either image layer or background!');
         end
-        
-        function obj = addData(obj, frame_arr)
-            if ~strcmp(class(frame_arr),'Frame')
-                disp(sprint('Data must be an object or array of class frame'));
-            else
-                obj.data_{1} = frame_arr;
-            end
-        end
-
-        function obj = save_format(obj,format)
-            obj.save_format_ = format;
-        end
-        
-        function layer_data=layers_data(obj, layer_num, data)
-            if(nargin==1)
-                layer_data=obj.layers_data_;
-                return;
-            elseif(nargin==3)
-                obj.layers_data_{layer_num}=data;
-            end
-            if(length(obj.layers_data_)<layer_num)
-               obj.layers_data_{layer_num}=ImageLayerDrawData(obj);
-            elseif(isempty(obj.layers_data_{layer_num}))
-                obj.layers_data_{layer_num}=ImageLayerDrawData(obj);
-            end
-            layer_data = obj.layers_data_{layer_num};
-        end
-
-
-        function image_data = image_data(obj)
-            if(isempty(obj.image_data_))
-                obj.image_data_=ImageDrawData(obj);
-            end
-            image_data = obj.image_data_;
-        end
-
-        function layer_arr = layer_arr(obj)
-            layer_arr = obj.layer_arr_;
-        end
-
-        function data = data(obj)
-            data = obj.data_;
-        end
-
-        function obj = frame_to_draw(obj, frame_to_draw)
-            obj.frame_to_draw_= frame_to_draw;
-        end
-
-        function obj = builder_file_name(obj, builder_file_name)
-            obj.builder_file_name_= builder_file_name;
-        end
-
-        function obj = output_folder(obj, output_folder)
-            obj.output_folder_= output_folder;
-        end
-    end  
+    end
 end

@@ -1,5 +1,5 @@
 classdef Utilities
-    %UNTITLED Summary of this class goes here
+    %UTILITIES Summary of this class goes here
     
     methods (Static)        
         function background_image = getBackground(obj) %TODO: move extensions to config

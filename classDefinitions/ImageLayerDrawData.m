@@ -1,6 +1,7 @@
 classdef ImageLayerDrawData < handle
-    %IMAGELAYERDRAWDATA Summary of this class goes here
-    %   Detailed explanation goes here
+    %IMAGELAYERDRAWDATA class that stores the Image data that is layer
+    %specific.
+    %For example: scale, whether to show the layer, layer type etc.
 
     properties (Access=private)
         image_builder_
@@ -13,7 +14,7 @@ classdef ImageLayerDrawData < handle
         markers_shape_
         markers_color_
         markers_size_
-        markers_color_by_value_ %bool TODO: for quiver- not an option
+        markers_color_by_value_ %bool 
         markers_size_by_value_ %bool
         line_width_
         quiver_show_arrow_head_
@@ -274,6 +275,10 @@ classdef ImageLayerDrawData < handle
         end
 
         function builder=close(obj)
+            % CLOSE  Returns the ImageBulder class that contains it,
+            % so you can go back to the Image
+            % builder after setting all the properties.
+            % returns: ImageBuilder
             builder=obj.image_builder_;
         end
     end
