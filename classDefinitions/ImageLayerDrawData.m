@@ -4,27 +4,93 @@ classdef ImageLayerDrawData < handle
     %For example: scale, whether to show the layer, layer type etc.
 
     properties (Access=private)
+        %Stores the ImageBulder class that contains it, used by close()
+        % so you can go back to the Image
+        % builder after setting all the properties.
+        % type: ImageBuilder
         image_builder_
+        %The scale of the values of the layer, of all layer types
+        %if you run draw it sets automatically according to the first
+        %relevant frame
+        % example: [min, max]
+        %type: float[] 
         scale_
+        %The name of the colormap of the layer (has to be recognized by matlab).
+        %type: str 
         colormap_
+        %Indicates whether the layer is of a single solid color
+        %type: bool
         is_solid_color_
+        %Color in rgb of the pixels of the layer. if is_solid_color_ id
+        %false will be disregarded.
+        % type: float[] (array)
         solid_color_
+        %The opacity of the layer, values between 0 and 1
+        % type: float - between 0 and 1
         opacity_
+        %Indicates whether the layer is shown
+        %type: bool
         show_
+        %For a marker layer- the shape (name) of the markers as recorgnized
+        %by matlab.
+        %  Use one of these values: '+' | 'o' | '*' | '.' | 'x' |
+        % 'square' | 'diamond' | 'v' | '^' | '>' | '<' | 'pentagram' | 'hexagram' | 'none'.
+        %type: str
         markers_shape_
+        %For a marker or quiver layer- the color (name) of the markers/quivers as recorgnized
+        %by matlab.
+        %type: str
         markers_color_
+        %For a marker or quiver layer- the size of the markers/quivers. (if
+        %they aren't displayed by the value (markers_size_by_value_=false)).
+        %type: float values between 0 and inf
         markers_size_
-        markers_color_by_value_ %bool 
-        markers_size_by_value_ %bool
+        %Indicates whether the color of the markers will be set by the
+        %value (in the layer_arr) if true the colormap used is the one set in
+        %the property colormap_
+        %type: bool
+        markers_color_by_value_ 
+        %Indicates whether the size of the markers will be set by the
+        %value (in the layer_arr)
+        %type: bool
+        markers_size_by_value_
+        %For a marker or quiver layer- the line width of the marker/quiver
+        %type: float
         line_width_
+        %For a quiver layer: indecates whether the quiers will have an
+        %arrawhead.
+        %type: bool
         quiver_show_arrow_head_
+        %For calculate: the class of the layer.
+        %example: "cells", "bonds", "etc".
+        %type: str
         class_
+        %For calculate: the filter function for the layer that indicates
+        %which objects from the data will be displayed. 
+        %example: "[obj_arr.aspect_ratio]>1.25"
+        %type: str
         filter_fun_
+        %For calculate: the value function for the layer.
+        %example: @(cell)( mod(atan([cell.elong_yy]./[cell.elong_xx])+pi,pi)),'aspect_ratio','area'
+        %type: str or anonymus function
         value_fun_
+        %The type of layer: "image", "quiver" or "list" (marker)
+        %type: string
         type_
+        %For calculate: the calibration data
+        %example: {'xy',0}
+        %type: cell{}
         calibration_fun_
+        %Indicates whether the colorbar is displayed for the current layer (displays the data of the current layer).
+        %for the colorbar to be displayed this needs to be true but also in
+        %ImageDrawData the show_colorbar_ property needs to be set to true
+        %(by using image_data.setShowColorbar(true))
         colorbar_
-        dialation_ %need to add full fuctionality
+        dialation_ %NOT FUNCTIONAL YET!
+    end
+
+    properties (Constant)
+        logger = Logger('ImageDrawData');
     end
 
     methods (Access=public)
@@ -32,14 +98,12 @@ classdef ImageLayerDrawData < handle
             obj.scale_=[];
             obj.colormap_="jet";
             obj.opacity_=1;
-            obj.show_= true; %bool
-            obj.markers_shape_="o"; %arrows using quiver, everything else using scatter??
-            %  Use one of these values: '+' | 'o' | '*' | '.' | 'x' |
-            % 'square' | 'diamond' | 'v' | '^' | '>' | '<' | 'pentagram' | 'hexagram' | 'none'.
-            obj.markers_color_="red"; %add option for rgb value?
+            obj.show_= true;
+            obj.markers_shape_="o";
+            obj.markers_color_="red";
             obj.markers_size_=2;
-            obj.markers_color_by_value_= false; %bool
-            obj.markers_size_by_value_= false; %bool
+            obj.markers_color_by_value_= false;
+            obj.markers_size_by_value_= false;
             obj.line_width_=0.5;
             obj.quiver_show_arrow_head_=false;
             obj.is_solid_color_=false;
@@ -62,7 +126,12 @@ classdef ImageLayerDrawData < handle
         end
 
         function obj = setColormap(obj, value)
-            obj.colormap_ = value;
+            colormaps=PresetValues.getColormaps;
+            if(ismember(value, colormaps))
+                obj.colormap_ = value;
+            else
+                obj.logger.error("Coundn't set value for setColormap please check if colormap is one recognized by matlab");
+            end
         end
 
         function value = getColormap(obj)
@@ -94,7 +163,13 @@ classdef ImageLayerDrawData < handle
         end
 
         function obj = setMarkersShape(obj, value)
-            obj.markers_shape_ = value;
+            shapes=PresetValues.getMarkerShapes;
+            if(ismember(value,shapes))
+                obj.markers_shape_ = value;
+            else 
+                obj.logger.error("Coundn't set value for setMarkersShape please check if the shape is one recognized by matlab");
+            end
+            
         end
 
         function value = getMarkersShape(obj)
@@ -102,7 +177,12 @@ classdef ImageLayerDrawData < handle
         end
 
         function obj = setMarkersColor(obj, value)
-            obj.markers_color_ = value;
+            colors=PresetValues.getColors;
+            if(ismember(value, colors))
+                obj.markers_color_ = value;
+            else
+                obj.logger.error("Coundn't set value for setMarkersColor please check if the color is one recognized by matlab");
+            end
         end
 
         function value = getMarkersColor(obj)
