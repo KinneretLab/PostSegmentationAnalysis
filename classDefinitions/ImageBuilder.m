@@ -207,20 +207,25 @@ classdef ImageBuilder <  FigureBuilder & handle
             % if frame_num_to_draw is given will draw and will only display
             % the image without saving. after each time it is given the
             % frame num to draw will be reset and the next time you will
-            % need to give it again. 
+            % need to give it again. mare detailed explanation in the
+            % frame_to_draw function.
             %if input is given the function will load the saved image
             %builder and will later do all the other functionalities
             % if layer_arr is empty the function will call calculate and
-            % will later do all the othe functionalities.
+            % will later do all the othe functionalities. if you want to
+            % call calculate (when there is a layer_arr) you need to call
+            % it seperately 
             % input: (optional) str - the path of the saved image builder. 
+            %returns: only if the frame_to_draw is set returns the figure.
+            %type: matlab figure
             if(nargin==1)
                 input=[];
             end
-            if(~isempty(input))
-                obj.loadBuilder(input);
+            if(~isempty(input)) %checks if there is an input path for the image builder
+                obj.loadBuilder(input); %loads builder
             end
-            if(isempty(obj.layer_arr_))
-                obj.calculate;
+            if(isempty(obj.layer_arr_)) %checks if there is a layer_arr - what it draws
+                obj.calculate; %calculates a new layer_arr
             end
             [~, col]=size(obj.layer_arr_);
             if(obj.image_data.getCrop)
@@ -247,6 +252,10 @@ classdef ImageBuilder <  FigureBuilder & handle
         end
 
         function obj = addData(obj, frame_arr)
+            % ADDDATA add the experiment data here- calculate uses this
+            % data
+            %input: {obj array...}
+            %returns: ImageBuilder
             if ~strcmp(class(frame_arr),'Frame')
                 disp(sprint('Data must be an object or array of class frame'));
             else
@@ -255,10 +264,26 @@ classdef ImageBuilder <  FigureBuilder & handle
         end
 
         function obj = save_format(obj,format)
+            %SAVE_FORMAT sets the format that the putput (the images) will be saved.
+            % either "fig" of "png".
+            %input: str
+            %returns: ImageBuilder
             obj.save_format_ = format;
         end
 
         function layer_data=layers_data(obj, layer_num, data)
+            %LAYERS_DATA gets or sets the layers_data (type: Image
+            %LayerDrawData) depending on the input.
+            %example: builder.layers_data(1)-> returns the
+            %ImageLayerDrawData for layer 1. if there isn't a layer in
+            %the array of that index it creates a default layer objects
+            %which you can then change to your liking.
+            %builder.layers_data(1, data) data (type: Image
+            %LayerDrawData) sets layer 1 with the object data.
+            %after setting it the function eturns the new layer (type:
+            %ImageLayerDrawData).
+            %input: layer_num: int, data: ImageLayerDrawData
+            %output: ImageLayerDrawData
             if(nargin==1)
                 layer_data=obj.layers_data_;
                 return;
@@ -275,6 +300,8 @@ classdef ImageBuilder <  FigureBuilder & handle
 
 
         function image_data = image_data(obj)
+            %IMAGE_DATA gets the image data (type: ImageDrawData) if doesnt exist then create default objects and returns it.
+            %returns: type: ImageDrawData
             if(isempty(obj.image_data_))
                 obj.image_data_=ImageDrawData(obj);
             end
@@ -282,22 +309,39 @@ classdef ImageBuilder <  FigureBuilder & handle
         end
 
         function layer_arr = layer_arr(obj)
+            %LAYER_ARR gets the layer_arr
+            %returns: type: cell array of double arrays
             layer_arr = obj.layer_arr_;
         end
 
         function data = data(obj)
+            %DATA gets the data that the calculate function uses to
+            %calculate the layer_arr
+            %returns: type: {obj array...}
+
             data = obj.data_;
         end
 
         function obj = frame_to_draw(obj, frame_to_draw)
+            %FRAME_TO_DRAW sets the frame to draw- if frame to draw is set
+            %the draw function will only *draw and display* that particular
+            %frame but will save nothing to the output folder. every time
+            %you call the draw function after setting the frame_to_draw it
+            %is reset meaning you have to set it again. If you want to
+            %consistanaly 
+            %example: builder.frame_to_draw(1).draw; 
+            %will draw the first frame and you can run that same line again
+            %to draw the first frame again.
+            %but: builder.frame_to_draw(1); builder.draw(); will draw the
+            %first frame and display it. running draw again immedeatly after will draw and
+            %save all the frames in the output folder *without displaying*
             obj.frame_to_draw_= frame_to_draw;
         end
 
-        function obj = builder_file_name(obj, builder_file_name)
-            obj.builder_file_name_= builder_file_name;
-        end
-
         function obj = output_folder(obj, output_folder)
+            %OUTPUT_FOLDER sets the output folder for images that draw
+            %produces as well as current builder (type: ImageBuilder) that
+            %saved using saveBuilder;
             obj.output_folder_= output_folder;
         end
     end
