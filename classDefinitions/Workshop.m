@@ -260,4 +260,35 @@ end
 
 
 builder.output_folder("Z:\Analysis\users\Yonit\MatlabCodes\Workspace\test").draw;
+%%
+%% Test quiver on 2d as well
 
+% Quiver images of defect example with cell orientation
+dir2 = 'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\Cells\';
+
+exp = Experiment(dir2);
+frame_arr = exp.frames;
+class_list = {'bonds','vertices','cells',};
+filter_list = {'','',''};
+value_fun_list = {1,1,{@(cell)( mod(atan([cell.elong_yy]./[cell.elong_xx])+pi,pi)),'aspect_ratio'}};
+calibration_list = {{'xy',0},{'xy',0},{'xy',0}};
+type_list = {'image','image','quiver'};
+image_size = [1024,1024];
+xyCalib = 0.52;
+
+exp.HMfolder('Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\Layer_Separation\Output');
+exp.calibrationXY(0.52).calibrationZ(3).imageSize(image_size);
+
+% builder.output_folder("Z:\Analysis\users\Yonit\MatlabCodes\Workspace\test").draw;
+
+builder = ImageBuilder;
+builder.addData(frame_arr);
+
+for i=1:length(class_list)
+    builder.layers_data(i).setClass(class_list{i}).setFilterFunction(filter_list{i}).setValueFunction(value_fun_list{i}).setCalibrationFunction(calibration_list{i}).setType(type_list{i});
+end 
+
+% builder.calculate;
+
+% builder.saveLayerArr('Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\3d','layer_arr_2d_test');
+builder.output_folder("Z:\Analysis\users\Yonit\MatlabCodes\Workspace\test").draw;
