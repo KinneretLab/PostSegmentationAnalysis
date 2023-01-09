@@ -218,6 +218,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             % input: (optional) str - the path of the saved image builder. 
             %returns: only if the frame_to_draw is set returns the figure.
             %type: matlab figure
+            
             if(nargin==1)
                 input=[];
             end
@@ -243,12 +244,14 @@ classdef ImageBuilder <  FigureBuilder & handle
                 ylim(ylims);
                 return;
             end
-            for i= 1 : col
-                frame = obj.layer_arr_(:, i);
-                fig=obj.drawFrame(frame, false, i);
-                obj.saveFigure(fig, i, xlims, ylims);
-                close(fig);
-            end
+            if(~isempty(obj.output_folder_))
+                for i= 1 : col
+                    frame = obj.layer_arr_(:, i);
+                    fig=obj.drawFrame(frame, false, i);
+                    obj.saveFigure(fig, i, xlims, ylims);
+                    close(fig);
+                end
+            end 
         end
 
         function obj = addData(obj, frame_arr)
@@ -355,7 +358,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             ylim(ylims);
             switch obj.save_format_
                 case "png"
-                    if(obj.image_data.getShowColorbar || ~isempty(obj.image_data.getImageTitle))
+                    if(obj.image_data.getShowColorbar || obj.image_data.getImageTitle~="")
                         exportgraphics(figure,fname,'Resolution',600)
                         return;
                     end
