@@ -1,23 +1,25 @@
+%% Addpath
+addpath("") %Add the path to the directory of ClassDefinitions
 %% Create the Expirement
 % per expirement: image size, calibration xy and z-> this is data not
 % stored in the expirement object and you need it to generate the images.
 dir = 'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\Cells\'; 
 exp = Experiment(dir);
 xy_calib = 0.65; %these are different per experimnet and you need to know per microscope used.
-z_alib= 3;
+z_calib= 3;
 image_size = [1024,1024];
 
 % now we will set the data, done like this:
 exp.calibrationXY(xy_calib);
-exp.calibrationZ(z_alib);
+exp.calibrationZ(z_calib);
 exp.imageSize(image_size);
 % or in one line (completely equivalent):
-exp.calibrationXY(xy_calib).calibrationZ(z_alib).imageSize(image_size);
+exp.calibrationXY(xy_calib).calibrationZ(z_calib).imageSize(image_size);
 
 %% Create the ImageBuilder 
 builder = ImageBuilder;
 builder.output_folder("Z:\Analysis\users\Projects\Iris\Codes\test\tutorial"); %you need to configure an output folder unless you want the image builder to save to the active matlab folder.
-builder.save_format("png"); %
+builder.save_format("png"); %png or fig
 %% Get relevant data (frames) from the experiment and add to builder
 frame_arr= exp.frames(1:3); % you can also add a part of the frames or only one frame-> exp.frames(1) or exp.frames(1:3) or exp.frames
 builder = builder.addData(frame_arr);
@@ -64,6 +66,7 @@ builder.calculate.frame_to_draw(1).draw;
 
 %oh no, no is_edge in vertex? let's see what is, type help(Bond);
 %we see that confidence is an attribute, maybe we want to filter by that.
+%-> unclear bug there, so we will not filter
 %% Add image layer- no educational mistake ;)
 builder.layers_data(2).setClass("bonds"); %in class you put one of the properties of Frame use help(Frame) to find them (you need to use the name from the methods part).
 builder.layers_data(2).setType("image");
@@ -71,7 +74,7 @@ builder.layers_data(2).setFilterFunction('');
 builder.layers_data(2).setValueFunction(1);
 
 builder.layers_data(2).setIsSolidColor(true);
-builder.calculate.frame_to_draw(1).draw; %run like this if you want to recalculate
+builder.calculate.frame_to_draw(1).draw; %run like this if you want to recalculate and display.
 %% Tip: if you just want to run and tweek the visualization (colormap, colorbar, scale etc.) don't run calculate!
 builder.draw;
 %% Add quiver layer
@@ -79,8 +82,15 @@ builder.layers_data(3).setClass("cells"); %in class you put one of the propertie
 builder.layers_data(3).setType("quiver");
 builder.layers_data(3).setFilterFunction('');
 builder.layers_data(3).setValueFunction({@(cell)(cell.fibre_orientation), 'aspect_ratio'}); 
-
-builder.calculate.frame_to_draw(1).draw; %run like this if you want to recalculate
-
+%the quiver layer needs a multiple index value function like this: {i,j},
+% the first index: direction, the second: size. In the example the
+% direction is not actually calculated. you need to know what you want from the data to
+% calculate it accordingly.
+builder.calculate; %in this case we can calculate first and then we can set the draw settings
+%% Draw settings for quivers - inline
+builder.layers_data(3).setMarkersColor("yellow").setQuiverShowArrowHead(true).setMarkersSize(10).setLineWidth(1);
+%% Drawing without calculating
+builder.frame_to_draw(1).draw; %run like this if you want to recalculate and display
+builder.draw; %saving to output folder
 %% Save builder for future reuse / editing in the GUI
 builder.saveBuilder("tutorial_builder");
