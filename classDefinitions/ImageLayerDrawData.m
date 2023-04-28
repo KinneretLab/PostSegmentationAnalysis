@@ -109,7 +109,7 @@ classdef ImageLayerDrawData < handle
             obj.is_solid_color_=false;
             obj.solid_color_ = [1 1 1];
             obj.filter_fun_=obj.setFilterFunction("");
-            obj.value_fun_={1};
+            obj.value_fun_=1;
             obj.calibration_fun_={'xy', 0};
             obj.dialation_=[];
             obj.image_builder_=image_builder;
