@@ -16,7 +16,19 @@ The second part of the post segmentation analysis is the stress inference. This 
 
 *Once each independent part of the post-segmentation analysis has been performed, the program will check whether the other part has already been performed, and if it has, the data from the separate databases will be matched (since they are initially independent). The main results of the stress inference will be copied into the data structure holding the cell geometrical data, and the unique cell ID from the geometrical data will be matched to the correct cells in the VMSI data.*
 
+### How to get started 
+####	1. Clone the following projects into your codes folder:
+a.	Post segmentation analysis.
 
+b.	Matlab utility functions.
+
+![](doc/git_projects.png)
+
+#### 2. Open post segmentation analysis:
+![](doc/open_psa_folder.png)
+
+Make sure that in the path on the top of the page the path to your post segmentation analysis is showing:
+![](doc/path_on_top.png)
 ### The pipeline for the post-segmentation analysis is as follows:
 0.	Follow the instructions in manuals for segmentation using Tissue Analyzer, including the final post processing in Lital’s manual (select the PostProcess tab and press the “Finish all” button). The final folder structure should include a folder for every image frame (named according to the frame name with no file extension), and the output from TA in each folder (specifically the two .tif files needed are “handCorrection.tif” and “vertices.tif”).
 ####Part 1: Geometric analysis
@@ -202,7 +214,7 @@ Once you have the data you are interested in, you want to actually see graphs an
 - `ImageBuilder`, responsible for visualizing aspects of every physical entity in particular frames. This generates an 
   actual image.
 
-Here, we will discuss using `PlotBuilder` as `ImageBuilder` hasn't been created yet, but they follow similar principles.
+Here, we will discuss using `PlotBuilder`:
 
 Plotting a particular graph usually involves just 3 lines of code. For example, if we want to track the mean area as a 
 function of the frame, we would write
@@ -257,7 +269,7 @@ Once again, it is a good idea to check the documentation file for the classes `P
 since they provide detailed documentation and explanation about each function its parameters, and the result, especially since 
 there are many somewhat unintuitive available operations available that make life much easier.
 
-### Data visualization - class structure
+### Plot builder data visualization - class structure
 
 ![Class Structure](doc/api_graph.svg)
 
@@ -269,7 +281,7 @@ Each of these provides useful methods out-of-the-box, and some functions you are
 The documentation speifies what exactly they are supposed to do, and it is your job to implement the functions 
 according to those guidelines.
 
-### Data visualization - known issues
+### Plot builder data visualization - known issues
 
 - 0-length bond: Sometimes, vertices exist right next to each other. This generates bonds with a minimal length (0). 
   These special and rare bonds do not have any directed bonds, and therefore do not have bordering cells.
@@ -280,3 +292,202 @@ according to those guidelines.
   but not the cells. In such cases, it might seem like there are "empty" frames.
 - Vertex-less cells & bonds: sometimes, a cell does not border any other cell.
   This leads to a cell or DBond not having any vertices. In such cases, the corresponding DBond points to itself.
+
+### Creating Image Visualizations 
+Now we will discuss `ImageBuilder`. Image builder helps to visualize the cell data using layers. It can display images and markers
+on top of each other (as different layers - like photoshop for instance)
+
+There are two steps to using `ImageBuilder`:
+1. Calculating the data
+2. Drawing the data
+
+They are both similar in concept to the `PlotBuilder`. 
+You can also draw the images and set all the relevant settings using the GUI element.
+
+#### Important classes:
+1. `ImageBuilder.m`
+2. `Experiment.m`
+3. `ImageDrawData.m`
+4. `ImageLayerDrawData.m`
+
+`ImageBuilder.m` and `Experiment.m` are the classes you need to create to use the `ImageBuilder`.
+The other classes are created by the ImageBuilder, but you need to set the properties to customize the visualization.
+
+#### Creating the `ImageBuilder` and `Experiment`
+Experiment:
+
+    dir = 'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\Cells\'; %the directory of the cells db
+    exp = Experiment(dir); %creating the experiment object
+    xy_calib = 0.65; %these are different per experimnet and you need to know per microscope used.
+    z_calib= 3;
+    image_size = [1024,1024];
+    
+    % now we will set the data, done like this:
+    exp.calibrationXY(xy_calib);
+    exp.calibrationZ(z_calib);
+    exp.imageSize(image_size);
+
+    % or in one line (completely equivalent):
+    exp.calibrationXY(xy_calib).calibrationZ(z_calib).imageSize(image_size);
+
+For experiment, you must set the properties: calibrationXY, calibrationZ, imageSize
+
+ImageBuilder:
+
+    builder = ImageBuilder; %creating the ImageBuilder object
+    builder.output_folder("Z:\Analysis\users\Projects\Iris\Codes\test\tutorial"); %you need to configure an output folder unless you want the image builder to save to the active matlab folder.
+    builder.save_format("png"); %png or fig
+
+For ImageBuilder, you must set the properties: output_folder, save_format
+
+Now, you need to tell the ImageBuilder what data from the experiment you want to visualize:
+You do it by using the function addData of Image builder like this:
+
+    frame_arr= exp.frames(1:3); % you can also add a part of the frames or only one frame-> exp.frames(1) or exp.frames(1:3) or exp.frames
+    builder = builder.addData(frame_arr);
+
+The data comes from the frames attribute of the experiment.
+(notice how you call the functions using the name you gave the variable when you created the class).
+
+Now you are ready to begin.
+
+#### Setting Layer Attributes
+To set an attribute for a specific layer you do it through the layers_data function like this:
+
+    builder.layers_data(layer_number_you_want_to_access) 
+
+In layer_number_you_want_to_access you write the number of the layer you want to access.
+This returns an `ImageLayerDrawData.m` to see what you can set type `help(ImageLayerDrawData)`.
+To set something look at the functions that begin with `set____`
+
+    builder.layers_data(number_of_layer).set______
+
+Examples of what you can set: colormap per layer, color of layer etc.
+
+#### Setting Image Attributes
+It works the same as layer attributes, but you don't need to specify which layer (because it's just one image):
+
+    builder.image_data.set______
+
+To see what you can set type `help(ImageLayerDrawData)`.
+
+
+#### Calculate
+To be able to generate an image you need to create the layers, this is what the calculate step is for.
+Meaning- to calculate the image itself you want to display, be it the pixels for a list for a marker layer.
+These are the attributes you must set to be able to generate an image
+
+    builder.layers_data(1).setClass("cells"); %in class you put one of the properties of Frame use help(Frame) to find them (you need to use the name from the methods part).
+    builder.layers_data(1).setType("list");
+    builder.layers_data(1).setValueFunction('perimeter'); 
+
+The class is the attributes of want you want to draw: "cells", "bond", "vertices" etc. `help(Frame)`
+The type is the type of layer you want to create:
+Types of layers:
+1. "list" - layer of markers 
+2. "image" - an image layer
+3. "quiver" - layer of quivers (arrows)
+
+The value function is what value will be in the pixel/marker/quiver (for quiver you also need a direction).
+In this case we use the perimeter of each cell to be the value. use `help(Cell/Bond/Vertex)` to find what you can use as a value,
+If you don't want anything just use 1.
+
+You can also set a filter function to filter some results:
+
+    builder.layers_data(1).setFilterFunction("[obj_arr.is_edge]==1")
+
+The cell object has an attribute for if the cell is on the edge. With it, we can filter to show only the cells on the edge.
+
+You need to set these for every layer, so next you will write (if you want more than one layer):
+
+    builder.layers_data(1).set_____
+
+This is what you need to calculate the image. To calculate type:
+
+    builder.calculate;
+
+(If you want to see if it turned out alright before moving on tho the next step, type:
+
+    builder.frame_to_draw(1).draw;
+This will draw and display the first frame, and you can see if it's to your liking.
+)
+
+NOTE: YOU DON'T HAVE TO RUN THE CALCULATE FUNCTION BEFORE DRAWING FOR THE FIRST TIME.
+IT WILL RUN IT FOR YOU, BUT YOU DO HAVE TO RUN IT AGAIN IF YOU CHANGED SOME OF THE PREVIOUS ATTRIBUTES AND YOU WIH TO RECALCULATE
+
+Now the image is calculated, and we can move on to the draw part.
+
+#### Drawing the data
+There are two ways to draw the data, using code, or using the GUI.
+
+#### Code
+This works in the same way as the previous step. 
+You set the layer attributes you want (`help(ImageLayerDrawData)` functions that begin with set___) or the image attributes you want (`help(ImageDrawData)`).
+Example:
+
+Layer:
+
+    builder.layers_data(1).setMarkersColorByValue(true).setColorbar(false); 
+
+Here, you see that for the first layer, the marker color is set to be displayed by value (using the default colormap), and that the colorbar is set to this layer.
+
+Image:
+
+    builder.image_data.setShowColorbar(true);
+    builder.image_data.setColorForNaN([0,1,0]);
+
+#### Saving (and loading) the Builder
+Before you can use the GUI you need to save the builder.
+Note: if the calculate function has been run already, it will save the calculated frames as well. 
+It's meant to prevent constant recalculation, but it does make it so the save process is longer, so don't be alarmed.
+
+You don't need to run the calculate function before saving, the GUI will run it.
+
+Saving the builder:
+
+    builder.saveBuilder("name_of_builder_file");
+
+If you want to reuse a saved builder using the code:
+
+    builder.loadBuilder("path_to_builder");
+
+Or if you want to immediately draw: 
+
+    builder.draw("path_to_builder");
+
+Note that this will draw in the save format and to the output folder YOU SET FOR THE BUILDER YOU MADE IN THE CURRENT SESSION.
+There is an example code in the main folder called: `exampleImageBuilder.m`, with explanations.
+
+#### GUI
+You need to have a saved builder, will all the properties to run the calculation set.
+
+1. Opening the GUI
+To open the GUI go to the `post-segmentation-analysis` folder. 
+In it click on the gui `folder` and open `layers_gui.mlapp`.
+
+![](doc/open_gui.png)
+
+2. Loading the image builder
+
+In the gui you will be greeted by the load tab:
+
+![](doc/load_tab.png)
+NOTE: IT SAYS LOAD IMAGE BUT IT MEANS LOAD IMAGE BUILDER!
+
+This is how it should look like when the image has been loaded:
+![](doc/image_loaded.png)
+(Image tob should appear, first frame should appear)
+
+3. Editing the image
+
+Now just edit all the fields you see in the image tab:
+
+![](doc/image_tab.png)
+
+You can drag the slider on the bottom to select which frame to display.
+You can edit different layers in the layers Panel.
+You can redraw the image to see the changes you made using the draw button.
+You can save the images using the save button.
+
+
+

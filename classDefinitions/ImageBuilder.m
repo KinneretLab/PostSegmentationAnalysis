@@ -1,4 +1,4 @@
-classdef ImageBuilder <  FigureBuilder & handle
+classdef ImageBuilder <  FigureBuilder & handle 
     % IMAGEBUILDER A tool used to draw, display and save the data from the cell database in
     % layers on top of each other.
     properties (Access = protected)
@@ -53,6 +53,11 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
             addpath(dir(search_path).folder)
             search_path = '../*/freezeColors';
+            while isempty(dir(search_path))
+                search_path = ['../', search_path];
+            end
+            addpath(dir(search_path).folder)
+            search_path = '../*/gui';
             while isempty(dir(search_path))
                 search_path = ['../', search_path];
             end
@@ -244,7 +249,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                 ylim(ylims);
                 return;
             end
-            if(~isempty(obj.output_folder_))
+            if(obj.output_folder_~="")
                 for i= 1 : col
                     frame = obj.layer_arr_(:, i);
                     fig=obj.drawFrame(frame, false, i);
