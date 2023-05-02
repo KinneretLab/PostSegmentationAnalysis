@@ -5,7 +5,7 @@ addpath("") %Add the path to the directory of ClassDefinitions
 % stored in the expirement object and you need it to generate the images.
 dir = 'Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\2021_05_06_pos6\Cells\'; %the directory of the cells db
 exp = Experiment(dir); %creating the experiment object
-xy_calib = 0.65; %these are different per experimnet and you need to know per microscope used.
+xy_calib = 0.52; %these are different per experimnet and you need to know per microscope used.
 z_calib= 3;
 image_size = [1024,1024];
 
@@ -70,13 +70,14 @@ builder.calculate.frame_to_draw(1).draw;
 %we see that confidence is an attribute, maybe we want to filter by that.
 %-> unclear bug there, so we will not filter
 %% Add image layer- no educational mistake ;)
-builder.layers_data(2).setClass("bonds"); %in class you put one of the properties of Frame use help(Frame) to find them (you need to use the name from the methods part).
+builder.layers_data(2).setClass("vertices"); %in class you put one of the properties of Frame use help(Frame) to find them (you need to use the name from the methods part).
 builder.layers_data(2).setType("image");
-builder.layers_data(2).setFilterFunction('');
+builder.layers_data(2).setFilterFunction('[obj_arr.y_pos]>500');
 builder.layers_data(2).setValueFunction(1);
 
 builder.layers_data(2).setIsSolidColor(true);
-builder.calculate.frame_to_draw(1).draw; %run like this if you want to recalculate and display.
+builder.calculate;
+builder.frame_to_draw(1).draw; %run like this if you want to recalculate and display.
 %% Tip: if you just want to run and tweek the visualization (colormap, colorbar, scale etc.) don't run calculate!
 %% Add quiver layer
 builder.layers_data(3).setClass("cells"); %in class you put one of the properties of Frame use help(Frame) to find them (you need to use the name from the methods part).
