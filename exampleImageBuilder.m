@@ -37,8 +37,8 @@ builder.layers_data(1).setClass("cells"); %in class you put one of the propertie
 builder.layers_data(1).setType("list");
 builder.layers_data(1).setFilterFunction("[obj_arr.is_edge]==1"); %refers to the properties of the class you decided, if you don't have any will not use filter
 builder.layers_data(1).setValueFunction('perimeter'); %what will be the value in case of marker or quiver layer, if you dont want anything set it as 1
-%you can also set the calibration in the same way. in this case we will use
-%the default.
+builder.layers_data(1).setCalibrationFunction({'xy', 1}); %the default is: {'xy', 0} make sure to use the correct one for your calculations
+%you can also set the calibration in the same way. 
 
 %also, oneline is also possible:
 builder.layers_data(1).setClass("cells").setType("list").setFilterFunction("[obj_arr.is_edge]==1").setValueFunction('perimeter');
