@@ -17,7 +17,7 @@ classdef Bond < PhysicalEntity
         bond_length = nan;
         % the list of pixels this bond resides in, under any projection.
         % type: BondPixelList
-        pixel_list
+        pixel_list = Null.null;
         % an internal value defining how sure we are this bond really exists.
         % you can access this using BOND#CONFIDENCE
         % values over 0.5 yield confidence the bond exists, while lower

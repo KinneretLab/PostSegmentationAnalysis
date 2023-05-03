@@ -1,26 +1,25 @@
 %% 0. Initialization:
 clear all; close all;
-addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\GroupCodes\July2021'));
+addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\GroupCodes\'));
 
 %% 0.1 Define mainDirList
 
 % Locations of original data - needed only for timestamps
-topMainDir = '\\phhydra\phhydraB\SD2\2021\Yonit\2021_05\'; % main folder of original files
+topMainDir = '\\phhydra\phhydraB\'; % main folder of original files
 rawMainAnalysisDirList= { ... % enter in the following line all sub-directories for movie analysis.
 
-'\2021_05_06\', ...
-
-
+'\SD\2021\Yonit\2021_05\2021_05_06\', ...
+'\SD2\2021\Liora\2021_07\2021_07_26\', ...
 
 };
 for i=1:length(rawMainAnalysisDirList),rawMainDirList{i}=[topMainDir,rawMainAnalysisDirList{i}];end
 
 
-topAnalysisDir='Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\'; % main folder for movie analysis
+topAnalysisDir='\\phhydra\phhydraB\Analysis\users'; % main folder for movie analysis
 mainAnalysisDirList= { ... % enter in the following line all sub-directories for movie analysis.
 
-'2021_05_06_pos6\', ...
-
+'\Yonit\Movie_Analysis\Labeled_cells\SD1_2021_05_06_pos6\', ...
+'\Liora\Movie_Analysis\2021_07_26\2021_07_26_pos1\', ...
 
 };
 for i=1:length(mainAnalysisDirList),mainDirList{i}=[topAnalysisDir,mainAnalysisDirList{i}];end
@@ -36,8 +35,8 @@ for i=1:length(mainAnalysisDirList),mainDirList{i}=[topAnalysisDir,mainAnalysisD
 % want to run on particular frames (in this example, 1:6 is for the first
 % movie, 1:9 is for the second). If left empty, runs on all frames.
 
-calibrationXY_list = [0.52]; % um per pixel in XY plane (can be a single value or vector of length of movie list if different for each movie).
-calibrationZ_list = [3]; % um per pixel in Z direction(can be a single value or vector of length of movie list if different for each movie).
+calibrationXY_list = [0.65,0.52]; % um per pixel in XY plane (can be a single value or vector of length of movie list if different for each movie).
+calibrationZ_list = [3,3]; % um per pixel in Z direction(can be a single value or vector of length of movie list if different for each movie).
    
 useDefects_list = 0; % Set to 1 if you are using manually marked defects, and 0 if not. (can be a single value or vector of length of movie list if different for each movie).
 disp('Please make sure you have run the orientation analysis on these movies/datasets')
@@ -50,8 +49,8 @@ for n=1:length(mainDirList)
    %% 1. Initialize parameters for each movie
     disp(['Analyzing movie/dataset ',num2str(n)])
     mainDir = mainDirList{n};
-    cellDir = [mainDir,'\Cells_auto\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
-    segDir = [cellDir,'AllSegmented\']; % Segmentation folder.
+    cellDir = [mainDir,'\Cells\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
+    segDir = [cellDir,'Segmentation\']; % Segmentation folder.
     maskDir =  [mainDir,'\Display\Masks'];
     outlineDir = [cellDir,'\Outlines'];
     rawDatasetsDir = [cellDir,'\Datasets'];
@@ -126,7 +125,8 @@ for n=1:length(mainDirList)
     frame_name = ([sortedFolderNames(thisFrameList)])';
     timeStampDir = [rawMainDirList{n},'\TimeStamps'];
     if exist(timeStampDir)==7
-        movieName = mainAnalysisDirList{n}(1:end-1);
+        underscores = find(mainAnalysisDirList{n}=='_');
+        movieName = mainAnalysisDirList{n}((underscores(end-2)-4):(end-1));
         time_sec = getTimeStamps(timeStampDir,movieName,frameArr);
         frames = table(frame,frame_name, time_sec);
         clear('frame','frame_name','time_sec');

@@ -58,7 +58,7 @@ end
     L = labelmatrix(CC);
     stats = regionprops(CC);
     RGB = label2rgb(L,'jet','k','shuffle');
-    background = find([stats.Area]==max([stats.Area]));
+    background = find([stats.Area]==max([stats.Area])); % This can possibly be changed so that if there is no background, or multiple background regions, we will be able to work with it. At the moment, there is always a frame of one pixel that is black at the edge of the image, so this can function as the background.
     
     % Initialize structures:
     frameCellData = struct();
@@ -172,6 +172,7 @@ end
         VyInds = (v_y(j)-1):(v_y(j)+1);
         VBvals = bondsIm(VyInds,VxInds,:);
         VBvalsList = reshape(VBvals,9,3);
+        origVBvalsList = VBvalsList;
         % Find adjacent vertices
         VVvals = vertexImBW((v_y(j)-1):(v_y(j)+1),(v_x(j)-1):(v_x(j)+1));
         adjacentVerts = setdiff(find(VVvals),5);
@@ -188,10 +189,10 @@ end
                 newVyInds = (newVy-1):(newVy+1);
                 newVBvals = bondsIm(newVyInds,newVxInds,:);
                 newVBvalsList = reshape(newVBvals,9,3);
-                jointVBvals = intersect(VBvalsList,newVBvalsList,'rows');
+                jointVBvals = intersect(origVBvalsList,newVBvalsList,'rows');
                 jointVBvals = setdiff(jointVBvals,[0,0,0],'rows');
                 jointVBvals = setdiff(jointVBvals,[255,255,255],'rows');
-                [~, vert1index]=ismember(jointVBvals,VBvalsList,'rows');
+                [~, vert1index]=ismember(jointVBvals,origVBvalsList,'rows');
                 for jv = 1:size(jointVBvals,1)
                     [bIndY,bIndX] = ind2sub([3,3],vert1index(jv));
                     bCoordX = VxInds(bIndX); 
@@ -375,7 +376,6 @@ end
                             v2check = ismember(frameCellData(s).cell_id,frameBondData(cellfun(@sum,findBs2)==2).cells);
                             bond_verts = bond_verts([v1check,v2check]);
                         end
-                        
                         ordered_verts(vi+1) = bond_verts;
                     end
 

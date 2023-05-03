@@ -72,6 +72,12 @@ classdef Cell < PhysicalEntity
         % The higher Y coordinate of the rectangle (bounding box) containing the pixels of the cell in its frame.
         % type: int
         bb_yEnd = nan;
+        % Magnitude of cell shape tensor Q calculated from cell projected on tangent plane and then rotated to xy plane around the intersection axis:
+        Q = nan;
+        % Qxx element of cell shpae tensor Q calculated from cell projected on tangent plane and then rotated to xy plane around the intersection axis:
+        Q_xx = nan;
+        % Qxy element of cell shpae tensor Q calculated from cell projected on tangent plane and then rotated to xy plane around the intersection axis:
+        Q_xy = nan;
         % the list of pixel coordinates indicating the edges of the cell
         % you can calculate these values for retrieval using CELL#OUTLINE()
         % then retrieve them from this variable.
@@ -81,11 +87,13 @@ classdef Cell < PhysicalEntity
         % you can access this using CELL#NEIGHBORS
         % type: CELL[]
         neighbors_ = Null.null;
+        % List of pixels inside cell used for plotting in images
         plot_pixels_
+
     end
-    
+
     methods
-        
+
         function obj = Cell(varargin)
             % CELL construct an array of cells.
             % This includes NaNs for any calculated value so things don't
@@ -96,11 +104,11 @@ classdef Cell < PhysicalEntity
         function id = uniqueID(~)
             id = "cell_id";
         end
-        
+
         function logger = logger(~)
             logger = Logger('Cell');
         end
-        
+
         function cells = neighbors(obj, varargin)
             % NEIGHBORS Find all the cells that share a border with this cell.
             % That is, this only has level 1 neighbors.
@@ -147,7 +155,7 @@ classdef Cell < PhysicalEntity
             % Return type: VERTEX[]
             vertices = obj.dBonds.startVertices(varargin{:});
         end
-        
+
         function cells = cells(obj, varargin)
             % CELLS the identity function
             % Parameters:
@@ -225,7 +233,7 @@ classdef Cell < PhysicalEntity
                                     theseCoords =  [orderedBonds(k).pixel_list.orig_x_coord,orderedBonds(k).pixel_list.orig_y_coord];
                                 else if I==length(orderedBonds(k).pixel_list.orig_x_coord)
                                         theseCoords =  flipud([orderedBonds(k).pixel_list.orig_x_coord,orderedBonds(k).pixel_list.orig_y_coord]);
-                                    end
+                                end
                                 end
                                 thisOutline = [thisOutline;[startVertex.x_pos,startVertex.y_pos];theseCoords];
                             else
@@ -237,7 +245,7 @@ classdef Cell < PhysicalEntity
                 end
             end
 
-        end    
+        end
 
         function plot_pixels = plot_pixels(obj)
             plot_pixels = {};
@@ -255,7 +263,7 @@ classdef Cell < PhysicalEntity
                     [in,on] = inpolygon(xq,yq,obj(i).outline_(:,1),obj(i).outline_(:,2));
                     obj(i).plot_pixels_ = [xq(in & (~on)),yq(in & (~on))];
 
-                 end
+                end
                 plot_pixels{i} = obj(i).plot_pixels_;
             end
 
@@ -266,13 +274,13 @@ classdef Cell < PhysicalEntity
             obj = flatten(obj);
             list_pixels(:,1) = [obj.center_x];
             list_pixels(:,2) = [obj.center_y];
-  %         list_pixels(:,3) = [obj.center_z];
+            %         list_pixels(:,3) = [obj.center_z];
 
         end
 
-        function pair_arr = createNeihgborPairs(obj)
+        function pair_arr = createNeighborPairs(obj)
             pair_arr = [];
-            obj.neighbors;
+            obj.frames.cells.neighbors;
             for i=1:length(obj)
                 fprintf('Finding pairs for cell #%d \n', i);
                 % Create first rank neihgbour pairs
@@ -304,6 +312,159 @@ classdef Cell < PhysicalEntity
             end
         end
 
-    end
+        function [Q_xx_cell,Q_xy_cell,Q_cell,obj] = calculateCellQ(obj)
+            % Get directed bonds for all cells:
+            obj = flatten(obj);
+            sprintf('Getting directed bonds')
+            theseDBonds = dBonds(obj); % Currently runs on a 1-dimensional list
+            sprintf('Getting vertices')
+            these_vertices = obj.vertices;
+            Q_xx_cell = [];
+            Q_xy_cell = [];
+            Q_cell = [];
+            sprintf('Starting Q calculation')
+            for i=1:length(obj)
+                if mod(i,50) == 0
+                    fprintf('Calculating Q for cell #%d \n', i);
+                end
+                orderedDBonds = DBond();
+                orderedDBonds(1) = theseDBonds(i,1);
+                cellDBonds = theseDBonds(i,:); % Make sure only non-empty dbonds are used:
+                numDBonds = length(cellDBonds(~isnan(cellDBonds)));
+                % Order cell's dbonds
+                if numDBonds>1
+                    for j=1:(numDBonds-1)
+                        nextDBond = orderedDBonds(j).left_dbond_id;
+                        cellDBondIDs = [theseDBonds(i,:).dbond_id];
+                        flag = (cellDBondIDs == nextDBond);
+                        orderedDBonds(j+1) = theseDBonds(i,flag);
+                    end
+                end
+                % Get ordered vertices
+                ordered_vertices = [orderedDBonds.vertex_id];
+                % Place first vertex again at the end of list
+                % of ordered vertices:
+                ordered_vertices = [ordered_vertices,ordered_vertices(1)];
+                % Get cell centre
+                c_x = obj(i).center_x;
+                c_y = obj(i).center_y;
+                c_z = obj(i).center_z;
 
+                % Initialize arrays of triangle measures:
+                triangle_Q = []; two_phi= [];tri_area = [];
+                % Run over triangles comprising the cell:
+                for j=1:length(ordered_vertices)-1
+
+                    v1 = these_vertices([ these_vertices.vertex_id]==ordered_vertices(j));
+                    v2 = these_vertices([ these_vertices.vertex_id]==ordered_vertices(j+1));
+
+                    v1_x = v1.x_pos;
+                    v1_y = v1.y_pos;
+                    v1_z = v1.z_pos;
+                    v2_x = v2.x_pos;
+                    v2_y = v2.y_pos;
+                    v2_z = v2.z_pos;
+
+                    % Project vertices onto plane defined by
+                    % normal and going through the centre of
+                    % the cell:
+                    N = [obj(i).norm_x,obj(i).norm_y,obj(i).norm_z];
+                    tri_verts = [c_x,c_y,c_z; v1_x,v1_y,v1_z; v2_x,v2_y,v2_z];
+                    proj = tri_verts - ((tri_verts - [c_x,c_y,c_z])*(N')) * N;
+
+                    % Rotate to xy plane through cell centre
+                    RZ = [N(1)/sqrt((N(1)^2)+(N(2)^2)) N(2)/sqrt((N(1)^2)+(N(2)^2))  0 ; -N(2)/sqrt((N(1)^2)+(N(2)^2)) N(1)/sqrt((N(1)^2)+(N(2)^2)) 0; 0 0 1];
+                    Nprime = RZ*N';
+                    RY = [Nprime(3) 0 -Nprime(1); 0 1 0 ; Nprime(1) 0 Nprime(3)];
+                    translatedProj = proj-[c_x,c_y,c_z];
+                    rotatedProj = (RY*(RZ*translatedProj'))';
+
+                    % Calculate Q for triangle on xy plane
+
+                    [triangle_Q(j),two_phi(j),tri_area(j)] = obj.calculateTriangleQ(rotatedProj(:,1:2));
+
+                end
+
+                % Calculate Q for cell on xy plane by an area weighted
+                % average over triangles:
+                if isreal(triangle_Q)
+
+                    Q_xx = triangle_Q.*cos(two_phi);
+                    Q_xy= triangle_Q.*sin(two_phi);
+                    Q_xx_area = Q_xx.*tri_area;
+                    Q_xy_area= Q_xy.*tri_area;
+                else
+                    Q_xx = nan;
+                    Q_xy= nan;
+                    Q_xx_area = nan;
+                    Q_xy_area= nan;
+                end
+
+                Q_xx_cell(i) = sum(Q_xx_area)/sum(tri_area);
+                Q_xy_cell(i) = sum(Q_xy_area)/sum(tri_area);
+                Q_cell(i) = sqrt(Q_xx_cell(i)^2 + Q_xy_cell(i)^2);
+
+                % Save Q calculated from xy plane
+
+                obj(i).Q = Q_cell(i);
+                obj(i).Q_xx = Q_xx_cell(i);
+                obj(i).Q_xy = Q_xy_cell(i);
+
+            end
+
+        end
+
+        function [axis] = referenceAxis(obj,mode,varargin)
+            % Calculate reference axis for projecting cell shape tensor.
+            % Currently the two options are the axis between the cell and
+            % the defect location, and the local fibre orientation axis.
+            % More options can be added. For both options, the direction
+            % is found in the tangent plane and then rotated to the xy
+            % plane in the same way as the cell, so the projection of the
+            % cell Q on the reference axis can be done in 2d on the xy
+            % plane.
+            obj = flatten(obj);
+            axis = [];
+            for i=1:length(obj)
+                if strcmp(mode,'by_defect')
+                    if nargin<3
+                        defect_idx = 1;
+                    else
+                        defect_idx = varargin{1};
+                    end
+                    defects = obj(i).frames.defects; % Get defect from the cell's frame;
+                    defect_loc = defects(defect_idx).list_pixels;
+                    % Calculate axis between defect and cell centre
+                    % projected on xy plane
+                    planar_axis = [defect_loc(1)-obj(i).center_x,defect_loc(2)-obj(i).center_y,0];
+
+                elseif strcmp(mode,'by_fibre_orientation')
+                    % Calculate axis as orientation of fibres projected
+                    % on xy plane
+                    planar_axis = [cos(obj(i).fibre_orientation),sin(obj(i).fibre_orientation),0];
+                else
+                    sprintf('Mode not recognized');
+                    return
+                end
+
+                % Project planar axis back onto cell tangent plane:
+                N = [obj(i).norm_x,obj(i).norm_y,obj(i).norm_z];
+                proj_axis = planar_axis - planar_axis*(N') * N;
+                % Normalize axis length to 1
+                proj_axis = proj_axis/norm(proj_axis);
+
+                % Rotate to xy plane using same transformation as for
+                % cell (rotating round intersection axis between cell
+                % tangent plane and xy plane):
+
+                RZ = [N(1)/sqrt((N(1)^2)+(N(2)^2)) N(2)/sqrt((N(1)^2)+(N(2)^2))  0 ; -N(2)/sqrt((N(1)^2)+(N(2)^2)) N(1)/sqrt((N(1)^2)+(N(2)^2)) 0; 0 0 1];
+                Nprime = RZ*N';
+                RY = [Nprime(3) 0 -Nprime(1); 0 1 0 ; Nprime(1) 0 Nprime(3)];
+                axis(i,:) = (RY*(RZ*proj_axis'))';
+
+            end
+            axis = axis(:,1:2);
+        end
+
+    end
 end

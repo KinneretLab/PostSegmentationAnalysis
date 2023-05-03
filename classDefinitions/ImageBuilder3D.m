@@ -21,8 +21,9 @@ classdef ImageBuilder3D <ImageBuilder
            
       end 
 
-      function saveLayerArr(obj,save_path,save_name)
-          saveLayerArr@ImageBuilder(obj,save_path,save_name)
+      function exportLayerArr(obj,save_path,save_name)
+          layer_arr_to_save = obj.layer_arr_3d_;
+          save(fullfile(save_path,save_name),"layer_arr_to_save")
       end
 
       function obj = setHMSubfolder(obj,subfolder)
@@ -71,16 +72,15 @@ classdef ImageBuilder3D <ImageBuilder
 
                 for i = 1:row
 
-                    is_marker = obj.layers_data_{i}.getIsMarkerLayer;
-                    is_quiver = obj.layers_data_{i}.getIsMarkerQuiver;
+                    type=obj.layers_data_{i}.getType;
 
-                    if is_marker
+                    if strcmp(type, obj.marker_type)
 
                         % Get z coordinate from smoothed height map for xy
                         % pixels of marker list
                         this_arr = obj.layer_arr_{i,j};
                         this_x = round(this_arr(:,1));
-                        this_y = round(this_arr(:,1));
+                        this_y = round(this_arr(:,2));
 
                         ind = sub2ind(size(this_HM),this_y,this_x);
                         this_z = this_HM(ind);
@@ -89,7 +89,7 @@ classdef ImageBuilder3D <ImageBuilder
 
                     end
 
-                    if is_quiver
+                    if strcmp(type,obj.quiver_type)
                         % Get z coordinate from smoothed height map for xy
                         % pixels of marker list.
 

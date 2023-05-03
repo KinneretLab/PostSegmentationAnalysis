@@ -217,6 +217,54 @@ classdef (Abstract) PhysicalEntity < handle
                 pair_list = pair_list(varargin{:});
             end
         end
+
+        function dist = pixelDist2d(obj,obj2)
+           % This function calculates the distance between a physical
+           % entity (relevant for cells, bonds, pixels and defects) or
+           % array of these, and another (single) physical entity. The
+           % distance is given in 2d pixels.
+            pos1 = obj.list_pixels;
+            pos2 = obj2.list_pixels;
+            dist = sqrt((pos1(:,1)-pos2(:,1)).^2+(pos1(:,2)-pos2(:,2)).^2);
+        end
+
+    
+    end
+
+    methods (Static)
+
+        function [triangle_Q,two_phi,tri_area] = calculateTriangleQ(verts)
+            % verts needs to be a list of triangle vertices in counter-clockwise
+            % order, as a 3x2 matrix with rows being different vertices,
+            % and columns being x,y coordinates
+            % Returns Q elongation tensor, 2*phi the orientation angle, and
+            % area for the triangle. 
+            tri_area =  0.5*(-verts(2,1)* verts(1,2)+verts(3,1)*verts(1,2)+verts(1,1)*verts(2,2)-verts(3,1)*verts(2,2)- verts(1,1)*verts(3,2)+ verts(2,1)*verts(3,2));
+            xx= verts(2,1) - verts(1,1);
+            xy= verts(3,1) - verts(1,1);
+            yx= verts(2,2) - verts(1,2);
+            yy= verts(3,2) - verts(1,2);
+            scaling_factor= 1/(2*3^(1/4));
+            S_xx = scaling_factor*(-1*(xx + xy));
+            S_xy = scaling_factor*sqrt(3)*(xx - xy);
+            S_yx = scaling_factor*(-1*(yx + yy));
+            S_yy = scaling_factor*sqrt(3)*(yx - yy);
+            Q_kk = log(S_xx*S_yy - S_xy*S_yx);
+            theta = mod2pi(atan2(S_yx - S_xy, S_xx + S_yy));
+            two_phi = (theta + atan2( S_xy + S_yx, S_xx - S_yy));
+            triangle_Q = asinh(0.5*sqrt((S_xx-S_yy)^2.+( S_xy+S_yx)^2.)/exp(0.5*Q_kk));
+
+        end
+
+        function Q_rr = projectQonAxis(Q_xx,Q_xy,axis)
+            % This function takes the elements of the shape tensor Q,
+            % and finds the element along the direction defined by "axis"
+            Q_rr = [];
+            for i=1:length(Q_xx)
+                Q = [Q_xx(i), Q_xy(i); Q_xy(i), -Q_xx(i)];
+                Q_rr(i) = axis(i,:)*Q*axis(i,:)';
+            end
+        end
     end
     
     methods(Access = protected)

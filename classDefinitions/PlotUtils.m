@@ -49,7 +49,7 @@ classdef PlotUtils
         end
         
         function func = cellFiberAngle(axis)
-            % CELLFIBERANGLE The angle between cell elongation adn fibers
+            % CELLFIBERANGLE The angle between cell elongation and fibers
             % on the tangential plane
             % Parameters:
             %   axis (Optional): string

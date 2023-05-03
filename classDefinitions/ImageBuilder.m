@@ -47,7 +47,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             obj@FigureBuilder()
 
             % generic global search for a particular folder; works independent of user
-            search_path = '../*/matlab-utility-functions';
+            search_path = '../*/MatlabGeneralFunctions';
             while isempty(dir(search_path))
                 search_path = ['../', search_path];
             end
@@ -581,7 +581,7 @@ classdef ImageBuilder <  FigureBuilder & handle
         end
 
         function s = getBackgroundSize(obj, frame)
-            [row, ~]=size(frame);
+            [row, ~]=size(frame); 
             for i = 1:row
                 layer_data=obj.layers_data_{i};
                 if(~isempty(frame) && layer_data.getType()==obj.image_type)
