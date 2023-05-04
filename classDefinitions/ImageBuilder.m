@@ -1,4 +1,4 @@
-classdef ImageBuilder <  FigureBuilder & handle
+classdef ImageBuilder <  FigureBuilder & handle 
     % IMAGEBUILDER A tool used to draw, display and save the data from the cell database in
     % layers on top of each other.
     properties (Access = protected)
@@ -53,6 +53,11 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
             addpath(dir(search_path).folder)
             search_path = '../*/freezeColors';
+            while isempty(dir(search_path))
+                search_path = ['../', search_path];
+            end
+            addpath(dir(search_path).folder)
+            search_path = '../*/gui';
             while isempty(dir(search_path))
                 search_path = ['../', search_path];
             end
@@ -244,7 +249,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                 ylim(ylims);
                 return;
             end
-            if(~isempty(obj.output_folder_))
+            if(obj.output_folder_~="")
                 for i= 1 : col
                     frame = obj.layer_arr_(:, i);
                     fig=obj.drawFrame(frame, false, i);
@@ -366,6 +371,11 @@ classdef ImageBuilder <  FigureBuilder & handle
                     frame=getframe(ax);
                     image=frame.cdata;
                     image=obj.fixBorders(image);
+                    [rows ,cols, ~]=size(image);
+                    if([rows, cols]~=obj.data_{1}(1).experiment.image_size_)
+                        obj.logger.warn("The resolution of your screen is not enough so image will be rescaled, you might see some distortion");
+                        image = imresize(image, obj.data_{1}(1).experiment.image_size_, 'bilinear');
+                    end
                     imwrite(image, fname);
                 case "fig"
                     set(gcf,'visible','on');
@@ -563,21 +573,19 @@ classdef ImageBuilder <  FigureBuilder & handle
         function image = fixBorders(obj, image)
             [rows ,cols, ~]=size(image);
             border_color=[240 240 240];
-            if(~all([rows, cols]~=obj.data_{1}(1).experiment.image_size_))
-                if(image(1,2,:)==border_color)
-                    image(1,:, :)=[];
-                end
-                if(image(end, 2, :)==border_color)
-                    image(end,:, :)=[];
-                end
-                if(image(2,1, :)==border_color)
-                    image(:,1, :)=[];
-                end
-                if(image(2,end, :)==border_color)
-                    image(:,end, :)=[];
-                end
-
+            if(image(1,2,:)==border_color)
+                image(1,:, :)=[];
             end
+            if(image(end, 2, :)==border_color)
+                image(end,:, :)=[];
+            end
+            if(image(2,1, :)==border_color)
+                image(:,1, :)=[];
+            end
+            if(image(2,end, :)==border_color)
+                image(:,end, :)=[];
+            end
+
         end
 
         function s = getBackgroundSize(obj, frame)
