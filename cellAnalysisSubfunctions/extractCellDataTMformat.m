@@ -85,7 +85,7 @@ end
             frameCellData(i-shift).bonds = [];
             frameCellData(i-shift).ordered_vertices = [];
             frameCellData(i-shift).dBonds = [];
-
+            frameCellData(i-shift).isEdge = 0;
 
         end
     end
@@ -159,14 +159,11 @@ end
         % Assign vertices back to cells
         for m=1:length(cIndex)
             frameCellData(cIndex(m)).vertices = unique([frameCellData(cIndex(m)).vertices,frameVertexData(j).vertex_id]);
-            if frameVertexData(j).isEdge == 1
-                frameCellData(cIndex(m)).isEdge = 1;
-            else
-                frameCellData(cIndex(m)).isEdge = 0;
-                
+            if frameVertexData(j).isEdge > 0
+                frameCellData(cIndex(m)).isEdge = 1;         
             end
         end
-        
+
         % Assign neighbouring bonds to vertex
         VxInds = (v_x(j)-1):(v_x(j)+1);
         VyInds = (v_y(j)-1):(v_y(j)+1);
@@ -338,31 +335,20 @@ end
                     ordered_verts = verts;
                 else
                     % Choose the first vertex in the list as the starting
-                    % point, and choose the next vertex as the next clockwise
-                    % from it:
+                    % point, find and choose one of it's neighbouring
+                    % vertices, and continue around the cell. At the end,
+                    % check if order is clockwise or anti-clockwise and
+                    % correct so all are clockwise (which corresponds to
+                    % anti-clockwise in the image that is read top to bottom).
                     ordered_verts = [];
                     ordered_verts(1) = verts(1);
                     vertBondInds = logical(cell2mat(cellfun(@(x)ismember(ordered_verts(1),x),{frameBondData.vertices},'UniformOutput',false)));
                     bond_verts = [frameBondData(vertBondInds).vertices];
                     bond_verts = intersect(bond_verts,verts);
-                    vert_xy = [];
-                    for vi = 1:length(bond_verts)
-                        vertInd = find([frameVertexData.vertex_id]== bond_verts(vi));
-                        vert_xy(vi,:) = [frameVertexData(vertInd).x_pos,frameVertexData(vertInd).y_pos];
-                    end
-                    tri_centre = mean(vert_xy,1);
-                    in = inpolygon(tri_centre(2),tri_centre(1),frameCellData(s).outline(:,2),frameCellData(s).outline(:,1)); % If true, means triangle is inside cell, which means clockwise order of triangle matches that of cell.
-                    tf = ispolycw(vert_xy(:,2),vert_xy(:,1));
-                    
-                    if in==tf
-                        this_vert = find(bond_verts==verts(1));
-                        bond_verts = [bond_verts,bond_verts(1)];
-                        ordered_verts(2) = bond_verts(this_vert+1);
-                    else
-                        this_vert = find(bond_verts==verts(1));
-                        bond_verts = [bond_verts(end),bond_verts];
-                        ordered_verts(2) = bond_verts(this_vert);
-                    end
+                    bond_verts = setdiff(bond_verts,ordered_verts(1));
+                    % Choose one of the adjacent vertices (without knowing
+                    % if clockwise or not)
+                    ordered_verts(2) = bond_verts(1);
                     % Fill in the next ordered vertices based on the remaining
                     % vertices shared by the relevant bonds:
                     for vi = 2:(length(verts)-1)
@@ -378,7 +364,16 @@ end
                         end
                         ordered_verts(vi+1) = bond_verts;
                     end
-
+                    x = [];
+                    y = [];
+                    for vi=1:length(ordered_verts)
+                        x(vi) = frameVertexData([frameVertexData.vertex_id] == ordered_verts(vi)).x_pos;
+                        y(vi) = frameVertexData([frameVertexData.vertex_id] == ordered_verts(vi)).y_pos;
+                    end
+                    tf = ispolycw(x,y);
+                    if ~tf
+                        ordered_verts(2:end) = fliplr(ordered_verts(2:end));
+                    end
                 end
 
                 frameCellData(s).ordered_vertices = ordered_verts;

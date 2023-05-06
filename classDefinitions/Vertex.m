@@ -75,7 +75,7 @@ classdef Vertex < PhysicalEntity
             
             % the relevant DBonds here are both those that start from here
             % and those that point to it.
-            dbonds = [obj.dbonds, obj.lookupMany(clazz, "vertex_id", "vertex2_id")];
+            dbonds = [obj.dBonds, obj.lookupMany(class(DBond), "vertex_id", "vertex2_id")];
             cells = dbonds.cells;
             % unique value filtering
             for i=1:length(obj)
@@ -89,6 +89,14 @@ classdef Vertex < PhysicalEntity
                 cells = cells(varargin{:});
             end
         end
+        
+        function is_edge = is_edge(obj)
+            % Find whether the bond is on the edge of the image by checking
+            % that all cells that involve this bond are on the edge.
+            obj = flatten(obj);
+            is_edge = arrayfun(@(arr) prod([arr.cells.is_edge],'all',"omitnan"),obj);
+        end
+
         
         function plot_pixels = plot_pixels(obj)
             plot_pixels = {};

@@ -369,7 +369,7 @@ classdef Cell < PhysicalEntity
                     % normal and going through the centre of
                     % the cell:
                     N = [obj(i).norm_x,obj(i).norm_y,obj(i).norm_z];
-                    tri_verts = [c_x,c_y,c_z; v1_x,v1_y,v1_z; v2_x,v2_y,v2_z];
+                    tri_verts = [c_x,c_y,c_z; v2_x,v2_y,v2_z; v1_x,v1_y,v1_z]; % To make the tirangles counter-clockwise when y is read bottom to top
                     proj = tri_verts - ((tri_verts - [c_x,c_y,c_z])*(N')) * N;
 
                     % Rotate to xy plane through cell centre

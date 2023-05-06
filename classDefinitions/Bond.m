@@ -87,6 +87,14 @@ classdef Bond < PhysicalEntity
             cells = obj.getOrCalculate(class(Cell), "cells_", @(bonds) bonds.dBonds.cells, varargin{:});
         end
 
+        function is_edge = is_edge(obj)
+            % Find whether the bond is on the edge of the image by checking
+            % that all cells that involve this bond are on the edge.
+            obj = flatten(obj);
+            is_edge = arrayfun(@(arr) prod([arr.cells.is_edge],'all',"omitnan"),obj);
+
+        end
+
         function coords = coords(obj, varargin)
             % COORDS gets the pixel list each bond in this array resides in.
             % Parameters:
