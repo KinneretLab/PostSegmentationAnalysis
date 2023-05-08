@@ -16,6 +16,10 @@ classdef Vertex < PhysicalEntity
         y_pos
         % the pixel Z coordinate of the vertex in the image
         z_pos
+        % An internal vairblae listing the cells this bond is a border of.
+        % you can access this using VERTEX#CELLS
+        % type: CELL[]
+        cells_ = Null.null;
     end
     
     methods
@@ -66,8 +70,8 @@ classdef Vertex < PhysicalEntity
             end
         end
         
-        function cells = cells(obj, varargin)
-            % BONDS calculates the cells each vertex in this array touches.
+        function cells = calculateCells(obj, varargin)
+            % CELLS calculates the cells each vertex in this array touches.
             % Parameters:
             %   varargin: additional MATLAB builtin operations to apply on
             %   the result.
@@ -89,11 +93,22 @@ classdef Vertex < PhysicalEntity
                 cells = cells(varargin{:});
             end
         end
+
+         function cells = cells(obj, varargin)
+            % CELLS calculates the cells each vertex in this array touches.
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            % Return type: CELL[]
+            cells = obj.getOrCalculate(class(Cell), "cells_", @(vertices) vertices.calculateCells, varargin{:});
+
+         end
         
         function is_edge = is_edge(obj)
             % Find whether the bond is on the edge of the image by checking
             % that all cells that involve this bond are on the edge.
             obj = flatten(obj);
+            obj.cells;
             is_edge = arrayfun(@(arr) prod([arr.cells.is_edge],'all',"omitnan"),obj);
         end
 

@@ -91,6 +91,7 @@ classdef Bond < PhysicalEntity
             % Find whether the bond is on the edge of the image by checking
             % that all cells that involve this bond are on the edge.
             obj = flatten(obj);
+            obj.cells;
             is_edge = arrayfun(@(arr) prod([arr.cells.is_edge],'all',"omitnan"),obj);
 
         end

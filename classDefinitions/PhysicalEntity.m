@@ -437,7 +437,7 @@ classdef (Abstract) PhysicalEntity < handle
         
         function phys_arr = getOrCalculate(obj, clazz, prop, lookup_func, varargin)
             % GETORCALCULATE A utility function that gets a property or calculates and saves the result.
-            % In basis, it chcks which entities in the list do not have the
+            % In basis, it checks which entities in the list do not have the
             % result stored in the property, puts them in a list and runs
             % the calculation, storing the result. This can be used in
             % tandem with the lookup functions.

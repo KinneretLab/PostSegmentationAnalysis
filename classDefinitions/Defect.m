@@ -63,8 +63,6 @@ classdef Defect < PhysicalEntity
             end
         end
 
-
-
         function list_pixels = list_pixels(obj)
             list_pixels = [];
             obj = flatten(obj);
