@@ -462,7 +462,7 @@ classdef (Abstract) PhysicalEntity < handle
             % check which objects needs to calculate stuff
             if ismember(clazz, {'logical', 'double', 'single', 'uint8', ...
                     'uint16', 'uint32', 'uint64', 'int8', 'int16', 'int32', 'int64'})
-                index_flag = arrayfun(@(entity) ~isnan(entity) & isnan(entity.(prop(1))), obj);
+                index_flag = arrayfun(@(entity) ~isnan(entity) & isempty(entity.(prop(1))), obj);
 
             else
                 index_flag = arrayfun(@(entity) ~isnan(entity) & Null.isNull(entity.(prop(1))), obj);
@@ -504,13 +504,15 @@ classdef (Abstract) PhysicalEntity < handle
             if max(sizes) > 0
                 if ismember(clazz, {'logical', 'double', 'single', 'uint8', ...
                         'uint16', 'uint32', 'uint64', 'int8', 'int16', 'int32', 'int64'})
-                    phys_arr(numel(obj), max(sizes, [], 'all')) = feval(clazz, nan);
+                    phys_arr(numel(obj), max(sizes, [], 'all'),length(prop)) = feval(clazz, nan);
                 else
-                    phys_arr(numel(obj), max(sizes, [], 'all')) = feval(clazz);
+                    phys_arr(numel(obj), max(sizes, [], 'all'),length(prop)) = feval(clazz);
                 end
                 for i=1:numel(obj)
                     if sizes(i) > 0
-                        phys_arr(i, 1:sizes(i)) = obj(i).(prop(1));
+                        for j = 1:length(prop)
+                           phys_arr(i, 1:sizes(i),j) = obj(i).(prop(j));
+                        end
                     end
                 end
             else
@@ -524,6 +526,8 @@ classdef (Abstract) PhysicalEntity < handle
             if nargin > 4
                 phys_arr = phys_arr(varargin{:});
             end
+            % Remove dimensions of size 1
+            phys_arr = squeeze(phys_arr);
         end
     end
 end
