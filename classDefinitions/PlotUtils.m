@@ -82,7 +82,7 @@ classdef PlotUtils
             end
             func = BulkFunc(func);
         end
-        
+
         function func = numBonds(axis)
             % NUMNEIGHBORS The number of bonds the entity (cell, vertex, true vertex, etc.) has
             % Parameters:

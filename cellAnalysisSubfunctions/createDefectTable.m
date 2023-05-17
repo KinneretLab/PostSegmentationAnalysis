@@ -1,4 +1,4 @@
-function [] = createDefectTable(mainDir,segDir,cellDir,frameList)
+function [] = createDefectTable(mainDir,segDir,cellDir,frameList,useCenter)
 %UNTITLED2 Summary of this function goes here
 %   Detailed explanation goes here
          dirDataDefect=[mainDir,'\Dynamic_Analysis\Defects'];
@@ -30,7 +30,7 @@ function [] = createDefectTable(mainDir,segDir,cellDir,frameList)
              thisFile=sortedFileNames{k}; % find this frame's file name
              endName=strfind(thisFile,'.');
              thisFileImNameBase = thisFile (1:endName-1); %without the .filetype
-             extractAllDefects(k, dirLocalOP, thisFileImNameBase,gTruth,dirDataDefect);
+             extractAllDefects(k, dirLocalOP, thisFileImNameBase,gTruth,dirDataDefect,useCenter);
              load([dirDataDefect,'\',thisFileImNameBase,'.mat']);
              % Separate 'defect' into two lines and assign frame
              for m = 1:length(defect)

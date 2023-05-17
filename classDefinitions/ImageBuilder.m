@@ -113,7 +113,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                     % Get value for each object using the specified value
                     % function for this layer.
                     
-                    value_arr = BulkFunc.apply(value_fun{1},filtered_arr,obj,phys_arr);
+                    value_arr = BulkFunc.apply(value_fun{1},filtered_arr,obj,phys_arr,filtered_arr);
 
                     % Apply calibration to values if specified (to convert
                     % pixels to microns)

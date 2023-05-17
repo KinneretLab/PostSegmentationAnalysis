@@ -39,6 +39,7 @@ calibrationXY_list = [0.65,0.52]; % um per pixel in XY plane (can be a single va
 calibrationZ_list = [3,3]; % um per pixel in Z direction(can be a single value or vector of length of movie list if different for each movie).
    
 useDefects_list = 0; % Set to 1 if you are using manually marked defects, and 0 if not. (can be a single value or vector of length of movie list if different for each movie).
+useCenter = 1; % For defect location from manual annotation.
 disp('Please make sure you have run the orientation analysis on these movies/datasets')
 %% 0.3 Define general parameters for analysis
 
@@ -141,7 +142,7 @@ for n=1:length(mainDirList)
      if useDefects ==1
          disp('Preparing defect data')
          % Prepare and load raw data on defect location.
-          createDefectTable(mainDir,segDir,cellDir,frameList{n});
+          createDefectTable(mainDir,segDir,cellDir,frameList{n},useCenter);
      end
     
 %

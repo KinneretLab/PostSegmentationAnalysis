@@ -73,11 +73,11 @@ classdef Cell < PhysicalEntity
         % type: int
         bb_yEnd = nan;
         % Magnitude of cell shape tensor Q calculated from cell projected on tangent plane and then rotated to xy plane around the intersection axis:
-        Q = nan;
+        Q = [];
         % Qxx element of cell shpae tensor Q calculated from cell projected on tangent plane and then rotated to xy plane around the intersection axis:
-        Q_xx = nan;
+        Q_xx = [];
         % Qxy element of cell shpae tensor Q calculated from cell projected on tangent plane and then rotated to xy plane around the intersection axis:
-        Q_xy = nan;
+        Q_xy = [];
         % the list of pixel coordinates indicating the edges of the cell
         % you can calculate these values for retrieval using CELL#OUTLINE()
         % then retrieve them from this variable.
@@ -165,7 +165,32 @@ classdef Cell < PhysicalEntity
             cells = obj(varargin{:});
         end
 
+        function q_xx = q_xx(obj, varargin)
+            % Get or calculate the xx element of Q shape tensor
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            % Return type: DOUBLE[]
+            [q_xx,~,~] = obj.calculateCellQ;
+        end
 
+        function q_xy = q_xy(obj, varargin)
+            % Get or calculate the xy element of Q shape tensor
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            % Return type: DOUBLE[]
+            [~,q_xy,~] = obj.calculateCellQ;
+        end
+
+        function q = q(obj, varargin)
+            % Get or calculate the magnitude of Q shape tensor
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            % Return type: DOUBLE[]
+            [~,~,q] = obj.calculateCellQ;
+        end
 
         function obj = outline(obj)
             % OUTLINE Calculates the list of pixel coordinates indicating the edges of the cell
@@ -284,7 +309,7 @@ classdef Cell < PhysicalEntity
             for i=1:length(obj)
                 fprintf('Finding pairs for cell #%d \n', i);
                 % Create first rank neihgbour pairs
-                if ~isnan(obj(i).neighbors_)
+                if ~Null.isNull(obj(i).neighbors_)
                     cell_pairs = {};
                     cell_pairs{1} = Pair([repmat(obj(i),length(obj(i).neighbors_),1), obj(i).neighbors_'],ones(length(obj(i).neighbors_),1));
                     % Proceed to further ranks:
@@ -312,7 +337,7 @@ classdef Cell < PhysicalEntity
             end
         end
 
-        function [Q_xx_cell,Q_xy_cell,Q_cell,obj] = calculateCellQ(obj)
+        function [Q_xx_cell,Q_xy_cell,Q_cell] = calculateCellQ(obj)
             % Get directed bonds for all cells:
             obj = flatten(obj);
             sprintf('Getting directed bonds')
@@ -327,88 +352,105 @@ classdef Cell < PhysicalEntity
                 if mod(i,50) == 0
                     fprintf('Calculating Q for cell #%d \n', i);
                 end
-                orderedDBonds = DBond();
-                orderedDBonds(1) = theseDBonds(i,1);
-                cellDBonds = theseDBonds(i,:); % Make sure only non-empty dbonds are used:
-                numDBonds = length(cellDBonds(~isnan(cellDBonds)));
-                % Order cell's dbonds
-                if numDBonds>1
-                    for j=1:(numDBonds-1)
-                        nextDBond = orderedDBonds(j).left_dbond_id;
-                        cellDBondIDs = [theseDBonds(i,:).dbond_id];
-                        flag = (cellDBondIDs == nextDBond);
-                        orderedDBonds(j+1) = theseDBonds(i,flag);
+                if isempty(obj(i).Q)
+
+                    orderedDBonds = DBond();
+                    orderedDBonds(1) = theseDBonds(i,1);
+                    cellDBonds = theseDBonds(i,:); % Make sure only non-empty dbonds are used:
+                    numDBonds = length(cellDBonds(~isnan(cellDBonds)));
+                    % Order cell's dbonds
+                    if numDBonds>1
+                        for j=1:(numDBonds-1)
+                            nextDBond = orderedDBonds(j).left_dbond_id;
+                            cellDBondIDs = [theseDBonds(i,:).dbond_id];
+                            flag = (cellDBondIDs == nextDBond);
+                            orderedDBonds(j+1) = theseDBonds(i,flag);
+                        end
                     end
-                end
-                % Get ordered vertices
-                ordered_vertices = [orderedDBonds.vertex_id];
-                % Place first vertex again at the end of list
-                % of ordered vertices:
-                ordered_vertices = [ordered_vertices,ordered_vertices(1)];
-                % Get cell centre
-                c_x = obj(i).center_x;
-                c_y = obj(i).center_y;
-                c_z = obj(i).center_z;
+                    % Get ordered vertices
+                    ordered_vertices = [orderedDBonds.vertex_id];
 
-                % Initialize arrays of triangle measures:
-                triangle_Q = []; two_phi= [];tri_area = [];
-                % Run over triangles comprising the cell:
-                for j=1:length(ordered_vertices)-1
+                    if ordered_vertices ~= 0
+                        % Place first vertex again at the end of list
+                        % of ordered vertices:
+                        ordered_vertices = [ordered_vertices,ordered_vertices(1)];
+                        % Get cell centre
+                        c_x = obj(i).center_x;
+                        c_y = obj(i).center_y;
+                        c_z = obj(i).center_z;
 
-                    v1 = these_vertices([ these_vertices.vertex_id]==ordered_vertices(j));
-                    v2 = these_vertices([ these_vertices.vertex_id]==ordered_vertices(j+1));
+                        % Initialize arrays of triangle measures:
+                        triangle_Q = []; two_phi= [];tri_area = [];
+                        % Run over triangles comprising the cell:
+                        for j=1:length(ordered_vertices)-1
 
-                    v1_x = v1.x_pos;
-                    v1_y = v1.y_pos;
-                    v1_z = v1.z_pos;
-                    v2_x = v2.x_pos;
-                    v2_y = v2.y_pos;
-                    v2_z = v2.z_pos;
+                            v1 = these_vertices([ these_vertices.vertex_id]==ordered_vertices(j));
+                            v2 = these_vertices([ these_vertices.vertex_id]==ordered_vertices(j+1));
 
-                    % Project vertices onto plane defined by
-                    % normal and going through the centre of
-                    % the cell:
-                    N = [obj(i).norm_x,obj(i).norm_y,obj(i).norm_z];
-                    tri_verts = [c_x,c_y,c_z; v2_x,v2_y,v2_z; v1_x,v1_y,v1_z]; % To make the tirangles counter-clockwise when y is read bottom to top
-                    proj = tri_verts - ((tri_verts - [c_x,c_y,c_z])*(N')) * N;
+                            v1_x = v1.x_pos;
+                            v1_y = v1.y_pos;
+                            v1_z = v1.z_pos;
+                            v2_x = v2.x_pos;
+                            v2_y = v2.y_pos;
+                            v2_z = v2.z_pos;
 
-                    % Rotate to xy plane through cell centre
-                    RZ = [N(1)/sqrt((N(1)^2)+(N(2)^2)) N(2)/sqrt((N(1)^2)+(N(2)^2))  0 ; -N(2)/sqrt((N(1)^2)+(N(2)^2)) N(1)/sqrt((N(1)^2)+(N(2)^2)) 0; 0 0 1];
-                    Nprime = RZ*N';
-                    RY = [Nprime(3) 0 -Nprime(1); 0 1 0 ; Nprime(1) 0 Nprime(3)];
-                    translatedProj = proj-[c_x,c_y,c_z];
-                    rotatedProj = (RY*(RZ*translatedProj'))';
+                            % Project vertices onto plane defined by
+                            % normal and going through the centre of
+                            % the cell:
+                            N = [obj(i).norm_x,obj(i).norm_y,obj(i).norm_z];
+                            tri_verts = [c_x,c_y,c_z; v2_x,v2_y,v2_z; v1_x,v1_y,v1_z]; % To make the tirangles counter-clockwise when y is read bottom to top
+                            proj = tri_verts - ((tri_verts - [c_x,c_y,c_z])*(N')) * N;
 
-                    % Calculate Q for triangle on xy plane
+                            % Rotate to xy plane through cell centre
+                            RZ = [N(1)/sqrt((N(1)^2)+(N(2)^2)) N(2)/sqrt((N(1)^2)+(N(2)^2))  0 ; -N(2)/sqrt((N(1)^2)+(N(2)^2)) N(1)/sqrt((N(1)^2)+(N(2)^2)) 0; 0 0 1];
+                            Nprime = RZ*N';
+                            RY = [Nprime(3) 0 -Nprime(1); 0 1 0 ; Nprime(1) 0 Nprime(3)];
+                            translatedProj = proj-[c_x,c_y,c_z];
+                            rotatedProj = (RY*(RZ*translatedProj'))';
 
-                    [triangle_Q(j),two_phi(j),tri_area(j)] = obj.calculateTriangleQ(rotatedProj(:,1:2));
+                            % Calculate Q for triangle on xy plane
 
-                end
+                            [triangle_Q(j),two_phi(j),tri_area(j)] = obj.calculateTriangleQ(rotatedProj(:,1:2));
 
-                % Calculate Q for cell on xy plane by an area weighted
-                % average over triangles:
-                if isreal(triangle_Q)
+                        end
 
-                    Q_xx = triangle_Q.*cos(two_phi);
-                    Q_xy= triangle_Q.*sin(two_phi);
-                    Q_xx_area = Q_xx.*tri_area;
-                    Q_xy_area= Q_xy.*tri_area;
+                        % Calculate Q for cell on xy plane by an area weighted
+                        % average over triangles:
+                        if isreal(triangle_Q)
+
+                            Q_xx = triangle_Q.*cos(two_phi);
+                            Q_xy= triangle_Q.*sin(two_phi);
+                            Q_xx_area = Q_xx.*tri_area;
+                            Q_xy_area= Q_xy.*tri_area;
+                        else
+                            Q_xx = nan;
+                            Q_xy= nan;
+                            Q_xx_area = nan;
+                            Q_xy_area= nan;
+                        end
+
+                    else
+                        Q_xx = nan;
+                        Q_xy= nan;
+                        Q_xx_area = nan;
+                        Q_xy_area= nan;
+                    end
+
+                    Q_xx_cell(i) = sum(Q_xx_area)/sum(tri_area);
+                    Q_xy_cell(i) = sum(Q_xy_area)/sum(tri_area);
+                    Q_cell(i) = sqrt(Q_xx_cell(i)^2 + Q_xy_cell(i)^2);
+
+                    % Save Q calculated from xy plane
+
+                    obj(i).Q = Q_cell(i);
+                    obj(i).Q_xx = Q_xx_cell(i);
+                    obj(i).Q_xy = Q_xy_cell(i);
+
                 else
-                    Q_xx = nan;
-                    Q_xy= nan;
-                    Q_xx_area = nan;
-                    Q_xy_area= nan;
+                    Q_xx_cell(i) = obj(i).Q_xx;
+                    Q_xy_cell(i) = obj(i).Q_xy;
+                    Q_cell(i) = obj(i).Q;
                 end
-
-                Q_xx_cell(i) = sum(Q_xx_area)/sum(tri_area);
-                Q_xy_cell(i) = sum(Q_xy_area)/sum(tri_area);
-                Q_cell(i) = sqrt(Q_xx_cell(i)^2 + Q_xy_cell(i)^2);
-
-                % Save Q calculated from xy plane
-
-                obj(i).Q = Q_cell(i);
-                obj(i).Q_xx = Q_xx_cell(i);
-                obj(i).Q_xy = Q_xy_cell(i);
 
             end
 

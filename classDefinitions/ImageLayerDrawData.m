@@ -139,10 +139,18 @@ classdef ImageLayerDrawData < handle
             % Input: type: string
             %returns: ImageDrawData
             colormaps=PresetValues.getColormaps;
-            if(ismember(value, colormaps))
-                obj.colormap_ = value;
+            if isstring(value)
+                if(ismember(value, colormaps))
+                    obj.colormap_ = value;
+                else
+                    obj.logger.error("Coundn't set value for setColormap please check if colormap is one recognized by matlab");
+                end
             else
+               if (size(value,1)>1 && size(value,2)==3)
+                   obj.colormap_ = value;
+               else
                 obj.logger.error("Coundn't set value for setColormap please check if colormap is one recognized by matlab");
+               end
             end
         end
 

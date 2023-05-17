@@ -30,6 +30,7 @@ classdef (Abstract) PhysicalEntity < handle
         uniqueID(obj)
         
         logger(obj)
+
     end
     
     methods
@@ -459,35 +460,57 @@ classdef (Abstract) PhysicalEntity < handle
             % Return type: clazz[]
             
             % check which objects needs to calculate stuff
-            index_flag = arrayfun(@(entity) ~isnan(entity) & Null.isNull(entity.(prop)), obj);
+            if ismember(clazz, {'logical', 'double', 'single', 'uint8', ...
+                    'uint16', 'uint32', 'uint64', 'int8', 'int16', 'int32', 'int64'})
+                index_flag = arrayfun(@(entity) ~isnan(entity) & isnan(entity.(prop(1))), obj);
+
+            else
+                index_flag = arrayfun(@(entity) ~isnan(entity) & Null.isNull(entity.(prop(1))), obj);
+            end
             obj_to_index = obj(index_flag);
             if ~isempty(obj_to_index)
-                obj.logger.info("Indexing %s for %d %ss", prop, length(obj_to_index), class(obj_to_index(1)));
+                obj.logger.info("Indexing %s for %d %ss",  strjoin(prop, ","), length(obj_to_index), class(obj_to_index(1)));
                 % apply calculation on the neccesary objects
                 index_result = lookup_func(obj_to_index);
                 if size(index_result, 1) ~= length(obj_to_index)
                     index_result = index_result';
                 end
+
                 for i=1:size(index_result, 1)
                     % store non NaN unique results in the respective object
                     result_row = index_result(i, :);
-                    obj_to_index(i).(prop) = unique(result_row(~isnan(result_row)));
+                    if length(prop) == 1
+%                        obj_to_index(i).(prop) = unique(result_row(~isnan(result_row)));
+                       obj_to_index(i).(prop) = unique(result_row);
+
+                    else
+                        for j = 1:length(prop)
+                            obj_to_index(i).(prop(j)) = result_row(j);
+                        end
+                    end
+
                 end
             else
                 phys_arr = eval([clazz, '.empty(', num2str(length(obj)), ',0)']);
             end
             % collect all the properties of the object into a tight matrix.
-            sizes = arrayfun(@(entity) ~Null.isNull(entity.(prop)) * length(entity.(prop)), obj);
+            if ismember(clazz, {'logical', 'double', 'single', 'uint8', ...
+                    'uint16', 'uint32', 'uint64', 'int8', 'int16', 'int32', 'int64'})
+                sizes = arrayfun(@(entity) length(entity.(prop(1))), obj);
+
+            else
+                sizes = arrayfun(@(entity) ~Null.isNull(entity.(prop(1))) * length(entity.(prop(1))), obj);
+            end
             if max(sizes) > 0
                 if ismember(clazz, {'logical', 'double', 'single', 'uint8', ...
                         'uint16', 'uint32', 'uint64', 'int8', 'int16', 'int32', 'int64'})
-                    phys_arr(numel(obj), max(sizes, [], 'all')) = feval(clazz, 0);
+                    phys_arr(numel(obj), max(sizes, [], 'all')) = feval(clazz, nan);
                 else
                     phys_arr(numel(obj), max(sizes, [], 'all')) = feval(clazz);
                 end
                 for i=1:numel(obj)
                     if sizes(i) > 0
-                        phys_arr(i, 1:sizes(i)) = obj(i).(prop);
+                        phys_arr(i, 1:sizes(i)) = obj(i).(prop(1));
                     end
                 end
             else
