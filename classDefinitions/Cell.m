@@ -172,7 +172,7 @@ classdef Cell < PhysicalEntity
             %   the result.
             % Return type: DOUBLE[]
             full_q = obj.getOrCalculate('double', ["Q_xx","Q_xy","Q"], @calculateCellQ,varargin{:});
-            q_xx = full_q(:,1);   
+            q_xx = full_q(1,:);   
         end
 
         function q_xy = q_xy(obj, varargin)
@@ -182,7 +182,7 @@ classdef Cell < PhysicalEntity
             %   the result.
             % Return type: DOUBLE[]
             full_q = obj.getOrCalculate('double', ["Q_xx","Q_xy","Q"], @calculateCellQ,varargin{:});
-            q_xy = full_q(:,2);
+            q_xy = full_q(2,:);
         end
 
         function q = q(obj, varargin)
@@ -192,7 +192,7 @@ classdef Cell < PhysicalEntity
             %   the result.
             % Return type: DOUBLE[]
             full_q = obj.getOrCalculate('double', ["Q_xx","Q_xy","Q"], @calculateCellQ,varargin{:});
-            q = full_q(:,3);
+            q = full_q(3,:);
         end
 
         function obj = outline(obj)
@@ -356,8 +356,6 @@ classdef Cell < PhysicalEntity
                 if mod(i,50) == 0
                     fprintf('Calculating Q for cell #%d \n', i);
                 end
-              %  if isempty(obj(i).Q)
-
                     orderedDBonds = DBond();
                     orderedDBonds(1) = theseDBonds(i,1);
                     cellDBonds = theseDBonds(i,:); % Make sure only non-empty dbonds are used:
@@ -449,12 +447,6 @@ classdef Cell < PhysicalEntity
                     obj(i).Q = Q_cell(i);
                     obj(i).Q_xx = Q_xx_cell(i);
                     obj(i).Q_xy = Q_xy_cell(i);
-
-%                 else
-%                     Q_xx_cell(i) = obj(i).Q_xx;
-%                     Q_xy_cell(i) = obj(i).Q_xy;
-%                     Q_cell(i) = obj(i).Q;
-%                 end
 
             end
             Q = [Q_xx_cell; Q_xy_cell; Q_cell];
