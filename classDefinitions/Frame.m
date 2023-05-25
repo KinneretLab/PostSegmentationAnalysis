@@ -32,6 +32,10 @@ classdef Frame < PhysicalEntity
         % you can access this using FRAME#TVERTICES
         % type: TRUEVERTEX[]
         t_vertices_ = Null.null;
+        % An internal vairblae listing the regions this frame contains.
+        % you can access this using FRAME#REGIONS
+        % type: MARKEDREGION[]
+        regions_ = Null.null;
         % An internal vairblae listing the defects this frame contains.
         % you can access this using FRAME#DEFECTS
         % type: DEFECT[]
@@ -113,6 +117,16 @@ classdef Frame < PhysicalEntity
             % Return type: TVERTEX[]
             vertices = obj.getOrCalculate(class(TrueVertex), "t_vertices_", @(frames) frames.lookupByFrame(class(TrueVertex)), varargin{:});
         end
+
+        function vertices = regions(obj, varargin)
+            % REGIONS searches for the marked regions (including mask) contained in each frame in this array.
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            % Return type: MARKEDREGION[]
+            vertices = obj.getOrCalculate(class(MarkedRegion), "regions_", @(frames) frames.lookupByFrame(class(MarkedRegion)), varargin{:});
+        end
+
         function defects = defects(obj, varargin)
             % DEFECTS searches for the defects contained in each frame in this array.
             % Parameters:

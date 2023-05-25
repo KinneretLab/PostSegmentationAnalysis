@@ -263,7 +263,7 @@ classdef Experiment < handle
         end
         
         function vertex_arr = tVertices(obj, varargin)
-            % VERTICES Retrieves all true vertices from the experiment(s), and loads/constructs them if neccesary.
+            % TVERTICES Retrieves all true vertices from the experiment(s), and loads/constructs them if neccesary.
             % Additional arguments can be applied to get select slices or a
             % conditional filtering
             % for example, exp.cells([exp.cells.confidence] > 0.5) will
@@ -276,6 +276,19 @@ classdef Experiment < handle
             %   filter contruction parameter.
             % Return type: TRUEVERTEX[] with size (1, ?)
             vertex_arr = obj.lookup(class(TrueVertex), varargin{:});
+        end
+        
+        function region_arr = regions(obj, varargin)
+            % REGIONS Retrieves all marked regions (including masks) from the experiment(s), and loads/constructs them if neccesary.
+            % Additional arguments can be applied to get select slices or a
+            % conditional filtering
+            % for example, exp.cells([exp.cells.confidence] > 0.5) will
+            % only yield cells with a confidence bigger than 0.5
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            % Return type: MARKEDREGION[] with size (1, ?)
+            region_arr = obj.lookup(class(MarkedRegion), varargin{:});
         end
 
         function frame_arr = frames(obj, varargin)
