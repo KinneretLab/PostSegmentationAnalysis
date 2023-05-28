@@ -75,9 +75,15 @@ for i = 1:length(sortedDatasets)
     norm_x = allCellNorms(:,1);
     norm_y = allCellNorms(:,2);
     norm_z = allCellNorms(:,3);
-    fibre_orientation = {thisCellData.fibreOrientation}';
-    fibre_localOP = {thisCellData.localOP}';
-    fibre_coherence = {thisCellData.fibreCoherence}';
+    try
+        fibre_orientation = {thisCellData.fibreOrientation}';
+        fibre_localOP = {thisCellData.localOP}';
+        fibre_coherence = {thisCellData.fibreCoherence}';
+    catch
+        fibre_orientation = zeros(length(norm_x), 1);
+        fibre_localOP = zeros(length(norm_x), 1);
+        fibre_coherence = zeros(length(norm_x), 1);
+    end
     bb_xStart = {thisCellData.bb_xStart}';
     bb_xEnd = {thisCellData.bb_xEnd}';
     bb_yStart = {thisCellData.bb_yStart}';

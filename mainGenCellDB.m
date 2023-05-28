@@ -1,4 +1,4 @@
-clear all; close all;
+%clear all; close all;
 addpath('classDefinitions');
 % generic global search for a particular folder; works independent of user
 search_path = '../*/natsortfiles';
@@ -7,14 +7,15 @@ while isempty(dir(search_path))
 end
 addpath(dir(search_path).folder)
 
-mainDir='Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\SD1_2021_05_06_pos9\'; % Main directory for movie you are analysing.
+mainDir='Z:\Analysis\users\Projects\Noam\Workshop\timelapse\'; % Main directory for movie you are analysing.
 cellDir = [mainDir,'\Cells\']; % Cell directory for movie (this is our normal folder structure and should stay consistent).
 segDir = [cellDir,'AllSegmented\']; % Segmentation folder.
 
 subDirs = dir([cellDir, '\Inference\']);
-infDir = [cellDir,'\Inference\',subDirs(3).name,'\']; % Inference images folder.
+infDir = [cellDir,'\Inference\',subDirs(find([subDirs(3:end).datenum]==max([subDirs(3:end).datenum])) + 2).name,'\']; % Inference images folder.
+segDir = infDir;
 
-training = false;
+training = true;
 
 fullCellData = Experiment.load(cellDir).cells;
 
@@ -28,11 +29,11 @@ disp('loading frames...');
 for i = 1:length(subDirNames)
     dirName = subDirNames{i};
     % get all the images
-    loadedFrames{i, 1} = imread(fullfile(segDir, dirName, 'handCorrection.tif'));
-    loadedFrames{i, 2} = imread(fullfile(infDir, dirName + ".tif"));
-    loadedFrames{i, 3} = imread(fullfile(cellDir, 'Adjusted_cortices', dirName + ".tiff"));
+    loadedFrames{i, 1} = read2gray(segDir, dirName, 'handCorrection.tif');
+    loadedFrames{i, 2} = zeros(size(loadedFrames{i, 1})); % for now black. In the future, it could be beneficial to use the segmentation direct output.
+    loadedFrames{i, 3} = read2gray(infDir, dirName + ".tiff");
     if training
-        loadedFrames{i, 4} = imread(fullfile(segDir, dirName, 'groundTruth.tif'));
+        loadedFrames{i, 4} = read2gray(segDir, dirName, 'groundTruth.tif');
     end
 end
 
@@ -43,6 +44,7 @@ statIdx = ones(3, 1);
 stat = cell(3, 1);
 summaryImages = loadedFrames(:,1);
 disp('Creating composites & categorizing...');
+fullCellData.outline;
 for cellIdx = 1:length(fullCellData)
     cellData = fullCellData(cellIdx);
     % iterate over each cell in the data to get its dimensions by min/max x/y coords or vertices
@@ -63,6 +65,9 @@ for cellIdx = 1:length(fullCellData)
         end
 
         saveToFolder(cellDir, cropped, status, cellData.strID);
+        if size(summaryImages{cellData.frame}, 3) == 1
+            summaryImages{cellData.frame} = cat(3, summaryImages{cellData.frame}, summaryImages{cellData.frame}, summaryImages{cellData.frame});
+        end
         summaryImages{cellData.frame}(:,:,statusToChannel(status)) = summaryImages{cellData.frame}(:,:,statusToChannel(status)) + uint8(maskedRaw * 255);
 
         stat{status + 1}(statIdx(status + 1)) = pixelDiff;
@@ -88,6 +93,9 @@ if training
     for imgIdx = 1:length(subDirs)
         sumImg{1} = cat(3, loadedFrames{imgIdx,1}(:,:,1), loadedFrames{imgIdx,4}(:,:,1), loadedFrames{imgIdx,2}(:,:,1));
         sumImg{2} = summaryImages{imgIdx};
+        if size(sumImg{2}, 3) == 1
+            sumImg{2} = cat(3, sumImg{2}, sumImg{2}, sumImg{2});
+        end
         rawImg = im2uint8(loadedFrames{imgIdx,3});
         sumImg{3} = cat(3,rawImg,rawImg,rawImg);
         savable = [sumImg{:}];
@@ -153,14 +161,13 @@ function retStatus = makeUI(msgStr, images)
 end
 
 function [status, pixelDiff, maskedRaw] = compareImages(cellData, rawImg, trueImg)
-    center = [floor(cellData.centre_y) floor(cellData.centre_x)];
+    center = [floor(cellData.center_x) floor(cellData.center_y)];
 
     % calculate raw mask, requires for output anyways, via subtraction
-    maskedRaw = imfill(im2bw(rawImg), cellData.outline(1, :)) - im2bw(rawImg);
+    maskedRaw = max(roipoly(im2bw(rawImg), cellData.outline_(:, 1), cellData.outline_(:, 2)) - im2bw(rawImg), 0);
 
     % make sure the center is inside the cell, otherwise return error code (too concave).
-    [in, on] = inpolygon(center(2), center(1), cellData.outline(:, 2), cellData.outline(:, 1));
-    if ~in || on
+    if ~cellData.is_convex
         status = 1;
         pixelDiff = -2;
         return;
@@ -173,7 +180,7 @@ function [status, pixelDiff, maskedRaw] = compareImages(cellData, rawImg, trueIm
         return;
     end
     % calculate pixel image of the images via subtraction
-    maskedTrue = imfill(im2bw(trueImg), center) - imbinarize(trueImg);
+    maskedTrue = imfill(im2bw(trueImg), flip(center)) - imbinarize(trueImg);
 
     % calculate difference
     pixelDiff = abs(sum(sum(maskedRaw)) - sum(sum(maskedTrue)));
@@ -214,5 +221,17 @@ function channel = statusToChannel(status)
             channel = 1;
         otherwise
             channel = 3;
+    end
+end
+
+function gray_img = read2gray(varargin)
+    if length(varargin) > 1
+        file_path = fullfile(varargin{:});
+    else
+        file_path = varargin{1};
+    end
+    gray_img = imread(file_path);
+    if size(gray_img, 3) > 1
+        gray_img = rgb2gray(gray_img);
     end
 end

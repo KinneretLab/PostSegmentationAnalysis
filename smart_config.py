@@ -53,7 +53,7 @@ class SmartConfig:
             if self._section == 'training':
                 self.epochs = raw['num_epochs']
                 self.lr_init = raw['initial_learning_rate']
-                self.ground_truth_dir = self.to_absolute(work_dir, raw['ground_truth_dir'])
+                # self.ground_truth_dir = self.to_absolute(work_dir, raw['ground_truth_dir'])
                 self.valid_ratio = raw['valid_ratio']
                 self.lr_momentum = raw['momentum']
                 self.lr_decay_step = raw['lr_decay_step']

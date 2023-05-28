@@ -1,4 +1,4 @@
-classdef ImageBuilder <  FigureBuilder & handle 
+classdef ImageBuilder <  FigureBuilder & handle
     % IMAGEBUILDER A tool used to draw, display and save the data from the cell database in
     % layers on top of each other.
     properties (Access = protected)
@@ -32,6 +32,12 @@ classdef ImageBuilder <  FigureBuilder & handle
         %The data for calculating and drawing the image - all the data that isn't layer specific.
         % type: ImageDrawData
         image_data_ = [];
+        %Determines if draw should recalculate the frames one per one, you
+        %can still use calculate.draw but this will calculate all the
+        %frames before drawing and will take a long time before giving
+        %any result.
+        % type: bool
+        recalculate_ = false;
     end
 
     properties (Constant)
@@ -80,16 +86,25 @@ classdef ImageBuilder <  FigureBuilder & handle
     methods (Access=public)
 
 
-        function [obj,layer_arr] = calculate(obj)
+        function obj = calculate(obj, frame_num)
             %CALCULATE   This function arranges the data according to the desired layers,
             % to later be converted into graphical representation.
 
-            % Initiate output array
+            %Check if got input frame num
+            if(nargin==1)
+                frame_num=[];
+            end
+            frame_arr = obj.data_{:};
+            if(~isempty(frame_num))
+                obj.calculateFrame(frame_num);
+                return;
+            end
+            for i= 1:length(frame_arr)
+                obj.calculateFrame(i);
+            end
+        end
 
-            layer_arr = {};
-
-            % Run over list of layers to calculate
-
+        function calculateFrame(obj, num_frame)
             for i= 1:length(obj.layers_data_)
                 class=obj.layers_data_{i}.getClass;
                 filter_fun=obj.layers_data_{i}.getFilterFunction;
@@ -101,87 +116,85 @@ classdef ImageBuilder <  FigureBuilder & handle
                 calibration_z = obj.data_{1}(1).experiment.calibration_z_; % Get calibration from experiment
 
 
-                for j = 1:length(frame_arr)
 
-                    % Get data arrays for frame, apply filter
-                    phys_arr = frame_arr(j).(class);
+                % Get data arrays for frame, apply filter
+                phys_arr = frame_arr(num_frame).(class);
 
-                    % Apply filter to each entity
+                % Apply filter to each entity
 
-                    filtered_arr =  phys_arr(filter_fun(phys_arr));
+                filtered_arr =  phys_arr(filter_fun(phys_arr));
 
-                    % Get value for each object using the specified value
-                    % function for this layer.
-                    
-                    value_arr = BulkFunc.apply(value_fun{1},filtered_arr,obj,phys_arr,filtered_arr);
+                % Get value for each object using the specified value
+                % function for this layer.
 
-                    % Apply calibration to values if specified (to convert
-                    % pixels to microns)
+                value_arr = BulkFunc.apply(value_fun{1},filtered_arr,obj,phys_arr,filtered_arr);
 
-                    if exist('calibration_list')
-                        if strcmp(calibration_fun{1},'xy')
-                            value_arr = value_arr*(calibration_xy^(calibration_fun{2}));
+                % Apply calibration to values if specified (to convert
+                % pixels to microns)
 
-                        else if strcmp(calibration_fun{1},'z')
-                                value_arr = value_arr*(calibration_z^(calibration_fun{2}));
-                        end
-                        end
+                if exist('calibration_list')
+                    if strcmp(calibration_fun{1},'xy')
+                        value_arr = value_arr*(calibration_xy^(calibration_fun{2}));
+
+                    else if strcmp(calibration_fun{1},'z')
+                            value_arr = value_arr*(calibration_z^(calibration_fun{2}));
                     end
-                    if ~isempty(filtered_arr)
-
-                        if strcmp(type,'image')
-
-                            image_size = obj.data_{1}(1).experiment.image_size_; % GET THIS FROM EXPERIMENT INFO, NEED TO IMPLEMENT THIS
-
-                            % Get relevant pixels (the function plot_pixels is
-                            % implemented in every relevant class)
-                            plot_pixels = filtered_arr.plot_pixels;
-
-                            this_im = NaN(image_size);
-
-                            for k=1:size(plot_pixels,2)
-                                for l=1:size(plot_pixels{k},1)
-                                    this_im(plot_pixels{k}(l,1),plot_pixels{k}(l,2)) = value_arr(k); % MAKE THIS NOT NEED LOOP
-                                end
-                            end
-
-                            layer_arr{i,j} = this_im;
-
-                        elseif strcmp(type,'list')
-
-                            % Get relevant pixels (the function list_pixels is
-                            % implemented in every relevant class). For cells,
-                            % this is the centre of the cell, for bonds the
-                            % middle point of the bond, and for vertices it is
-                            % the vertex location.
-                            list_pixels = filtered_arr.list_pixels;
-                            this_list = [list_pixels,value_arr'];
-                            layer_arr{i,j} = this_list;
-
-                        elseif strcmp(type,'quiver')
-                            % Get relevant pixels (the function list_pixels is
-                            % implemented in every relevant class). For cells,
-                            % this is the centre of the cell, for bonds the
-                            % middle point of the bond, and for vertices it is
-                            % the vertex location.
-                            list_pixels = filtered_arr.list_pixels;
-                            value_fun_dir = value_fun{1};
-                            value_arr_dir = arrayfun(value_fun_dir,filtered_arr);
-                            value_fun_size = value_fun{2};
-                            value_arr_size = arrayfun(value_fun_size,filtered_arr);
-                            this_list = [list_pixels,value_arr_dir',value_arr_size'];
-                            layer_arr{i,j} = this_list;
-
-                        else
-                            disp(sprintf('Typelist needs to specify image, list or quiver'));
-                        end
-
-                    else
-                        layer_arr{i,j} = {};
                     end
                 end
+                if ~isempty(filtered_arr)
+
+                    if strcmp(type,'image')
+
+                        image_size = obj.data_{1}(1).experiment.image_size_; % GET THIS FROM EXPERIMENT INFO, NEED TO IMPLEMENT THIS
+
+                        % Get relevant pixels (the function plot_pixels is
+                        % implemented in every relevant class)
+                        plot_pixels = filtered_arr.plot_pixels;
+
+                        this_im = NaN(image_size);
+
+                        for k=1:size(plot_pixels,2)
+                            for l=1:size(plot_pixels{k},1)
+                                this_im(plot_pixels{k}(l,1),plot_pixels{k}(l,2)) = value_arr(k); % MAKE THIS NOT NEED LOOP
+                            end
+                        end
+
+                        obj.layer_arr_{i,num_frame} = this_im;
+
+                    elseif strcmp(type,'list')
+
+                        % Get relevant pixels (the function list_pixels is
+                        % implemented in every relevant class). For cells,
+                        % this is the centre of the cell, for bonds the
+                        % middle point of the bond, and for vertices it is
+                        % the vertex location.
+                        list_pixels = filtered_arr.list_pixels;
+                        this_list = [list_pixels,value_arr'];
+                        obj.layer_arr_{i,num_frame} = this_list;
+
+                    elseif strcmp(type,'quiver')
+                        % Get relevant pixels (the function list_pixels is
+                        % implemented in every relevant class). For cells,
+                        % this is the centre of the cell, for bonds the
+                        % middle point of the bond, and for vertices it is
+                        % the vertex location.
+                        list_pixels = filtered_arr.list_pixels;
+                        value_fun_dir = value_fun{1};
+                        value_arr_dir = arrayfun(value_fun_dir,filtered_arr);
+                        value_fun_size = value_fun{2};
+                        value_arr_size = arrayfun(value_fun_size,filtered_arr);
+                        this_list = [list_pixels,value_arr_dir',value_arr_size'];
+                        obj.layer_arr_{i,num_frame} = this_list;
+
+                    else
+                        obj.logger.error(sprintf('Typelist needs to specify image, list or quiver'));
+                    end
+
+                else
+                    obj.layer_arr_{i,num_frame} = {};
+                end
+
             end
-            obj.layer_arr_ = layer_arr;
         end
 
         function loadBuilder(obj, input)
@@ -217,19 +230,16 @@ classdef ImageBuilder <  FigureBuilder & handle
             % if layer_arr is empty the function will call calculate and
             % will later do all the othe functionalities. if you want to
             % call calculate (when there is a layer_arr) you need to call
-            % it seperately 
-            % input: (optional) str - the path of the saved image builder. 
+            % it seperately
+            % input: (optional) str - the path of the saved image builder.
             %returns: only if the frame_to_draw is set returns the figure.
             %type: matlab figure
-            
+
             if(nargin==1)
                 input=[];
             end
             if(~isempty(input)) %checks if there is an input path for the image builder
                 obj.loadBuilder(input); %loads builder
-            end
-            if(isempty(obj.layer_arr_)) %checks if there is a layer_arr - what it draws
-                obj.calculate; %calculates a new layer_arr
             end
             [~, col]=size(obj.layer_arr_);
             if(obj.image_data.getCrop)
@@ -240,6 +250,9 @@ classdef ImageBuilder <  FigureBuilder & handle
                 ylims=[1, image_size(2)];
             end
             if(~isempty(obj.frame_to_draw_))
+                if(obj.recalculate_ || col<obj.frame_to_draw_)
+                    obj.calculateFrame(obj.frame_to_draw_);
+                end
                 frame = obj.layer_arr_(:, obj.frame_to_draw_);
                 figures{1} = obj.drawFrame(frame, true, obj.frame_to_draw_);
                 obj.frame_to_draw_=[];
@@ -249,12 +262,16 @@ classdef ImageBuilder <  FigureBuilder & handle
             end
             if(obj.output_folder_~="")
                 for i= 1 : col
+                    if(obj.recalculate_ || col<i)
+                        obj.calculateFrame(i);
+                    end
                     frame = obj.layer_arr_(:, i);
                     fig=obj.drawFrame(frame, false, i);
                     obj.saveFigure(fig, i, xlims, ylims);
                     close(fig);
                 end
-            end 
+            end
+            obj.recalculate_ = false;
         end
 
         function obj = addData(obj, frame_arr)
@@ -263,7 +280,7 @@ classdef ImageBuilder <  FigureBuilder & handle
             %input: {obj array...}
             %returns: ImageBuilder
             if ~strcmp(class(frame_arr),'Frame')
-                disp(sprint('Data must be an object or array of class frame'));
+                obj.logger.error(sprint('Data must be an object or array of class frame'));
             else
                 obj.data_{1} = frame_arr;
             end
@@ -334,8 +351,8 @@ classdef ImageBuilder <  FigureBuilder & handle
             %frame but will save nothing to the output folder. every time
             %you call the draw function after setting the frame_to_draw it
             %is reset meaning you have to set it again. If you want to
-            %consistanaly 
-            %example: builder.frame_to_draw(1).draw; 
+            %consistanaly
+            %example: builder.frame_to_draw(1).draw;
             %will draw the first frame and you can run that same line again
             %to draw the first frame again.
             %but: builder.frame_to_draw(1); builder.draw(); will draw the
@@ -344,12 +361,21 @@ classdef ImageBuilder <  FigureBuilder & handle
             obj.frame_to_draw_= frame_to_draw;
         end
 
+        function obj = recalculate(obj, recalculate)
+            %RECALCULATE sets recalculate- Determines if draw should recalculate the frames one per one, you
+            %can still use calculate.draw but this will calculate all the
+            %frames before drawing and will take a long time before giving
+            %any result.
+            obj.recalculate_= recalculate;
+        end
+
         function obj = output_folder(obj, output_folder)
             %OUTPUT_FOLDER sets the output folder for images that draw
             %produces as well as current builder (type: ImageBuilder) that
             %saved using saveBuilder;
             obj.output_folder_= output_folder;
         end
+
     end
 
     methods (Access=private)
@@ -375,6 +401,7 @@ classdef ImageBuilder <  FigureBuilder & handle
                         image = imresize(image, obj.data_{1}(1).experiment.image_size_, 'bilinear');
                     end
                     imwrite(image, fname);
+
                 case "fig"
                     set(gcf,'visible','on');
                     savefig(figure, fname)
@@ -587,7 +614,7 @@ classdef ImageBuilder <  FigureBuilder & handle
         end
 
         function s = getBackgroundSize(obj, frame)
-            [row, ~]=size(frame); 
+            [row, ~]=size(frame);
             for i = 1:row
                 layer_data=obj.layers_data_{i};
                 if(~isempty(frame) && layer_data.getType()==obj.image_type)
