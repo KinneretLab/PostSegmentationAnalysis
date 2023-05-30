@@ -261,9 +261,15 @@ classdef ImageBuilder <  FigureBuilder & handle
                 return;
             end
             if(obj.output_folder_~="")
-                for i= 1 : col
+                for i= 1 : length(obj.data_{:})
+                    [~, col]=size(obj.layer_arr_);
                     if(obj.recalculate_ || col<i)
                         obj.calculateFrame(i);
+                    end
+                    if(col>i)
+                        if(isempty(obj.layer_arr_(:,i)))
+                            obj.calculateFrame(i);
+                        end
                     end
                     frame = obj.layer_arr_(:, i);
                     fig=obj.drawFrame(frame, false, i);
