@@ -141,6 +141,64 @@ classdef MarkedRegion < PhysicalEntity
         function n = nargs(~)
             n = 0;
         end
+
+        function phys_arr = lookup(obj, clazz, varargin)
+            flat_obj = obj.flatten;
+            candidates = flat_obj.frames.lookupByFrame(clazz);
+            % this retrieves a large 4D array containing the coordinates of
+            % the pixels - D1:region,D2:cell_in_frame,D3:pixel,D4:dimension
+            phys_pixels = candidates.plot_pixels;
+            % get the pixel areas of all the physical entities
+            phys_areas = sum(squeeze(isnan(phys_pixels(:,:,:,1))),ndims(phys_pixels) - 1);
+            sizes = num2cell(size(candidates));
+            % examine the pixels of each entity to check how many are
+            % within the region, then count them.
+            covered_areas = zeros(sizes{:});
+            for region_idx=1:size(phys_pixels,1)
+                for cell_idx=1:size(phys_pixels,2)
+                    covered_areas(region_idx, cell_idx) = ...
+                        ismember(squeeze(phys_pixels(region_idx,cell_idx,:,:)), flat_obj(region_idx).plot_pixels, 'rows');
+                end
+            end
+            % the division indicates % coverage of the entity by 
+            is_covered = (covered_areas ./ phys_areas) >= obj(1).criterion_;
+            candidates(~is_covered) = Null.null;
+             % collect all the properties of the object into a tight matrix.
+            sizes = arrayfun(@(entity) ~Null.isNull(candidates) * length(candidates), obj);
+            phys_arr(numel(obj), max(sizes, [], 'all')) = feval(clazz);
+            for i=1:numel(obj)
+                if sizes(i) > 0
+                    phys_arr(i, 1:sizes(i)) = candidates(i,Null.isNull(candidates(i,:)));
+                end
+            end
+            
+            % filter result and put it into result_arr
+            if ~isempty(varargin)
+                phys_arr = phys_arr(varargin{:});
+            end
+            % Remove dimensions of size 1
+            phys_arr = squeeze(phys_arr); 
+        end
+
+        function cells = cells(obj, varargin)
+            cells = obj.lookup(class(Cell), varargin{:});
+        end
+
+        function bonds = bonds(obj, varargin)
+            bonds = obj.lookup(class(Bond), varargin{:});
+        end
+
+        function vertices = vertices(obj, varargin)
+            vertices = obj.lookup(class(Vertex), varargin{:});
+        end
+
+        function defects = defects(obj, varargin)
+            defects = obj.lookup(class(Defect), varargin{:});
+        end
+
+        function tVertices = tVertices(obj, varargin)
+            tVertices = obj.lookup(class(TrueVertex), varargin{:});
+        end
     end
 end
 

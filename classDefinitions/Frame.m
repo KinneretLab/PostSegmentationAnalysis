@@ -143,10 +143,7 @@ classdef Frame < PhysicalEntity
                 obj(i).cell_pairs_ = cells.createNeihgborPairs;
             end
         end
-
-    end
-    
-    methods(Access = protected)
+        
         function phys_arr = lookupByFrame(obj, clazz, varargin)
             % LOOKUPBYFRAME A utility function that searches for the entities contained in each frame in this array.
             % Its basically just LOOKUPMANY but with parts trimmed off for
