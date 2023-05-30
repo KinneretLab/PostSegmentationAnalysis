@@ -480,9 +480,12 @@ classdef (Abstract) PhysicalEntity < handle
                     % store non NaN unique results in the respective object
                     result_row = index_result(i, :);
                     if length(prop) == 1
-%                        obj_to_index(i).(prop) = unique(result_row(~isnan(result_row)));
-                       obj_to_index(i).(prop) = unique(result_row);
-
+                        if ismember(clazz, {'logical', 'double', 'single', 'uint8', ...
+                                'uint16', 'uint32', 'uint64', 'int8', 'int16', 'int32', 'int64'})
+                            obj_to_index(i).(prop) = unique(result_row);
+                        else
+                            obj_to_index(i).(prop) = unique(result_row(~isnan(result_row)));
+                        end
                     else
                         for j = 1:length(prop)
                             obj_to_index(i).(prop(j)) = result_row(j);

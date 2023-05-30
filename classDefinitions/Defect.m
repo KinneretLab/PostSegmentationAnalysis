@@ -45,9 +45,12 @@ classdef Defect < PhysicalEntity
             defects = obj(varargin{:});
         end
         
-        function defect_cell = cells(obj, varargin)
+        function defect_cell = cells(obj, use_defect_pair)
             % CELLS calculates the cell with the closest centre to the
-            % defect location.
+            % defect location. If 'use_defect_pair' = 1, this means the
+            % function will check if there is a pair of +1/2,+1/2
+            % defects, and return the cell at the midpoint
+            % between them.
             % Parameters:
             %   varargin: additional MATLAB builtin operations to apply on
             %   the result.
@@ -55,11 +58,30 @@ classdef Defect < PhysicalEntity
             defect_cell = Cell();
             obj = flatten(obj);
             for i = 1:length(obj)
-                % Find all cells in this defect's frame:
+                if strcmp(use_defect_pair,'use_defect_pair')
+                   frame_defects = obj(i).siblings('frame');
+                   pair_exist = length(frame_defects)==2;
+                   pair_type = isequal([frame_defects.type],[1/2,1/2]);
+                   if pair_exist && pair_type % Check whether there is a pair of +1/2 defects in the frame, and find cell closest to centre between them:
+                        all_cells = obj(i).frames.cells;
+                        dist1 = frame_defects(1).pixelDist2d(all_cells);
+                        dist2 = frame_defects(2).pixelDist2d(all_cells);
+                        [~,ind] = min(dist1+dist2);
+                        defect_cell(i) = all_cells(ind);
+                   else
+                       % Follow case of single defect:
+                       all_cells = obj(i).frames.cells; % Find all cells in frame
+                       dist = obj(i).pixelDist2d(all_cells); % Find 2d distance between cells and defect
+                       [~,ind] = min(dist);
+                       defect_cell(i) = all_cells(ind);
+                   end
+                else
+                % Case of single defect:
                 all_cells = obj(i).frames.cells;
                 dist = obj(i).pixelDist2d(all_cells);
                 [~,ind] = min(dist);
                 defect_cell(i) = all_cells(ind);
+                end
             end
         end
 
