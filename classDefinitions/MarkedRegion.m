@@ -41,10 +41,17 @@ classdef MarkedRegion < PhysicalEntity
 
         % List of all pixels within the area of the 2D projected region
         % type: int[][2]
-        plot_pixels
+        plot_pixels_
         % List of all pixels within the circumference of the 2D projected region
         % type: int[][2]
-        list_pixels
+        list_pixels_
+
+        % a map from the class name of the physical entity to a list of % coverages
+        % of the corresponing physical entity with the order indiced by FRAME#LOOKUPBYFRAME
+        % this list is used to filter out cells based on their coverage
+        % criterion.
+        % type: Map(string -> float[])
+        coverages_
     end
 
     methods(Static, Access=protected)
@@ -72,7 +79,7 @@ classdef MarkedRegion < PhysicalEntity
     end
 
     methods(Static)
-        function setCriterion(num)
+        function setCoverageCriterion(num)
             if nargin == 0
                 MarkedRegion.criterion_(0.5);
             else
@@ -143,32 +150,40 @@ classdef MarkedRegion < PhysicalEntity
         end
 
         function phys_arr = lookup(obj, clazz, varargin)
-            flat_obj = obj.flatten;
-            candidates = flat_obj.frames.lookupByFrame(clazz);
-            % this retrieves a large 4D array containing the coordinates of
-            % the pixels - D1:region,D2:cell_in_frame,D3:pixel,D4:dimension
-            phys_pixels = candidates.plot_pixels;
-            % get the pixel areas of all the physical entities
-            phys_areas = sum(squeeze(isnan(phys_pixels(:,:,:,1))),ndims(phys_pixels) - 1);
-            sizes = num2cell(size(candidates));
-            % examine the pixels of each entity to check how many are
-            % within the region, then count them.
-            covered_areas = zeros(sizes{:});
-            for region_idx=1:size(phys_pixels,1)
-                for cell_idx=1:size(phys_pixels,2)
-                    covered_areas(region_idx, cell_idx) = ...
-                        ismember(squeeze(phys_pixels(region_idx,cell_idx,:,:)), flat_obj(region_idx).plot_pixels, 'rows');
+            index_flag = arrayfun(@(entity) ~isnan(entity) & Null.isNull(entity.coverages_(clazz)), obj);
+            obj_to_index = obj(index_flag);
+            if ~isempty(obj_to_index)
+                obj.logger.info("Calculating %s coverages for %d marked regions", clazz, length(obj_to_index))
+                % this retrieves a cell array, with each entry containing the 
+                % coordinates of the pixels. 
+                % Cell degrees of freedom: region,cell_in_frame (1D)
+                % Array degrees of freedom D1:pixel,D2:dimension
+                phys_candidates = obj_to_index.frames.lookupByFrame(clazz);
+                phys_pixels = reshape(phys_candidates.plot_pixels, size(phys_candidates));
+                % as a result of the cellfun, the cell array turns into an
+                % array with 2D containing the coverages:
+                % D1:region, D2: entity in frame
+                obj_mat = repmat(obj_to_index', [1, size(phys_pixels, 2)]);
+                coverages = cellfun(@getCoverage, obj_mat, phys_pixels);
+                obj.logger.debug("All coverages calculated, saving as properties...")
+                for region_idx=1:length(obj_to_index)
+                    % save the found coverages in the corresponding place.
+                    % implementation note: this trims trailing NaNs, so
+                    % this might end up shorter than the #entities in the
+                    % frame
+                    coverages_row = coverages(region_idx, :);
+                    obj_to_index(region_idx).coverages_(clazz) = coverages_row(1:find(~isnan(coverages_row, 1, 'last')));
                 end
+            else
+                phys_arr = eval([clazz, '.empty(', num2str(length(obj)), ',0)']);
             end
-            % the division indicates % coverage of the entity by 
-            is_covered = (covered_areas ./ phys_areas) >= obj(1).criterion_;
-            candidates(~is_covered) = Null.null;
+            candidates = obj.flatten.frames.lookupByFrame(clazz);
              % collect all the properties of the object into a tight matrix.
-            sizes = arrayfun(@(entity) ~Null.isNull(candidates) * length(candidates), obj);
+            sizes = arrayfun(@(entity) sum(entity.coverages_(clazz) >= entity.criterion_), obj);
             phys_arr(numel(obj), max(sizes, [], 'all')) = feval(clazz);
             for i=1:numel(obj)
                 if sizes(i) > 0
-                    phys_arr(i, 1:sizes(i)) = candidates(i,Null.isNull(candidates(i,:)));
+                    phys_arr(i, 1:sizes(i)) = candidates(i,obj(i).coverages_(clazz) >= obj(i).criterion_);
                 end
             end
             
@@ -198,6 +213,29 @@ classdef MarkedRegion < PhysicalEntity
 
         function tVertices = tVertices(obj, varargin)
             tVertices = obj.lookup(class(TrueVertex), varargin{:});
+        end
+
+        function plot_pixels = plot_pixels(obj)
+            plot_pixels = {obj.plot_pixels_};
+        end
+
+        function list_pixels = list_pixels(obj)
+            list_pixels = {obj.list_pixels_};
+        end
+    end
+
+    methods(Access=private, Static)
+        function result = getCoverage(obj, phys_pixels)
+            % get the pixel count occupied by the physical entity
+            phys_area = sum(~isnan(phys_pixels),1);
+            if phys_area > 0 % just a slightly faster methodology to reach the same conclusion.
+                % examine the pixels of each entity to check how many are
+                % within the region, then count them.
+                covered_area = sum(ismember(phys_pixels, obj.plot_pixels, 'rows'));
+                result = covered_area/phys_area;
+            else
+                result = nan;
+            end
         end
     end
 end
