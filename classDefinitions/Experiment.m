@@ -159,6 +159,23 @@ classdef Experiment < handle
             end
             result = imread([obj.folder_, '\', path]);
         end
+
+        function result = dir(obj, path)
+            % IMREAD Reads a file relative to the experiment and converts it to a MATLAB image.
+            % Parameters:
+            %   path: string
+            %      the path relative to experiment folder to read.
+            % Return type: dir[]
+            if isempty(obj)
+                return
+            end
+            if length(obj) ~= 1
+                obj(1).logger.error("Load function called for an array of experiments. This is an ambiguous call. Plase iterate over the array instead.")
+                return
+            end
+            result = dir([obj.folder_, '\', path]);
+            result = natsortfiles(result(3:end));
+        end
         
         function phys_arr = lookup(obj, clazz, varargin)
             % LOOKUP Retrieves all physical entities of the deired class from the experiment(s), and loads/constructs them if neccesary.
