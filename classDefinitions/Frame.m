@@ -32,6 +32,10 @@ classdef Frame < PhysicalEntity
         % you can access this using FRAME#TVERTICES
         % type: TRUEVERTEX[]
         t_vertices_ = Null.null;
+        % An internal vairblae listing the regions this frame contains.
+        % you can access this using FRAME#REGIONS
+        % type: MARKEDREGION[]
+        regions_ = Null.null;
         % An internal vairblae listing the defects this frame contains.
         % you can access this using FRAME#DEFECTS
         % type: DEFECT[]
@@ -113,6 +117,16 @@ classdef Frame < PhysicalEntity
             % Return type: TVERTEX[]
             vertices = obj.getOrCalculate(class(TrueVertex), "t_vertices_", @(frames) frames.lookupByFrame(class(TrueVertex)), varargin{:});
         end
+
+        function vertices = regions(obj, varargin)
+            % REGIONS searches for the marked regions (including mask) contained in each frame in this array.
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            % Return type: MARKEDREGION[]
+            vertices = obj.getOrCalculate(class(MarkedRegion), "regions_", @(frames) frames.lookupByFrame(class(MarkedRegion)), varargin{:});
+        end
+
         function defects = defects(obj, varargin)
             % DEFECTS searches for the defects contained in each frame in this array.
             % Parameters:
@@ -129,10 +143,7 @@ classdef Frame < PhysicalEntity
                 obj(i).cell_pairs_ = cells.createNeihgborPairs;
             end
         end
-
-    end
-    
-    methods(Access = protected)
+        
         function phys_arr = lookupByFrame(obj, clazz, varargin)
             % LOOKUPBYFRAME A utility function that searches for the entities contained in each frame in this array.
             % Its basically just LOOKUPMANY but with parts trimmed off for
@@ -160,14 +171,14 @@ classdef Frame < PhysicalEntity
                 % to increase efficiency, we sort the search targets by
                 % frame.
                 map_key = entity.experiment.uniqueName;
-                full_map_key = [map_key, ':', entity.frame];
+                full_map_key = map_key + ':' + entity.frame;
                 if ~index.isKey(full_map_key)
                     % if the map is not aware of the frame, index the
                     % frame (and other frames in the experiment)
                     full_phys = entity.experiment.lookup(clazz);
                     frame_num = [full_phys.(full_phys.frameID)];
                     for frame_id=unique(frame_num)
-                        index([map_key, ':', frame_id]) = full_phys(frame_num == frame_id);
+                        index(map_key + ':' + frame_id) = full_phys(frame_num == frame_id);
                     end
                 end
                 % no need to actually look up anything, the index already

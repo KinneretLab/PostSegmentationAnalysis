@@ -3,7 +3,7 @@ classdef SimpleProfiler
     %actions, and classifies them based on the duration.
     
     methods(Static)
-        function profile(func, array, is_bulk)
+        function time_per_obj = profile(func, array, is_bulk)
             if is_bulk
                 t0 = datetime('now');
                 r = func(array);

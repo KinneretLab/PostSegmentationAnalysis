@@ -12,7 +12,7 @@ classdef Experiment < handle
     properties
         % An internal variable storing the absolute location of the data tables.
         % Used for file-system operations
-        % type: string
+        % type: Path
         folder_
         % An internal variable storing the absolute location of the
         % experiment height maps.
@@ -55,8 +55,9 @@ classdef Experiment < handle
         %      experiment from scratch.
         % Return type: Experiment
         function obj = load(folder)
+            folder_path = Path(folder);
             map = Experiment.loaded_;
-            map_key = Experiment.toUniqueName({folder});
+            map_key = Experiment.toUniqueName(folder_path);
             if map.isKey(map_key)
                 obj = map(map_key);
             else
@@ -78,7 +79,7 @@ classdef Experiment < handle
                 key = key.uniqueName;
             else
                 if contains(key, '/')
-                    key = Experiment.toUniqueName({key});
+                    key = Experiment.toUniqueName(key);
                 end
             end
             map = Experiment.loaded_;
@@ -96,11 +97,14 @@ classdef Experiment < handle
     
     methods (Static, Access = private)
         function unique_name = toUniqueName(folder_names)
-            regex_result = regexp(folder_names, "\w+", 'match');
+            arguments
+                folder_names Path
+            end
+            regex_result = string(regexp(folder_names.string, "\w+", 'match'));
             if length(folder_names) == 1
-                unique_name = [regex_result{1}{end - 1}, '_', regex_result{1}{end}];
+                unique_name = regex_result(end - 1) + '_' + regex_result(end);
             else
-                unique_name = cellfun(@(result) [result{end - 1}, '_', result{end}], regex_result, 'UniformOutput', false);
+                unique_name = cellfun(@(result) result(end - 1) + '_' + result(end), regex_result);
             end
         end
     end
@@ -112,10 +116,10 @@ classdef Experiment < handle
             %      the absolute path to the folder where the data tables
             %      exist.
             if nargin > 0
-                obj.folder_ = folder;
+                obj.folder_ = Path(folder);
                 obj.data_ = containers.Map();
                 obj.files_ = containers.Map(cellfun(@class,{Cell, Bond, Vertex, DBond, Frame, BondPixelList, Defect}, 'UniformOutput', false), ...
-                    cellfun(@(file) ([folder, '\', file, '.csv']), {'cells', 'bonds', 'vertices', 'directed_bonds', 'frames', 'bond_pixels','defects'}, 'UniformOutput', false));
+                    cellfun(@(file) string(Path(folder) \ file + ".csv"), {'cells', 'bonds', 'vertices', 'directed_bonds', 'frames', 'bond_pixels','defects'}, 'UniformOutput', false));
             else
                 obj.folder_ = nan;
             end
@@ -158,6 +162,23 @@ classdef Experiment < handle
                 return
             end
             result = imread([obj.folder_, '\', path]);
+        end
+
+        function result = dir(obj, path)
+            % IMREAD Reads a file relative to the experiment and converts it to a MATLAB image.
+            % Parameters:
+            %   path: string
+            %      the path relative to experiment folder to read.
+            % Return type: dir[]
+            if isempty(obj)
+                return
+            end
+            if length(obj) ~= 1
+                obj(1).logger.error("Load function called for an array of experiments. This is an ambiguous call. Plase iterate over the array instead.")
+                return
+            end
+            result = dir(string(obj.folder_ \ path));
+            result = natsortfiles(result(3:end));
         end
         
         function phys_arr = lookup(obj, clazz, varargin)
@@ -263,7 +284,7 @@ classdef Experiment < handle
         end
         
         function vertex_arr = tVertices(obj, varargin)
-            % VERTICES Retrieves all true vertices from the experiment(s), and loads/constructs them if neccesary.
+            % TVERTICES Retrieves all true vertices from the experiment(s), and loads/constructs them if neccesary.
             % Additional arguments can be applied to get select slices or a
             % conditional filtering
             % for example, exp.cells([exp.cells.confidence] > 0.5) will
@@ -276,6 +297,19 @@ classdef Experiment < handle
             %   filter contruction parameter.
             % Return type: TRUEVERTEX[] with size (1, ?)
             vertex_arr = obj.lookup(class(TrueVertex), varargin{:});
+        end
+        
+        function region_arr = regions(obj, varargin)
+            % REGIONS Retrieves all marked regions (including masks) from the experiment(s), and loads/constructs them if neccesary.
+            % Additional arguments can be applied to get select slices or a
+            % conditional filtering
+            % for example, exp.cells([exp.cells.confidence] > 0.5) will
+            % only yield cells with a confidence bigger than 0.5
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            % Return type: MARKEDREGION[] with size (1, ?)
+            region_arr = obj.lookup(class(MarkedRegion), varargin{:});
         end
 
         function frame_arr = frames(obj, varargin)
@@ -329,7 +363,7 @@ classdef Experiment < handle
         end
 
         function unique_name = uniqueName(obj)
-            unique_name = Experiment.toUniqueName({obj.folder_});
+            unique_name = Experiment.toUniqueName([obj.folder_]);
         end
 
     end
