@@ -203,7 +203,7 @@ classdef Cell < PhysicalEntity
             fprintf('Getting directed bonds');
             theseDBonds = dBonds(obj); % Currently runs on a 1-dimensional list
             dbArray = [obj.experiment];
-            dbFolderArray = {dbArray.folder_};
+            dbFolderArray = string([dbArray.folder_]);
             [~,ia,ic] = unique(dbFolderArray);
             for i=1:length(ia)
                 fprintf('Creating bond array\n');

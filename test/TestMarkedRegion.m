@@ -7,12 +7,13 @@ classdef TestMarkedRegion < matlab.unittest.TestCase
         % Shared setup for the entire test class
         function loadClasses(~)
             addpath('../classDefinitions')
+            addpath('../cellAnalysisSubfunctions')
         end
     end
     
     methods(TestMethodSetup)
         function loadExperiment(testCase)
-            testCase.e = Experiment.load('example/Cells');
+            testCase.e = Experiment.load('test/example/Cells');
         end
     end
 
@@ -33,7 +34,7 @@ classdef TestMarkedRegion < matlab.unittest.TestCase
         end
         
         function frameShouldFindMarkedRegions(testCase)
-            regions = testCase.e.frame(1).regions;
+            regions = testCase.e.frames(1).regions;
             testCase.verifyNotEmpty(regions, "Frame 1 should have marked regions, but none were found")
         end
 
@@ -58,33 +59,33 @@ classdef TestMarkedRegion < matlab.unittest.TestCase
             testCase.verifyClass(region.raw, 'logical', "The 'raw' function should retrive the binary of the image");
             testCase.verifyEqual(size(region.plot_pixels{1}, 2), 2, "The 'plot_pixels' function should return a list of pixels in 2D space"); % should return the full area
             testCase.verifyEqual(size(region.list_pixels{1}, 2), 2, "The 'list_pixels' function should return a list of pixels in 2D space"); % should return the perimeter
-            testCase.verifyGreaterThan(size(region.plot_pixels, 1), size(region.list_pixels, 1), "There should be more 'area pixels' than 'perimeter pixels' from the dimension relations")
+            testCase.verifyGreaterThan(size(region.plot_pixels{1}, 1), size(region.list_pixels{1}, 1), "There should be more 'area pixels' than 'perimeter pixels' from the dimension relations")
         end
 
         function markedRegionShouldContainParticularCell(testCase)
             region = testCase.e.regions(2);
-            particular_id = testCase.e.cells(1).cell_id;
+            particular_id = testCase.e.cells(81).cell_id;
             found_cells = region.cells;
             testCase.verifyNotEmpty(found_cells, "The marked region should contain cells, but method found none using standard method")
-            testCase.verifyTrue(ismember(particular_id, [found_cells.cell_id]), "Cell $$$$ should be in the marked region, but that cell was not in the query result")
+            testCase.verifyTrue(ismember(particular_id, [found_cells.cell_id]), "Cell "+particular_id+" should be in the marked region, but that cell was not in the query result")
         end
 
         function markedRegionShouldContainParticularBond(testCase)
             region = testCase.e.regions(2);
-            particular_id = testCase.e.bonds(1).bond_id;
+            particular_id = testCase.e.bonds(191).bond_id;
             found_bonds = region.bonds;
             testCase.verifyNotEmpty(found_bonds, "The marked region should contain bonds, but method found none using standard method")
-            testCase.verifyTrue(ismember(particular_id, [found_bonds.cell_id]), "Bond $$$$ should be in the marked region, but that bond was not in the query result")
+            testCase.verifyTrue(ismember(particular_id, [found_bonds.bond_id]), "Bond "+particular_id+" should be in the marked region, but that bond was not in the query result")
         end
 
         function markedRegionCanAdjustInclusionCriterion(testCase)
             region = testCase.e.regions(2);
-            particular_id = testCase.e.cells(1).cell_id;
+            particular_id = testCase.e.cells(81).cell_id;
             found_cells = region.cells;
-            testCase.verifyTrue(ismember(particular_id, [found_cells.cell_id]), "Cell $$$$ should be in the marked region, but that cell was not in the query result")
+            testCase.verifyTrue(ismember(particular_id, [found_cells.cell_id]), "Cell "+particular_id+" should be in the marked region, but that cell was not in the query result")
             region.setCoverageCriterion(1);
             found_cells = region.cells;
-            testCase.verifyFalse(ismember(particular_id, [found_cells.cell_id]), "Cell $$$$ should be is not completely in the marked region, but the query found it. Does the criterion affect the result?")
+            testCase.verifyFalse(ismember(particular_id, [found_cells.cell_id]), "Cell "+particular_id+" should be is not completely in the marked region, but the query found it. Does the criterion affect the result?")
         end
     end
     

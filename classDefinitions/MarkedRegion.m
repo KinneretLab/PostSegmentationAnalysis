@@ -94,12 +94,13 @@ classdef MarkedRegion < PhysicalEntity
         end
 
         function result = getCoverage(obj, phys_pixels)
-            % get the pixel count occupied by the physical entity
-            phys_area = sum(~isnan(phys_pixels),1);
-            if phys_area > 0 % just a slightly faster methodology to reach the same conclusion.
+            phys_pixels = phys_pixels{1};
+            if ~isempty(phys_pixels)
+                % get the pixel count occupied by the physical entity
+                phys_area = sum(~isnan(phys_pixels(:,1)));
                 % examine the pixels of each entity to check how many are
                 % within the region, then count them.
-                covered_area = sum(ismember(phys_pixels, obj.plot_pixels, 'rows'));
+                covered_area = sum(ismember(phys_pixels, obj.plot_pixels{1}, 'rows'));
                 result = covered_area/phys_area;
             else
                 result = nan;
@@ -192,18 +193,18 @@ classdef MarkedRegion < PhysicalEntity
                     j = 1;
                     for directory = directories
                         obj(i).type = string(directory.name);
-                        obj(i).raw = imread([directory.folder, '\', directory.name]) > 0;
+                        obj(i).raw = imread([directory.folder, '\', directory.name ,'\', frame.frame_name, '.tiff']) > 0;
                         obj(i).frame = frame.frame; % if Frame is ever directly stored, you can do `.frame_ = frame` to do the job.
                         obj(i).area = sum(obj(i).raw, 'all');
                         obj(i).region_id = uniqueID(frame.frame, j);
-                        obj(i).coverages_ = containers.Map('KeyType', 'char', 'ValueType', 'double');
+                        obj(i).coverages_ = containers.Map;
 
                         [frame_x, frame_y] = meshgrid(1:size(obj(i).raw, 1), 1:size(obj(i).raw));
-                        obj(i).plot_pixels(:, 1) = frame_x(obj(i).raw);
-                        obj(i).plot_pixels(:, 2) = frame_y(obj(i).raw);
-                        outline = img - imerode(img, strel("disk",1));
-                        obj(i).list_pixels(:, 1) = frame_x(outline);
-                        obj(i).list_pixels(:, 2) = frame_y(outline);
+                        obj(i).plot_pixels_(:, 1) = frame_x(obj(i).raw);
+                        obj(i).plot_pixels_(:, 2) = frame_y(obj(i).raw);
+                        outline = logical(obj(i).raw - imerode(obj(i).raw, strel("disk",1)));
+                        obj(i).list_pixels_(:, 1) = frame_x(outline);
+                        obj(i).list_pixels_(:, 2) = frame_y(outline);
                         j = j + 1;
                         i = i + 1;
                     end
@@ -253,7 +254,7 @@ classdef MarkedRegion < PhysicalEntity
             %      will have a,b remain the same regardless of order.
             %      default: 0.5
             % Return type: clazz[]
-            index_flag = arrayfun(@(entity) ~isnan(entity) & Null.isNull(entity.coverages_(clazz)), obj);
+            index_flag = arrayfun(@(entity) ~isnan(entity) & ~entity.coverages_.isKey(clazz), obj);
             obj_to_index = obj(index_flag);
             if ~isempty(obj_to_index)
                 obj.logger.info("Calculating %s coverages for %d marked regions", clazz, length(obj_to_index))
@@ -267,7 +268,7 @@ classdef MarkedRegion < PhysicalEntity
                 % array with 2D containing the coverages:
                 % D1:region, D2: entity in frame
                 obj_mat = repmat(obj_to_index', [1, size(phys_pixels, 2)]);
-                coverages = cellfun(@getCoverage, obj_mat, phys_pixels);
+                coverages = arrayfun(@MarkedRegion.getCoverage, obj_mat, phys_pixels);
                 obj.logger.debug("All coverages calculated, saving as properties...")
                 for region_idx=1:length(obj_to_index)
                     % save the found coverages in the corresponding place.
@@ -275,7 +276,7 @@ classdef MarkedRegion < PhysicalEntity
                     % this might end up shorter than the #entities in the
                     % frame
                     coverages_row = coverages(region_idx, :);
-                    obj_to_index(region_idx).coverages_(clazz) = coverages_row(1:find(~isnan(coverages_row, 1, 'last')));
+                    obj_to_index(region_idx).coverages_(clazz) = coverages_row(1:find(~isnan(coverages_row), 1, 'last'));
                 end
             else
                 phys_arr = eval([clazz, '.empty(', num2str(length(obj)), ',0)']);
