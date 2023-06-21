@@ -18,6 +18,9 @@ classdef Defect < PhysicalEntity
         y_pos
         % defect type (topological charge)
         type
+        % comment (normal, spread out, based on neighbouring frames,
+        % unclear)
+        comment
 
     end
     

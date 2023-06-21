@@ -340,6 +340,27 @@ classdef Cell < PhysicalEntity
             end
         end
 
+        function cell_dist = cellDist(obj,obj2)
+
+            obj = flatten(obj);
+            pair_arr = unique(obj2.createNeighborPairs);
+            pair_cells = arrayfun(@(pair) pair.elements(2),pair_arr);
+            cell_dist = [];
+            for i=1:length(obj)
+                if obj(i) == obj2
+                    cell_dist(i) = 0;
+                else
+                    if obj(i).frame ~= obj2.frame
+
+                        cell_dist(i) = Nan;
+                    else
+                        cell_dist(i) = pair_arr(pair_cells == obj(i)).distance;
+                    end
+                end
+            end
+
+        end
+
         function [Q] = calculateCellQ(obj)
             % Get directed bonds for all cells:
             obj = flatten(obj);
