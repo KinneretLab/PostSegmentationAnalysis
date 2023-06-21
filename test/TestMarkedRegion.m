@@ -13,7 +13,7 @@ classdef TestMarkedRegion < matlab.unittest.TestCase
     
     methods(TestMethodSetup)
         function loadExperiment(testCase)
-            testCase.e = Experiment.load('test/example/Cells');
+            testCase.e = Experiment.load('example/Cells');
         end
     end
 
