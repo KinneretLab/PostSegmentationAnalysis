@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/postSegmentationAnalysis.iml" filepath="$PROJECT_DIR$/.idea/postSegmentationAnalysis.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/post-segmentation-analysis.iml" filepath="$PROJECT_DIR$/.idea/post-segmentation-analysis.iml" />
     </modules>
   </component>
 </project>
