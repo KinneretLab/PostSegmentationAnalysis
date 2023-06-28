@@ -312,7 +312,7 @@ classdef Cell < PhysicalEntity
             for i=1:length(obj)
                 fprintf('Finding pairs for cell #%d \n', i);
                 % Create first rank neihgbour pairs
-                if ~Null.isNull(obj(i).neighbors_)
+                if ~Null.isNull(obj(i).neighbors_) & ~isempty(obj(i).neighbors_)
                     cell_pairs = {};
                     cell_pairs{1} = Pair([repmat(obj(i),length(obj(i).neighbors_),1), obj(i).neighbors_'],ones(length(obj(i).neighbors_),1));
                     % Proceed to further ranks:

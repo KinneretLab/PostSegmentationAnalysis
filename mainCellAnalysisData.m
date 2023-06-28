@@ -8,8 +8,8 @@ addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\GroupCodes\
 topMainDir = '\\phhydra\phhydraB\'; % main folder of original files
 rawMainAnalysisDirList= { ... % enter in the following line all sub-directories for movie analysis.
 
-'\SD\2021\Yonit\2021_05\2021_05_06\', ...
-'\SD2\2021\Liora\2021_07\2021_07_26\', ...
+'\SD2\2021\Yonit\2021_06\2021_06_21\', ...
+'\SD2\2021\Yonit\2021_06\2021_06_21\', ...
 
 };
 for i=1:length(rawMainAnalysisDirList),rawMainDirList{i}=[topMainDir,rawMainAnalysisDirList{i}];end
@@ -18,8 +18,9 @@ for i=1:length(rawMainAnalysisDirList),rawMainDirList{i}=[topMainDir,rawMainAnal
 topAnalysisDir='\\phhydra\phhydraB\Analysis\users'; % main folder for movie analysis
 mainAnalysisDirList= { ... % enter in the following line all sub-directories for movie analysis.
 
-'\Yonit\Movie_Analysis\Labeled_cells\SD1_2021_05_06_pos6\', ...
-'\Liora\Movie_Analysis\2021_07_26\2021_07_26_pos1\', ...
+'\Yonit\Movie_Analysis\Labeled_cells\2021_06_21_pos3\', ...
+'\Yonit\Movie_Analysis\Labeled_cells\2021_06_21_pos4\', ...
+
 
 };
 for i=1:length(mainAnalysisDirList),mainDirList{i}=[topAnalysisDir,mainAnalysisDirList{i}];end
@@ -35,8 +36,8 @@ for i=1:length(mainAnalysisDirList),mainDirList{i}=[topAnalysisDir,mainAnalysisD
 % want to run on particular frames (in this example, 1:6 is for the first
 % movie, 1:9 is for the second). If left empty, runs on all frames.
 
-calibrationXY_list = [0.65,0.52]; % um per pixel in XY plane (can be a single value or vector of length of movie list if different for each movie).
-calibrationZ_list = [3,3]; % um per pixel in Z direction(can be a single value or vector of length of movie list if different for each movie).
+calibrationXY_list = [0.52,0.52]; % um per pixel in XY plane (can be a single value or vector of length of movie list if different for each movie).
+calibrationZ_list = [3,3]; % um per pixel in Z directio n(can be a single value or vector of length of movie list if different for each movie).
    
 useDefects_list = 0; % Set to 1 if you are using manually marked defects, and 0 if not. (can be a single value or vector of length of movie list if different for each movie).
 useCenter = 1; % For defect location from manual annotation.

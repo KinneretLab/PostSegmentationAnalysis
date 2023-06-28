@@ -79,11 +79,14 @@ classdef Defect < PhysicalEntity
                        defect_cell(i) = all_cells(ind);
                    end
                 else
-                % Case of single defect:
-                all_cells = obj(i).frames.cells;
-                dist = obj(i).pixelDist2d(all_cells);
-                [~,ind] = min(dist);
-                defect_cell(i) = all_cells(ind);
+                    % Case of single defect:
+                    all_cells = obj(i).frames.cells;
+                    if ~isempty(all_cells)
+                        dist = obj(i).pixelDist2d(all_cells);
+                        [~,ind] = min(dist);
+                        defect_cell(i) = all_cells(ind);
+
+                    end
                 end
             end
         end
