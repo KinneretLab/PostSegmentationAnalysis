@@ -202,18 +202,9 @@ classdef Cell < PhysicalEntity
             obj = flatten(obj);
             fprintf('Getting directed bonds');
             theseDBonds = dBonds(obj); % Currently runs on a 1-dimensional list
-            dbArray = [obj.experiment];
-            dbFolderArray = string([dbArray.folder_]);
-            [~,ia,ic] = unique(dbFolderArray);
-            for i=1:length(ia)
-                fprintf('Creating bond array\n');
-                bondArray{i} = dbArray(ia(i)).bonds;
-                fprintf('Creating bond pixel list array\n');
-                pixelListArray{i} = dbArray(ia(i)).bondPixelLists;
-                fprintf('Creating vertex array\n');
-                vertexArray{i} = dbArray(ia(i)).vertices;
-
-            end
+            theseVertices = obj.vertices; % Get vertices for all cells
+            theseBonds = obj.bonds; % Get bonds for each cell
+            obj.bonds.coords; % Get bonds and get pixel list for all of them
             flags = [];
             for i=1:length(obj)
                 if mod(i,50) == 0
@@ -236,21 +227,20 @@ classdef Cell < PhysicalEntity
                     end
                     % Get ordered vertices
                     orderedVertices = [orderedDBonds.vertex_id];
+                    % Get cell bonds:
+                    cellBonds = theseBonds(i,:);
                     % Get bonds for ordered dbonds:
                     for j=1:length(orderedDBonds)
-                        bondIDArray = [bondArray{ic(i)}.bond_id];
+                        bondIDArray = [cellBonds.bond_id];
                         thisID = orderedDBonds(j).bond_id;
                         flag = (bondIDArray == thisID);
-                        orderedBonds(j) = bondArray{ic(i)}(flag);
+                        orderedBonds(j) = cellBonds(flag);
                     end
                     % Get coordinates for each of the bonds, flip if necessary, and complete outline with vertices:
                     thisOutline = [];
                     for k=1:length(orderedBonds)
-                        thisID = orderedBonds(k).bond_id;
-                        bondIDArray = [pixelListArray{ic(i)}.pixel_bondID];
-                        flags = (bondIDArray == thisID);
-                        orderedBonds(k).pixel_list = pixelListArray{ic(i)}(flags);
-                        startVertex = vertexArray{ic(i)}([vertexArray{ic(i)}.vertex_id] == orderedVertices(k));
+                        cellVertices = theseVertices(i,:);
+                        startVertex = cellVertices([cellVertices.vertex_id] == orderedVertices(k));
                         if isempty(startVertex)
                             theseCoords =  [orderedBonds(k).pixel_list.orig_x_coord,orderedBonds(k).pixel_list.orig_y_coord];
                             thisOutline = [thisOutline; theseCoords];
@@ -377,21 +367,23 @@ classdef Cell < PhysicalEntity
                 if mod(i,50) == 0
                     fprintf('Calculating Q for cell #%d \n', i);
                 end
-                    orderedDBonds = DBond();
-                    orderedDBonds(1) = theseDBonds(i,1);
-                    cellDBonds = theseDBonds(i,:); % Make sure only non-empty dbonds are used:
-                    numDBonds = length(cellDBonds(~isnan(cellDBonds)));
-                    % Order cell's dbonds
-                    if numDBonds>1
-                        for j=1:(numDBonds-1)
-                            nextDBond = orderedDBonds(j).left_dbond_id;
-                            cellDBondIDs = [theseDBonds(i,:).dbond_id];
-                            flag = (cellDBondIDs == nextDBond);
-                            orderedDBonds(j+1) = theseDBonds(i,flag);
-                        end
-                    end
+                     % This was to order the dBonds, but they should be ordered to begin with.       
+%                     orderedDBonds = DBond();
+%                     orderedDBonds(1) = theseDBonds(i,1);
+%                     cellDBonds = theseDBonds(i,:); % Make sure only non-empty dbonds are used:
+%                     numDBonds = length(cellDBonds(~isnan(cellDBonds)));
+%                     % Order cell's dbonds
+%                     if numDBonds>1
+%                         for j=1:(numDBonds-1)
+%                             nextDBond = orderedDBonds(j).left_dbond_id;
+%                             cellDBondIDs = [theseDBonds(i,:).dbond_id];
+%                             flag = (cellDBondIDs == nextDBond);
+%                             orderedDBonds(j+1) = theseDBonds(i,flag);
+%                         end
+%                     end
                     % Get ordered vertices
-                    ordered_vertices = [orderedDBonds.vertex_id];
+                    ordered_vertices = [theseDBonds(i,:).vertex_id];
+                    cell_vertices = these_vertices(i,:);
 
                     if ordered_vertices ~= 0
                         % Place first vertex again at the end of list
@@ -407,8 +399,8 @@ classdef Cell < PhysicalEntity
                         % Run over triangles comprising the cell:
                         for j=1:length(ordered_vertices)-1
 
-                            v1 = these_vertices([ these_vertices.vertex_id]==ordered_vertices(j));
-                            v2 = these_vertices([ these_vertices.vertex_id]==ordered_vertices(j+1));
+                            v1 = cell_vertices([cell_vertices.vertex_id]==ordered_vertices(j));
+                            v2 = cell_vertices([cell_vertices.vertex_id]==ordered_vertices(j+1));
 
                             v1_x = v1.x_pos;
                             v1_y = v1.y_pos;
