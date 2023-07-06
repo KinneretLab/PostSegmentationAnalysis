@@ -200,24 +200,24 @@ classdef Cell < PhysicalEntity
             % you can retrieve them from the variable CELL#outline_.
             % Currently runs on a 1-dimensional list, if multidiemnsional array is given, it is first flattened.
             obj = flatten(obj);
-            fprintf('Getting directed bonds');
+            obj.logger.debug('Getting directed bonds');
             theseDBonds = dBonds(obj); % Currently runs on a 1-dimensional list
             dbArray = [obj.experiment];
             dbFolderArray = string([dbArray.folder_]);
             [~,ia,ic] = unique(dbFolderArray);
             for i=1:length(ia)
-                fprintf('Creating bond array\n');
+                obj.logger.debug('Creating bond array\n');
                 bondArray{i} = dbArray(ia(i)).bonds;
-                fprintf('Creating bond pixel list array\n');
+                obj.logger.debug('Creating bond pixel list array\n');
                 pixelListArray{i} = dbArray(ia(i)).bondPixelLists;
-                fprintf('Creating vertex array\n');
+                obj.logger.debug('Creating vertex array\n');
                 vertexArray{i} = dbArray(ia(i)).vertices;
 
             end
             flags = [];
             for i=1:length(obj)
                 if mod(i,50) == 0
-                    fprintf('Finding outline for cell #%d \n', i);
+                    obj.logger.info('Finding outline for cell #%d \n', i);
                 end
                 if isempty(obj(i).outline_)
                     orderedDBonds = DBond();
@@ -278,9 +278,9 @@ classdef Cell < PhysicalEntity
         function plot_pixels = plot_pixels(obj)
             plot_pixels = {};
             obj = flatten(obj);
-            sprintf('Getting cell outlines')
+            obj.logger.debug('Getting cell outlines')
             obj = outline(obj);
-            disp(sprintf('Finding pixels inside cell outlines'));
+            obj.logger.info('Finding pixels inside cell outlines');
             for i=1:length(obj)
                 if isempty(obj(i).plot_pixels_)
                     minX = floor(min(obj(i).outline_(:,1)));
@@ -310,7 +310,7 @@ classdef Cell < PhysicalEntity
             pair_arr = [];
             obj.frames.cells.neighbors;
             for i=1:length(obj)
-                fprintf('Finding pairs for cell #%d \n', i);
+                obj.logger.info('Finding pairs for cell #%d \n', i);
                 % Create first rank neihgbour pairs
                 if ~Null.isNull(obj(i).neighbors_) & ~isempty(obj(i).neighbors_)
                     cell_pairs = {};
@@ -364,18 +364,18 @@ classdef Cell < PhysicalEntity
         function [Q] = calculateCellQ(obj)
             % Get directed bonds for all cells:
             obj = flatten(obj);
-            sprintf('Getting directed bonds')
+            obj.logger.debug('Getting directed bonds')
             theseDBonds = dBonds(obj); % Currently runs on a 1-dimensional list
-            sprintf('Getting vertices')
+            obj.logger.debug('Getting vertices')
             these_vertices = obj.vertices;
             Q = [];
             Q_xx_cell = [];
             Q_xy_cell = [];
             Q_cell = [];
-            sprintf('Starting Q calculation')
+            obj.logger.info('Starting Q calculation')
             for i=1:length(obj)
                 if mod(i,50) == 0
-                    fprintf('Calculating Q for cell #%d \n', i);
+                    obj.logger.debug('Calculating Q for cell #%d \n', i);
                 end
                     orderedDBonds = DBond();
                     orderedDBonds(1) = theseDBonds(i,1);
@@ -502,7 +502,7 @@ classdef Cell < PhysicalEntity
                     % on xy plane
                     planar_axis = [cos(obj(i).fibre_orientation),sin(obj(i).fibre_orientation),0];
                 else
-                    sprintf('Mode not recognized');
+                    obj.logger.error('Mode not recognized');
                     return
                 end
 

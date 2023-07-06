@@ -38,7 +38,7 @@ classdef Logger < handle
         end
         
         function error(obj, format, varargin)
-            obj.log(@(msg) fprintf(2, msg + '\n'), 'ERROR', 3, format, varargin{:});
+            obj.log(@(msg) cprintf('[0.9,0,0]', msg + '\n'), 'ERROR', 3, format, varargin{:});
         end
         
         function log(obj, log_func, level_name, level, format, varargin)
