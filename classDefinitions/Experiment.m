@@ -201,7 +201,7 @@ classdef Experiment < handle
             for row = 1:length(obj)
                 experiment = obj(row);
                 if ~experiment.data_.isKey(clazz)
-                    obj(1).logger.info("Indexing %ss for Experiment %s", clazz, experiment.folder_);
+                    obj(1).logger.info("Indexing %ss for Experiment %s", clazz, strrep(experiment.folder_.string, '\', '/'));
                     if experiment.files_.isKey(clazz)
                         % load the data from the apropriate table
                         lookup_table = readtable(experiment.files_(clazz),'Delimiter',',');
