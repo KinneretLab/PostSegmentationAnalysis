@@ -207,9 +207,7 @@ classdef Cell < PhysicalEntity
             obj.bonds.coords; % Get bonds and get pixel list for all of them
             flags = [];
             for i=1:length(obj)
-                if mod(i,50) == 0
-                    obj.logger.info('Finding outline for cell #%d \n', i);
-                end
+                obj.logger.progress('Finding outline for cell', i, length(obj));
                 if isempty(obj(i).outline_)
                     orderedDBonds = DBond();
                     orderedDBonds(1) = theseDBonds(i,1);
@@ -300,7 +298,7 @@ classdef Cell < PhysicalEntity
             pair_arr = [];
             obj.frames.cells.neighbors;
             for i=1:length(obj)
-                obj.logger.info('Finding pairs for cell #%d \n', i);
+                obj.logger.progress('Finding pairs for cell', i, length(obj));
                 % Create first rank neihgbour pairs
                 if ~Null.isNull(obj(i).neighbors_) & ~isempty(obj(i).neighbors_)
                     cell_pairs = {};
@@ -364,9 +362,7 @@ classdef Cell < PhysicalEntity
             Q_cell = [];
             obj.logger.info('Starting Q calculation')
             for i=1:length(obj)
-                if mod(i,50) == 0
-                    obj.logger.debug('Calculating Q for cell #%d \n', i);
-                end
+                obj.logger.progress('Calculating Q for cell', i, length(obj));
                      % This was to order the dBonds, but they should be ordered to begin with.
 %                     orderedDBonds = DBond();
 %                     orderedDBonds(1) = theseDBonds(i,1);
