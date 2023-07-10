@@ -296,6 +296,7 @@ classdef (Abstract) PhysicalEntity < handle
             if numel(obj) > 2
                 index = containers.Map;
                 for lookup_idx = 1:numel(obj)
+                    obj.logger.progress("Searching for %ss matching ID %s.%s", lookup_idx, numel(obj), clazz, class(obj(1)), requester_prop);
                     entity = obj(lookup_idx);
                     % skip NaNs
                     if isnan(entity) || isnan(entity.(requester_prop))
@@ -374,6 +375,7 @@ classdef (Abstract) PhysicalEntity < handle
             if numel(obj) > 2
                 index = containers.Map;
                 for lookup_idx = 1:numel(obj)
+                    obj.logger.progress("Searching for %ss matching ID %s.%s", lookup_idx, numel(obj), clazz, class(obj(1)), requester_prop);
                     entity = obj(lookup_idx);
                     % skip NaNs
                     if isnan(entity) || isnan(entity.(requester_prop))

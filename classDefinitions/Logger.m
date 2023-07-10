@@ -2,6 +2,10 @@ classdef Logger < handle
     %LOGGER A utility class useful for informing the user of relevant
     % information. Incorporates time, class, and color to make useful
     % indications.
+
+    properties (Constant)
+        bar_size = 40;
+    end
     
     properties
         clazz
@@ -44,7 +48,7 @@ classdef Logger < handle
                 rate_ = seconds(rate);
             end
             if isempty(rate_)
-                rate_ = seconds(30);
+                rate_ = seconds(0.5);
             end
             out = rate_;
         end
@@ -77,10 +81,8 @@ classdef Logger < handle
                     Logger.lastLineLength(0);
                 end
                 % generate progress string
-                prog_frac = current / total;
-                bar_size = 40;
-                num_done = floor(prog_frac * bar_size);
-                num_left = bar_size - num_done;
+                num_done = floor(current / total * obj.bar_size);
+                num_left = obj.bar_size - num_done;
                 prog_str = sprintf(" [%s%s] (%d/%d)", repmat('#', 1, num_done), repmat('.', 1, num_left), current, total);
                 % do the printing
                 obj.log('[0,0,0.7]', "PROG", 1, format + prog_str, varargin{:});
@@ -90,8 +92,7 @@ classdef Logger < handle
         function log(obj, color, level_name, level, format, varargin)
             if Logger.level <= level
                 time_str = datetime('now');
-                time_str.Format =  'yyyy-MM-dd HH:mm:SS';
-                backspace = "";
+                time_str.Format =  'yyyy-MM-dd HH:mm:ss';
                 if level_name == "PROG"
                     fprintf(repmat('\b', 1, Logger.lastLineLength))
                 end

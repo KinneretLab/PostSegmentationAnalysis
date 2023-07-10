@@ -277,7 +277,6 @@
             err_arrays = cell(length(frame_data), 2 * length(full_data));
             % since for a sequence we are plotting one graph per frame, we
             % need to iterate over each frame first.
-            last_log_time = datetime('now');
             for frame_idx = 1:length(frame_data)
                 if obj.sequence_
                     % figure out which entities should be included in this
@@ -363,10 +362,7 @@
                     % other stuff for them: Y,X_err,Y_err.
                     % Y is done last because it overrides the list of
                     % entries.
-                    if seconds(datetime('now') - last_log_time) > 60 || frame_idx * data_idx == 1 || (frame_idx == length(frame_data) && data_idx == length(full_data))
-                        obj.logger.info('Calculate: calculating Y,X_err,Y_err for frame (%d/%d), experiment (%d/%d)', frame_idx, length(frame_data), data_idx, length(full_data));
-                        last_log_time = datetime('now');
-                    end
+                    obj.logger.progress("Calculate: calculating Y,X_err,Y_err for the frames of experiment (%d/%d)",frame_idx, length(frame_data), data_idx, length(full_data));
                     for key = data_sorted.keys
                         x_err_sorted(key{1}) = obj.smart_apply(obj.x_err_function_, data_sorted(key{1}), obj, data_entry);
                         y_err_sorted(key{1}) = obj.smart_apply(obj.y_err_function_, data_sorted(key{1}), obj, data_entry);
@@ -450,7 +446,7 @@
                         % with binning enabled.
                         sizes = cellfun(@(obj_arr) (length(obj_arr)), raw_data(figure_idx, :));
                         if max(sizes(1:2:end)) ~= min(sizes(1:2:end))
-                            disp("[ERROR] bar graphs can only be drawn if the data is uniform in size.");
+                            obj.log.error("Bar graphs can only be drawn if the data is uniform in size.");
                         end
                         % convert cell array to matrix and draw in a bar
                         % graph.

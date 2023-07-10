@@ -83,7 +83,7 @@ classdef BondPixelList < PhysicalEntity
         
         function obj = dbonds(obj, varargin)
             % DBONDS unsupported.
-            disp("method BondPixelList.dbonds is not supported. Did you mean to use .bonds?");
+            obj.logger.error("method BondPixelList.dbonds is not supported. Did you mean to use .bonds?");
         end
         
         function bonds = bonds(obj, varargin)
@@ -111,7 +111,7 @@ classdef BondPixelList < PhysicalEntity
                 pixels(:,2) = obj.orig_y_coord;
                 pixels = pixels(varargin{:});
             else
-                disp('[ERROR] Method unavailable for arrays, please iterate');
+                obj.logger.error('Method unavailable for arrays, please iterate');
             end
         end
         
@@ -132,7 +132,7 @@ classdef BondPixelList < PhysicalEntity
                 pixels(:,3) = obj.smooth_y_coord;
                 pixels = pixels(varargin{:});
             else
-                disp('[ERROR] Method unavailable for arrays, please iterate');
+                obj.logger.error('Method unavailable for arrays, please iterate');
             end
         end
     end

@@ -50,10 +50,11 @@ classdef TrueVertex < PhysicalEntity
                 % a potential way to make this more efficient is using a
                 % KD-tree. The important thing here to resolve is
                 % duplicate searches.
-                obj.logger.info("Merging vertex lists...");
                 children = {candidates(1, :)};
                 candidates(1, :) = [];
+                total = size(candidates, 1);
                 while size(candidates, 1) > 0
+                    obj.logger.progress("Merging vertex lists", total - size(candidates, 1), total);
                     % search for duplicates
                     found = find(~isnan(candidates) & ismember(candidates, children{end}));
                     if isempty(found)
@@ -66,6 +67,7 @@ classdef TrueVertex < PhysicalEntity
                         children{end} = unique([children{end}, to_append(:)']);
                     end
                 end
+                obj.logger.progress("Merging vertex lists", total, total);
                 solo_vertices = experiment.vertices;
                 solo_vertices = solo_vertices(~ismember(solo_vertices, flat));
                 l = length(solo_vertices);

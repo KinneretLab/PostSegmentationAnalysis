@@ -163,6 +163,7 @@ classdef Frame < PhysicalEntity
             index = containers.Map;
             lookup_result = cell(size(obj));
             for lookup_idx = 1:numel(obj)
+                obj.logger.progress("Searching for %ss contained in the given Frames", lookup_idx, numel(obj), clazz);
                 entity = obj(lookup_idx);
                 % skip NaNs
                 if isnan(entity)
