@@ -8,6 +8,9 @@ function [] = createDefectTable(mainDir,segDir,cellDir,frameList,useCenter)
          cd([mainDir,'\Orientation_Analysis']); load('resultsGroundTruth');
          
          cd(segDir); fileNames=dir ('*.tif*');
+         if isempty(fileNames)
+             fileNames=dir ('*.png*');
+         end
          sortedFileNames = natsortfiles({fileNames.name});
          
          defectCount = 0;
