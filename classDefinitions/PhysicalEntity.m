@@ -69,7 +69,9 @@ classdef (Abstract) PhysicalEntity < handle
                      %%% definitions can lead to code breaks. Make sure to
                      %%% rename both table variables and the class variable
                      %%% if you want to refactor things.
-                    [obj.(names{i})] = values{:, i};
+                     if isprop(obj(1), names{i})
+                        [obj.(names{i})] = values{:, i};
+                     end
                 end
             else
                 % in there are no args, then only one object should be
