@@ -182,7 +182,7 @@ classdef MarkedRegion < PhysicalEntity
                 % special case - prepend the mask directory for iteration
                 mask_directory = experiment.dir("..\Display");
                 mask_directory = mask_directory(string({mask_directory.name}) == "Masks");
-                directories = [mask_directory, directories];
+                directories = [mask_directory, directories'];
 
                 obj(1, length(frames) * length(directories)) = MarkedRegion;
                 % set experiment
@@ -192,23 +192,27 @@ classdef MarkedRegion < PhysicalEntity
                 for frame = frames
                     j = 1;
                     for directory = directories
-                        obj(i).type = string(directory.name);
-                        obj(i).raw = imread([directory.folder, '\', directory.name ,'\', frame.frame_name, '.tiff']) > 0;
-                        obj(i).frame = frame.frame; % if Frame is ever directly stored, you can do `.frame_ = frame` to do the job.
-                        obj(i).area = sum(obj(i).raw, 'all');
-                        obj(i).region_id = uniqueID(frame.frame, j);
-                        obj(i).coverages_ = containers.Map;
-
-                        [frame_x, frame_y] = meshgrid(1:size(obj(i).raw, 1), 1:size(obj(i).raw));
-                        obj(i).plot_pixels_(:, 1) = frame_x(obj(i).raw);
-                        obj(i).plot_pixels_(:, 2) = frame_y(obj(i).raw);
-                        outline = logical(obj(i).raw - imerode(obj(i).raw, strel("disk",1)));
-                        obj(i).list_pixels_(:, 1) = frame_x(outline);
-                        obj(i).list_pixels_(:, 2) = frame_y(outline);
+                        full_path = [directory.folder, '\', directory.name ,'\', frame.frame_name, '.tiff'];
+                        if isfile(full_path)
+                            obj(i).type = string(directory.name);
+                            obj(i).raw = imread(full_path) > 0;
+                            obj(i).frame = frame.frame; % if Frame is ever directly stored, you can do `.frame_ = frame` to do the job.
+                            obj(i).area = sum(obj(i).raw, 'all');
+                            obj(i).region_id = uniqueID(frame.frame, j);
+                            obj(i).coverages_ = containers.Map;
+    
+                            [frame_x, frame_y] = meshgrid(1:size(obj(i).raw, 1), 1:size(obj(i).raw));
+                            obj(i).plot_pixels_(:, 1) = frame_x(obj(i).raw);
+                            obj(i).plot_pixels_(:, 2) = frame_y(obj(i).raw);
+                            % by default this sorts the pixels by conectivity. Note that discontinuous boundaries are atill an issue.
+                            outline = bwboundaries(obj(i).raw, CoordinateOrder="xy");
+                            obj(i).list_pixels_ = vertcat(outline{:});
+                        end
                         j = j + 1;
                         i = i + 1;
                     end
                 end
+                obj(isnan(obj)) = [];
             end
         end
 

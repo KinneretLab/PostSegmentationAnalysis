@@ -46,6 +46,13 @@ classdef TestMarkedRegion < matlab.unittest.TestCase
             testCase.verifyNotEmpty(query_region, "The experiment should be able to filter regions by their frame (used frame 1), but none were found.")
         end
 
+        function markedRegionCanBeIncomplete(testCase)
+            testCase.e.regions;
+            query_region = testCase.e.regions([testCase.e.regions.type] == "MissingFoot");
+            testCase.verifyNotEmpty(query_region, "The experiment should be able to find regions even if some of the frames contain them (used 'MissingFoot')")
+            testCase.verifyLength(query_region, 1, "The region MissingFoot should only contain one region - that of the first frame, but more were found")
+        end
+
         function markedRegionsShouldHaveUniqueIDs(testCase)
             regions = testCase.e.regions;
             ids = [regions.(regions.uniqueID)];
@@ -86,6 +93,13 @@ classdef TestMarkedRegion < matlab.unittest.TestCase
             region.setCoverageCriterion(1);
             found_cells = region.cells;
             testCase.verifyFalse(ismember(particular_id, [found_cells.cell_id]), "Cell "+particular_id+" should be is not completely in the marked region, but the query found it. Does the criterion affect the result?")
+        end
+
+        function markedRegionListPixelsAreWellOrdered(testCase)
+            region_pixels = testCase.e.regions(1).list_pixels{1};
+            region_pixels = [region_pixels; region_pixels(1,:)]; % make it cyclic
+            pixel_diff = abs(diff(region_pixels,1,1));
+            testCase.assertLessThanOrEqual(pixel_diff, 1, "Outline of a marked region (used Mask of frame 1) should be ordered to form a continuous path, but it is not.")
         end
     end
     
