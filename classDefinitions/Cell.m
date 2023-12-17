@@ -276,7 +276,7 @@ classdef Cell < PhysicalEntity
                     minY = floor(min(obj(i).outline_(:,2)));
                     maxY = ceil(max(obj(i).outline_(:,2)));
                     [xq,yq] = meshgrid([minX:maxX],[minY:maxY]);
-                    [in,on] = inpolygon(xq,yq,obj(i).outline_(:,1),obj(i).outline_(:,2));
+                    [in,on] = inpolygon(xq,yq,round(obj(i).outline_(:,1)),round(obj(i).outline_(:,2)));
                     obj(i).plot_pixels_ = [xq(in & (~on)),yq(in & (~on))];
 
                 end

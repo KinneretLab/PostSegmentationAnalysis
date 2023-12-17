@@ -256,7 +256,6 @@ classdef (Abstract) PhysicalEntity < handle
             theta = mod2pi(atan2(S_yx - S_xy, S_xx + S_yy));
             two_phi = (theta + atan2( S_xy + S_yx, S_xx - S_yy));
             triangle_Q = asinh(0.5*sqrt((S_xx-S_yy)^2.+( S_xy+S_yx)^2.)/exp(0.5*Q_kk));
-
         end
 
         function Q_rr = projectQonAxis(Q_xx,Q_xy,axis)

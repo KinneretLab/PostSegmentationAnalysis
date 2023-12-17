@@ -112,7 +112,7 @@ classdef Bond < PhysicalEntity
             obj = flatten(obj);
             coords = obj.coords;
             for i=1:length(coords)
-                plot_pixels{i} = [coords(i).orig_x_coord,coords(i).orig_y_coord];
+                plot_pixels{i} = [round(coords(i).orig_x_coord),round(coords(i).orig_y_coord)];
             end
         end
         

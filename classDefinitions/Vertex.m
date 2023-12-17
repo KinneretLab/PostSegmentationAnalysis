@@ -117,15 +117,15 @@ classdef Vertex < PhysicalEntity
             plot_pixels = {};
             obj = flatten(obj);
             for i=1:length(obj)
-                plot_pixels{i} = [obj(i).x_pos,obj(i).y_pos];
+                plot_pixels{i} = [round(obj(i).x_pos),round(obj(i).y_pos)];
             end
         end
         
         function list_pixels = list_pixels(obj)
             list_pixels = [];
             obj = flatten(obj);
-            list_pixels(:,1) = [obj.x_pos];
-            list_pixels(:,2) = [obj.y_pos];
+            list_pixels(:,1) = [round(obj.x_pos)];
+            list_pixels(:,2) = [round(obj.y_pos)];
           %  list_pixels(:,3) = [obj.z_pos];
 
         end

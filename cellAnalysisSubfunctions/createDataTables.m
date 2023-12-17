@@ -133,7 +133,7 @@ for i = 1:length(sortedDatasets)
     end
     
     catch
-        sprintf(['Skipping ',thisFileName])
+        fprintf(['Skipping ',thisFileName])
     end
 end
 

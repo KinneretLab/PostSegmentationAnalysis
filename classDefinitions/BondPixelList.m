@@ -45,6 +45,14 @@ classdef BondPixelList < PhysicalEntity
                 obj.names_ = table(1,:).Properties.VariableNames;
                 obj = splitapply(@obj.init, table, findgroups(table.pixel_bondID))';
             end
+
+            for i=1:length(obj)
+                if isempty(obj(i).orig_x_coord)|| isempty(obj(i).orig_y_coord)
+                    obj(i).orig_x_coord = obj(i).smooth_x_coord;
+                    obj(i).orig_y_coord = obj(i).smooth_y_coord;
+                end
+            end
+
         end
         
         function new_obj = init(template_obj, varargin)
@@ -129,12 +137,34 @@ classdef BondPixelList < PhysicalEntity
                 pixels = zeros(length(obj.smooth_x_coord), 2);
                 pixels(:,1) = obj.smooth_x_coord;
                 pixels(:,2) = obj.smooth_y_coord;
-                pixels(:,3) = obj.smooth_y_coord;
+                pixels(:,3) = obj.smooth_z_coord;
                 pixels = pixels(varargin{:});
             else
                 obj.logger.error('Method unavailable for arrays, please iterate');
             end
         end
+
+function pixels = discrete(obj, varargin)
+            % ORIG gets the geometrically corrected coordinates of the bond. 
+            % You can also tell it to get a paricular coordinate using the
+            % additional arguments.
+            % note that this does not work on arrays of bond pixel lists,
+            % only singular entities.
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            % Return type: double[]
+            if all(size(obj) == [1, 1])
+                pixels = zeros(length(obj.smooth_x_coord), 2);
+                pixels(:,1) = ceil(obj.smooth_x_coord);
+                pixels(:,2) = ceil(obj.smooth_y_coord);
+                pixels(:,3) = ceil(obj.smooth_z_coord);
+                pixels = pixels(varargin{:});
+            else
+                obj.logger.error('Method unavailable for arrays, please iterate');
+            end
+        end
+        
     end
     
 end
