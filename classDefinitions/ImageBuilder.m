@@ -494,7 +494,12 @@ classdef ImageBuilder <  FigureBuilder & handle
                 end
                 freezeColors;
             else
+                if (layer_data.getMarkersAsLine())
+                    plot(x,y,layer_data.getMarkerLineSpec(),'Color',layer_data.getMarkersColor(),'LineWidth',layer_data.getLineWidth())
+
+                else
                 s=scatter(x,y, marker_size, layer_data.getMarkersColor());
+                end
             end
             s.Marker=layer_data.getMarkersShape();
             s.LineWidth=layer_data.getLineWidth();

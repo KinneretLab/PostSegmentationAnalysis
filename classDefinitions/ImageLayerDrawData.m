@@ -54,7 +54,14 @@ classdef ImageLayerDrawData < handle
         %value (in the layer_arr)
         %type: bool
         markers_size_by_value_
-        %For a marker or quiver layer- the line width of the marker/quiver
+        % Option to draw the marker layer as a line rather than a scatter (good for
+        % outlines of regions)
+        % type: bool
+        markers_as_line_
+        % Option for line style for marker (dashed, etc) if used as line
+        % type: str
+        marker_line_spec_
+        %For a marker or quiver layer- the line width of the marker/quiver        
         %type: float
         line_width_
         %For a quiver layer: indecates whether the quiers will have an
@@ -104,6 +111,8 @@ classdef ImageLayerDrawData < handle
             obj.markers_size_=2;
             obj.markers_color_by_value_= false;
             obj.markers_size_by_value_= false;
+            obj.markers_as_line_ = false;
+            obj.marker_line_spec_ = '-';
             obj.line_width_=0.5;
             obj.quiver_show_arrow_head_=false;
             obj.is_solid_color_=false;
@@ -325,6 +334,37 @@ classdef ImageLayerDrawData < handle
             %returns: float
             value = obj.line_width_;
         end
+
+        function obj = setMarkersAsLine(obj, value)
+            %SETMARKERSASLINE Sets whether the marker layer should be
+            %plotted as a line.
+            %For a marker layer, whether to plot as a line.
+            %type: input: float
+            obj.markers_as_line_ = value;
+        end
+
+        function value = getMarkersAsLine(obj)
+            %GETMARKERSASLINE  whether the marker layer should be
+            %plotted as a line.
+            %For a marker layer, whether to plot as a line.
+            %returns: float
+            value = obj.markers_as_line_;
+        end
+
+        function obj = setMarkerLineSpec(obj, value)
+            %SETMARKERLINESPE Sets the line width of the marker/quiver
+            %For a marker layer that is drawn as a line - the line spec of the marker
+            %type: input: float
+            obj.marker_line_spec_ = value;
+        end
+
+        function value = getMarkerLineSpec(obj)
+            %GETMARKERLINESPEC Gets the line specification of the marker
+            %For a marker layer that is drawn as a line - the line spec of the marker
+            %returns: float
+            value = obj.marker_line_spec_;
+        end
+
 
         function obj = setQuiverShowArrowHead(obj, value)
             %SETQUIVERSHOWARROWHEAD Sets  whether the quiers will have an
