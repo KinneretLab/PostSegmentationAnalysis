@@ -7,6 +7,6 @@ function [ID] = uniqueID(frame,numInFrame)
 a = double(frame);
 b = double(numInFrame);
 ID = (1/2)*(a+b)*(a+b+1)+a;
-ID = int32(ID);
+ID = floor(ID);
 end
 

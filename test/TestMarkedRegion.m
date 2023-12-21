@@ -52,6 +52,13 @@ classdef TestMarkedRegion < matlab.unittest.TestCase
             testCase.verifyNotEmpty(query_region, "The experiment should be able to filter regions by their frame (used frame 1), but none were found.")
         end
 
+        function markedRegionsCannotBeEmpty(testCase)
+            all_regions = testCase.e.regions;
+            region_count = length(all_regions);
+            region_potential = length(testCase.e.frames) * length(unique([all_regions.type]));
+            testCase.assertLessThan(region_count, region_potential, "Empty regions should be deleted from the region list, but here some empty regions were not deleted.");
+        end
+
         function markedRegionCanBeIncomplete(testCase)
             testCase.e.regions;
             query_region = testCase.e.regions([testCase.e.regions.type] == "MissingFoot");
