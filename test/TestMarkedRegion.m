@@ -5,9 +5,15 @@ classdef TestMarkedRegion < matlab.unittest.TestCase
     
     methods(TestClassSetup)
         % Shared setup for the entire test class
-        function loadClasses(~)
+        function loadClasses(testCase)
             addpath('../classDefinitions')
             addpath('../cellAnalysisSubfunctions')
+            search_path = '../*/natsortfiles';
+            while isempty(dir(search_path))
+                search_path = ['../', search_path];
+            end
+            addpath(dir(search_path).folder)
+            testCase.fatalAssertEqual(exist('bwboundaries', 'file'), 2, "Missing the Image Processing Toolbox which contains critical functions used here. Go install it.")
         end
     end
     

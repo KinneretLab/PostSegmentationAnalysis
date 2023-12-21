@@ -205,8 +205,8 @@ classdef MarkedRegion < PhysicalEntity
                             obj(i).plot_pixels_(:, 1) = frame_x(obj(i).raw);
                             obj(i).plot_pixels_(:, 2) = frame_y(obj(i).raw);
                             % by default this sorts the pixels by conectivity. Note that discontinuous boundaries are atill an issue.
-                            outline = bwboundaries(obj(i).raw, CoordinateOrder="xy");
-                            obj(i).list_pixels_ = vertcat(outline{:});
+                            outline = bwboundaries(obj(i).raw);
+                            obj(i).list_pixels_ = vertcat(fliplr(outline{:}));
                         end
                         j = j + 1;
                         i = i + 1;
