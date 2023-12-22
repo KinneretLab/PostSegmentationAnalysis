@@ -56,7 +56,7 @@ classdef TestMarkedRegion < matlab.unittest.TestCase
             all_regions = testCase.e.regions;
             region_count = length(all_regions);
             region_potential = length(testCase.e.frames) * length(unique([all_regions.type]));
-            testCase.assertLessThan(region_count, region_potential, "Empty regions should be deleted from the region list, but here some empty regions were not deleted.");
+            testCase.verifyLessThan(region_count, region_potential, "Empty regions should be deleted from the region list, but here some empty regions were not deleted.");
         end
 
         function markedRegionCanBeIncomplete(testCase)
@@ -98,6 +98,18 @@ classdef TestMarkedRegion < matlab.unittest.TestCase
             testCase.verifyTrue(ismember(particular_id, [found_bonds.bond_id]), "Bond "+particular_id+" should be in the marked region, but that bond was not in the query result")
         end
 
+        function markedRegionCellsCallCanUseArrays(testCase)
+            region_arr = testCase.e.regions(1:2);
+            contained_cells = region_arr.cells;
+            testCase.verifyEqual(size(contained_cells,1), 2, "Applying a lookup on a list of entities should be applied on both, wih each entry in dim 1 corresponding to an input.");
+        end
+
+        function markedRegionCellsCallFromDifferentFramesCanUseArrays(testCase)
+            region_arr = testCase.e.regions([1, end]);
+            contained_cells = region_arr.cells;
+            testCase.verifyEqual(size(contained_cells,1), 2, "Applying a lookup on a list of entities sourced by different frames should treat the objects seperately.");
+        end
+
         function markedRegionCanAdjustInclusionCriterion(testCase)
             region = testCase.e.regions(2);
             particular_id = testCase.e.cells(81).cell_id;
@@ -112,7 +124,7 @@ classdef TestMarkedRegion < matlab.unittest.TestCase
             region_pixels = testCase.e.regions(1).list_pixels{1};
             region_pixels = [region_pixels; region_pixels(1,:)]; % make it cyclic
             pixel_diff = abs(diff(region_pixels,1,1));
-            testCase.assertLessThanOrEqual(pixel_diff, 1, "Outline of a marked region (used Mask of frame 1) should be ordered to form a continuous path, but it is not.")
+            testCase.verifyLessThanOrEqual(pixel_diff, 1, "Outline of a marked region (used Mask of frame 1) should be ordered to form a continuous path, but it is not.")
         end
     end
     

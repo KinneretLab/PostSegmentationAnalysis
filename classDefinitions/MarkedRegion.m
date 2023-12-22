@@ -267,7 +267,8 @@ classdef MarkedRegion < PhysicalEntity
                 % Cell degrees of freedom: region,cell_in_frame (1D)
                 % Array degrees of freedom D1:pixel,D2:dimension
                 phys_candidates = obj_to_index.frames.lookupByFrame(clazz);
-                phys_pixels = reshape(phys_candidates.plot_pixels, size(phys_candidates));
+                phys_pixels = cell(size(phys_candidates));
+                phys_pixels(~isnan(phys_candidates)) = phys_candidates.plot_pixels;
                 % as a result of the cellfun, the cell array turns into an
                 % array with 2D containing the coverages:
                 % D1:region, D2: entity in frame
