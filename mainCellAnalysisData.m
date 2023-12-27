@@ -124,18 +124,20 @@ for n=1:length(mainDirList)
     end
     frameArr = (thisFrameList)';
     frame = num2cell(thisFrameList)';
-    frame_name = ([sortedFolderNames(thisFrameList)])';
+    frame_name = [sortedFolderNames(thisFrameList)]';
+    verification_str = string(fileread(cellDir + "/verified.txt"));
+    verified_segmentation = ismember(thisFrameList, split(verification_str, ","));
     timeStampDir = [rawMainDirList{n},'\TimeStamps'];
     if exist(timeStampDir)==7
         underscores = find(mainAnalysisDirList{n}=='_');
         movieName = mainAnalysisDirList{n}((underscores(end-2)-4):(end-1));
         time_sec = getTimeStamps(timeStampDir,movieName,frameArr);
-        frames = table(frame,frame_name, time_sec);
-        clear('frame','frame_name','time_sec');
+        frames = table(frame,frame_name, time_sec, verified_segmentation);
+        clear('frame','frame_name','time_sec', 'verified_segmentation');
 
     else
-        frames = table(frame,frame_name);
-        clear('frame','frame_name');
+        frames = table(frame,frame_name, verified_segmentation);
+        clear('frame','frame_name', 'verified_segmentation');
     end
     cd(cellDir); writetable(frames,'frames.csv','Delimiter',',')
 
