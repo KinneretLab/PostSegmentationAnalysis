@@ -118,8 +118,8 @@ classdef Experiment < handle
             if nargin > 0
                 obj.folder_ = Path(folder);
                 obj.data_ = containers.Map();
-                obj.files_ = containers.Map(cellfun(@class,{Cell, Bond, Vertex, DBond, Frame, BondPixelList, Defect}, 'UniformOutput', false), ...
-                    cellfun(@(file) string(Path(folder) \ file + ".csv"), {'cells', 'bonds', 'vertices', 'directed_bonds', 'frames', 'bond_pixels','defects'}, 'UniformOutput', false));
+                obj.files_ = containers.Map(cellfun(@class,{Cell, Bond, Vertex, DBond, Frame, BondPixelList, Defect, Event}, 'UniformOutput', false), ...
+                    cellfun(@(file) string(Path(folder) \ file + ".csv"), {'cells', 'bonds', 'vertices', 'directed_bonds', 'frames', 'bond_pixels','defects','events'}, 'UniformOutput', false));
             else
                 obj.folder_ = nan;
             end
@@ -350,6 +350,19 @@ classdef Experiment < handle
             %   the result.
             % Return type: FRAME[] with size (1, ?)
             defect_arr = obj.lookup(class(Defect), varargin{:});
+        end
+
+        function defect_arr = events(obj, varargin)
+            % events Retrieves all events from the experiment(s), and loads/constructs them if neccesary.
+            % Additional arguments can be applied to get select slices or a
+            % conditional filtering
+            % for example, exp.cells([exp.cells.confidence] > 0.5) will
+            % only yield cells with a confidence bigger than 0.5
+            % Parameters:
+            %   varargin: additional MATLAB builtin operations to apply on
+            %   the result.
+            % Return type: Event[] with size (1, ?)
+            defect_arr = obj.lookup(class(Event), varargin{:});
         end
 
         function frame_arr = cellPairsExp(obj)

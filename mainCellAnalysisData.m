@@ -125,8 +125,12 @@ for n=1:length(mainDirList)
     frameArr = (thisFrameList)';
     frame = num2cell(thisFrameList)';
     frame_name = [sortedFolderNames(thisFrameList)]';
-    verification_str = string(fileread(cellDir + "/verified.txt"));
-    verified_segmentation = ismember(thisFrameList, split(verification_str, ","));
+    if exist(cellDir + "/verified.txt")==7
+        verification_str = string(fileread(cellDir + "/verified.txt"));
+        verified_segmentation = ismember(thisFrameList, split(verification_str, ","));
+    else
+        verified_segmentation = zeros(size(frame));
+    end
     timeStampDir = [rawMainDirList{n},'\TimeStamps'];
     if exist(timeStampDir)==7
         underscores = find(mainAnalysisDirList{n}=='_');
