@@ -13,6 +13,9 @@ classdef Frame < PhysicalEntity
         % the time since the start of the experiment the frame was captured.
         % type: double
         time_sec
+        % was the cell segmentation verified by a qualified reviewer? true
+        % if it was validated, false otherwise.
+        verified_segmentation
         % internal parameter holding the mask image.
         % type: boolean[]
         mask_
