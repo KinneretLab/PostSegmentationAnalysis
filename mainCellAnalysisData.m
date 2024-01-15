@@ -5,21 +5,20 @@ addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\GroupCodes\
 %% 0.1 Define mainDirList
 
 % Locations of original data - needed only for timestamps
-topMainDir = '\\phhydra\phhydraB\'; % main folder of original files
+topMainDir = 'Z:\SD\2021\Yonit\2021_05\'; % main folder of original files
 rawMainAnalysisDirList= { ... % enter in the following line all sub-directories for movie analysis.
 
-'\SD2\2021\Yonit\2021_06\2021_06_21\', ...
-'\SD2\2021\Yonit\2021_06\2021_06_21\', ...
+'2021_05_06\', ...
+
 
 };
 for i=1:length(rawMainAnalysisDirList),rawMainDirList{i}=[topMainDir,rawMainAnalysisDirList{i}];end
 
 
-topAnalysisDir='\\phhydra\phhydraB\Analysis\users'; % main folder for movie analysis
+topAnalysisDir='Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\'; % main folder for movie analysis
 mainAnalysisDirList= { ... % enter in the following line all sub-directories for movie analysis.
 
-'\Yonit\Movie_Analysis\Labeled_cells\2021_06_21_pos3\', ...
-'\Yonit\Movie_Analysis\Labeled_cells\2021_06_21_pos4\', ...
+'SD1_2021_05_06_pos6\', ...
 
 
 };
@@ -32,14 +31,14 @@ for i=1:length(mainAnalysisDirList),mainDirList{i}=[topAnalysisDir,mainAnalysisD
  frameList = cell(1,length(mainAnalysisDirList));
 % frameList = {[1:89,90:5:230,235:275,280:5:305],[1:8,10:121,123:143,145:157,159,161:181,183:1140],[]}; % Enter specific frame ranges in this format if you
 % frameList = {[1:19,21:25,27:32],[]}; % Enter specific frame ranges in this format if you
-% frameList = {[354:363]}; 
+% frameList = {[28:31]}; 
 % want to run on particular frames (in this example, 1:6 is for the first
 % movie, 1:9 is for the second). If left empty, runs on all frames.
 
-calibrationXY_list = [0.52,0.52]; % um per pixel in XY plane (can be a single value or vector of length of movie list if different for each movie).
-calibrationZ_list = [3,3]; % um per pixel in Z directio n(can be a single value or vector of length of movie list if different for each movie).
+calibrationXY_list = [0.65]; % um per pixel in XY plane (can be a single value or vector of length of movie list if different for each movie).
+calibrationZ_list = [3]; % um per pixel in Z directio n(can be a single value or vector of length of movie list if different for each movie).
    
-useDefects_list = 0; % Set to 1 if you are using manually marked defects, and 0 if not. (can be a single value or vector of length of movie list if different for each movie).
+useDefects_list = 1; % Set to 1 if you are using manually marked defects, and 0 if not. (can be a single value or vector of length of movie list if different for each movie).
 useCenter = 1; % For defect location from manual annotation.
 disp('Please make sure you have run the orientation analysis on these movies/datasets')
 %% 0.3 Define general parameters for analysis

@@ -22,7 +22,7 @@ end
 % Run over all prescribed frames:
 
  for k = frames
-    try
+     try
     thisFolder = sortedFolderNames{k};
     cd([segDir,'\',thisFolder]);
     
@@ -459,6 +459,7 @@ end
                         conj_ordered_vert = frame_dBonds(findConj).ordered_vertices;
                         if isequal(db_ordered_vert,fliplr(conj_ordered_vert))
                             frame_dBonds(t).conjugate_dBond = frame_dBonds(findConj).dbond_id;
+                            frame_dBonds(findConj).conjugate_dBond = frame_dBonds(t).dbond_id;
                             frame_dBonds(t).bond = db_bond(t2);
                         else
                             frame_dBonds(t).bond = db_bond(db_bond~=db_bond(t2));

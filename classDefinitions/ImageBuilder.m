@@ -465,9 +465,15 @@ classdef ImageBuilder <  FigureBuilder & handle
 
         function drawMarkerLayer(obj, layer, layer_num)
             layer_data=obj.layers_data_{layer_num};
-            x=layer(:,1);
-            y=layer(:, 2);
-            value=layer(:,3);
+            if iscell(layer)
+                x=layer{1}(:,1);
+                y=layer{1}(:, 2);
+                value=layer{2}*ones(size(x));
+            else
+                x=layer(:,1);
+                y=layer(:, 2);
+                value=layer(:,3);
+            end
             if isempty(layer_data.getScale())
                 mi=min(value);
                 ma=max(value);
