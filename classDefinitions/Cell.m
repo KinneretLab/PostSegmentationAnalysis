@@ -226,7 +226,7 @@ classdef Cell < PhysicalEntity
                     % Get ordered vertices
                     orderedVertices = [orderedDBonds.vertex_id];
                     % Get cell bonds:
-                    cellBonds = theseBonds(i,:);
+                    cellBonds = unique(theseBonds(i,:));
                     % Get bonds for ordered dbonds:
                     for j=1:length(orderedDBonds)
                         bondIDArray = [cellBonds.bond_id];
@@ -409,6 +409,7 @@ classdef Cell < PhysicalEntity
                             % normal and going through the centre of
                             % the cell:
                             N = [obj(i).norm_x,obj(i).norm_y,obj(i).norm_z];
+
                             tri_verts = [c_x,c_y,c_z; v2_x,v2_y,v2_z; v1_x,v1_y,v1_z]; % To make the tirangles counter-clockwise when y is read bottom to top
                             proj = tri_verts - ((tri_verts - [c_x,c_y,c_z])*(N')) * N;
 
@@ -418,6 +419,11 @@ classdef Cell < PhysicalEntity
                             RY = [Nprime(3) 0 -Nprime(1); 0 1 0 ; Nprime(1) 0 Nprime(3)];
                             translatedProj = proj-[c_x,c_y,c_z];
                             rotatedProj = (RY*(RZ*translatedProj'))';
+
+                            % Deal with case of N being in the Z direction
+                            if or(round(N,4) == [0,0,1],round(N,4) == [0,0,-1])
+                                rotatedProj = translatedProj;
+                            end
 
                             % Calculate Q for triangle on xy plane
 

@@ -511,6 +511,11 @@ classdef ImageBuilder <  FigureBuilder & handle
             s.LineWidth=layer_data.getLineWidth();
             s.MarkerEdgeAlpha=layer_data.getOpacity();
             s.MarkerFaceAlpha=layer_data.getOpacity();
+            if (layer_data.getMarkersFill())
+                s.MarkerFaceColor="flat";
+                s.MarkerEdgeColor = "none";
+            end
+
         end
 
         function drawQuiverLayer(obj, layer, layer_num)

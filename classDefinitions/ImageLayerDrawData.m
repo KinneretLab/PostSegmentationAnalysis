@@ -45,6 +45,10 @@ classdef ImageLayerDrawData < handle
         %they aren't displayed by the value (markers_size_by_value_=false)).
         %type: float values between 0 and inf
         markers_size_
+        %For a marker layer, for circles or squares, whether to fill the
+        %marker or leave as outline.
+        %type: bool
+        markers_fill_
         %Indicates whether the color of the markers will be set by the
         %value (in the layer_arr) if true the colormap used is the one set in
         %the property colormap_
@@ -109,6 +113,7 @@ classdef ImageLayerDrawData < handle
             obj.markers_shape_="o";
             obj.markers_color_="red";
             obj.markers_size_=2;
+            obj.markers_fill_=false;
             obj.markers_color_by_value_= false;
             obj.markers_size_by_value_= false;
             obj.markers_as_line_ = false;
@@ -250,11 +255,21 @@ classdef ImageLayerDrawData < handle
             %by matlab.
             %type: str
             colors=PresetValues.getColors;
-            if(ismember(value, colors))
-                obj.markers_color_ = value;
+
+            if isstring(value)
+                if(ismember(value, colors))
+                    obj.markers_color_ = value;
+                else
+                    obj.logger.error("Coundn't set value for setMarkersColor please check if colormap is one recognized by matlab");
+                end
             else
-                obj.logger.error("Coundn't set value for setMarkersColor please check if the color is one recognized by matlab");
+                if (size(value,1) == 1 && size(value,2)==3)
+                    obj.markers_color_ = value;
+                else
+                    obj.logger.error("Coundn't set value for setMarkersColor please check if colormap is one recognized by matlab");
+                end
             end
+
         end
 
         function value = getMarkersColor(obj)
@@ -277,6 +292,19 @@ classdef ImageLayerDrawData < handle
             %they aren't displayed by the value (markers_size_by_value_=false)).
             %returns: float values between 0 and inf
             value = obj.markers_size_;
+        end
+        function obj = setMarkersFill(obj, value)
+            %SETMARKERSFILL  Sets the fill of the markers
+            %For a marker or quiver layer- whether the marker is filled our outlined.
+            %type: input: bool
+            obj.markers_fill_ = value;
+        end
+
+        function value = getMarkersFill(obj)
+            %GETMARKERSFILL  Gets the fill of the markers
+            %For a marker or quiver layer- whether the marker is filled our outlined.
+            %returns: bool
+            value = obj.markers_fill_;
         end
 
 
