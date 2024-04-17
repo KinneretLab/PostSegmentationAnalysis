@@ -7,9 +7,17 @@ function [] = createDefectTable(mainDir,segDir,cellDir,frameList,useCenter)
          dirLocalOP = [mainDir,'\Orientation_Analysis\LocalOP']; % masked local order parameter field
          cd([mainDir,'\Orientation_Analysis']); load('resultsGroundTruth');
          
-         cd(segDir); fileNames=dir ('*.tif*');
+         try
+             cd(segDir); fileNames=dir ('*.tif*');
          if isempty(fileNames)
              fileNames=dir ('*.png*');
+         end
+
+         catch
+            cd([cellDir,'Adjusted_cortices']); fileNames=dir ('*.tif*');
+         if isempty(fileNames)
+             fileNames=dir ('*.png*');
+         end
          end
          sortedFileNames = natsortfiles({fileNames.name});
          

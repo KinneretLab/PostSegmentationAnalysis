@@ -389,8 +389,8 @@ classdef ImageBuilder <  FigureBuilder & handle
             frame=obj.data_{1}(frame_num);
             name=frame.frame_name;
             fname = fullfile(obj.output_folder_, sprintf("%s.%s",name,obj.save_format_));
-            xlim(xlims);
-            ylim(ylims);
+             xlim(ylims);
+             ylim(xlims);
             switch obj.save_format_
                 case "png"
                     if(obj.image_data.getShowColorbar || obj.image_data.getImageTitle~="")

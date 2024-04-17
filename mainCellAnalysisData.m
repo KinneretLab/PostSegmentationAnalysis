@@ -5,20 +5,20 @@ addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\GroupCodes\
 %% 0.1 Define mainDirList
 
 % Locations of original data - needed only for timestamps
-topMainDir = 'Z:\SD\2021\Yonit\2021_05\'; % main folder of original files
+topMainDir = '\\phhydra\data-new\phhydra\spinning-disk\DATA\Yonit\2019\2019_08\'; % main folder of original files
 rawMainAnalysisDirList= { ... % enter in the following line all sub-directories for movie analysis.
 
-'2021_05_06\', ...
+'2019_08_21\', ...
 
 
 };
 for i=1:length(rawMainAnalysisDirList),rawMainDirList{i}=[topMainDir,rawMainAnalysisDirList{i}];end
 
 
-topAnalysisDir='Z:\Analysis\users\Yonit\Movie_Analysis\Labeled_cells\'; % main folder for movie analysis
+topAnalysisDir='Z:\Analysis\users\Yonit\Movie_Analysis\Channels\'; % main folder for movie analysis
 mainAnalysisDirList= { ... % enter in the following line all sub-directories for movie analysis.
 
-'SD1_2021_05_06_pos6\', ...
+'2019_08_21_pos2\', ...
 
 
 };
@@ -35,7 +35,7 @@ for i=1:length(mainAnalysisDirList),mainDirList{i}=[topAnalysisDir,mainAnalysisD
 % want to run on particular frames (in this example, 1:6 is for the first
 % movie, 1:9 is for the second). If left empty, runs on all frames.
 
-calibrationXY_list = [0.65]; % um per pixel in XY plane (can be a single value or vector of length of movie list if different for each movie).
+calibrationXY_list = [1.28]; % um per pixel in XY plane (can be a single value or vector of length of movie list if different for each movie).
 calibrationZ_list = [3]; % um per pixel in Z directio n(can be a single value or vector of length of movie list if different for each movie).
    
 useDefects_list = 1; % Set to 1 if you are using manually marked defects, and 0 if not. (can be a single value or vector of length of movie list if different for each movie).
@@ -115,15 +115,29 @@ for n=1:length(mainDirList)
     % Frames table
     disp('Writing frames table')
     
-    sortedFolderNames = listFoldersInDir(segDir);
-    if isempty(frameList{n})
-        thisFrameList = 1:length(sortedFolderNames);
+    if exist(segDir)
+        sortedFolderNames = listFoldersInDir(segDir);
+        frame_name = [sortedFolderNames(thisFrameList)]';
+        if isempty(frameList{n})
+            thisFrameList = 1:length(sortedFolderNames);
+        else
+            thisFrameList = frameList{n};
+        end
+
     else
-        thisFrameList = frameList{n};
+        cd([cellDir,'\Adjusted_cortices'])
+        sortedFolderNames = dir('*.tiff');
+        if isempty(frameList{n})
+            thisFrameList = 1:length(sortedFolderNames);
+        else
+            thisFrameList = frameList{n};
+        end
+        frame_name = arrayfun(@(arr) arr.name, sortedFolderNames(thisFrameList), 'UniformOutput', false);
+
     end
+
     frameArr = (thisFrameList)';
     frame = num2cell(thisFrameList)';
-    frame_name = [sortedFolderNames(thisFrameList)]';
     if exist(cellDir + "/verified.txt")==7
         verification_str = string(fileread(cellDir + "/verified.txt"));
         verified_segmentation = ismember(thisFrameList, split(verification_str, ","));
