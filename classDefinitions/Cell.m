@@ -172,7 +172,7 @@ classdef Cell < PhysicalEntity
             %   the result.
             % Return type: DOUBLE[]
             full_q = obj.getOrCalculate('double', ["Q_xx","Q_xy","Q"], @calculateCellQ,varargin{:});
-            q_xx = full_q(1,:);   
+            q_xx = reshape(full_q(:,1), size(obj));
         end
 
         function q_xy = q_xy(obj, varargin)
@@ -182,7 +182,7 @@ classdef Cell < PhysicalEntity
             %   the result.
             % Return type: DOUBLE[]
             full_q = obj.getOrCalculate('double', ["Q_xx","Q_xy","Q"], @calculateCellQ,varargin{:});
-            q_xy = full_q(2,:);
+            q_xy = reshape(full_q(:,2), size(obj));
         end
 
         function q = q(obj, varargin)
@@ -192,7 +192,7 @@ classdef Cell < PhysicalEntity
             %   the result.
             % Return type: DOUBLE[]
             full_q = obj.getOrCalculate('double', ["Q_xx","Q_xy","Q"], @calculateCellQ,varargin{:});
-            q = full_q(3,:);
+            q = reshape(full_q(:,3), size(obj));
         end
 
         function obj = outline(obj)
@@ -381,7 +381,7 @@ classdef Cell < PhysicalEntity
                     ordered_vertices = [theseDBonds(i,:).vertex_id];
                     cell_vertices = these_vertices(i,:);
 
-                    if ordered_vertices ~= 0
+                    if ordered_vertices ~= 0 & ~isnan(ordered_vertices)
                         % Place first vertex again at the end of list
                         % of ordered vertices:
                         ordered_vertices = [ordered_vertices,ordered_vertices(1)];

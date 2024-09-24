@@ -1,6 +1,23 @@
 %% 0. Initialization:
 clear all; close all;
-addpath(genpath('\\phhydra\phhydraB\Analysis\users\Yonit\MatlabCodes\GroupCodes\'));
+search_path = '../*/natsortfiles';
+while isempty(dir(search_path))
+    search_path = ['../', search_path];
+end
+found = dir(search_path);
+found = found(1).folder;
+addpath(found)
+addpath([found, '/..'])
+search_path = '../*/manualDefectAnalysis';
+while isempty(dir(search_path))
+    search_path = ['../', search_path];
+end
+found = dir(search_path);
+found = found(1).folder;
+addpath(found)
+addpath([found, '/..'])
+addpath('cellAnalysisSubfunctions')
+addpath('3D_correction')
 
 %% 0.1 Define mainDirList
 
@@ -69,7 +86,7 @@ for n=1:length(mainDirList)
     %% 2. Extract all cell data from segmentation images and vertex images saved from Tissue Analyzer.
     disp('Extracting raw cell data')
     extractCellDataTMformat(segDir,maskDir,frameList{n},rawDatasetsDir);
-    
+
     %% 3. Apply geometric correction to cell outlines in "fullCellData", and calculate area, orientation, and aspect ratio. Save back into struct.
     disp('Applying geometric correction')
     cells3DCorrectionTMformat(mainDir,rawDatasetsDir,outlineDir,segDir, calibrationXY, calibrationZ,umCurvWindow,cellHMnum,frameList{n});
@@ -117,12 +134,12 @@ for n=1:length(mainDirList)
     
     if exist(segDir)
         sortedFolderNames = listFoldersInDir(segDir);
-        frame_name = [sortedFolderNames(thisFrameList)]';
         if isempty(frameList{n})
             thisFrameList = 1:length(sortedFolderNames);
         else
             thisFrameList = frameList{n};
         end
+        frame_name = [sortedFolderNames(thisFrameList)]';
 
     else
         cd([cellDir,'\Adjusted_cortices'])
@@ -145,9 +162,10 @@ for n=1:length(mainDirList)
         verified_segmentation = zeros(size(frame));
     end
     timeStampDir = [rawMainDirList{n},'\TimeStamps'];
-    if exist(timeStampDir)==7
-        underscores = find(mainAnalysisDirList{n}=='_');
-        movieName = mainAnalysisDirList{n}((underscores(end-2)-4):(end-1));
+    if exist(timeStampDir, 'dir')==7
+        movieName = dir(segDir + "*.tif*");
+        movieName = regexprep(movieName(1).name, "_T.*", "");
+        movieName = regexprep(movieName, "pos_", "pos");
         time_sec = getTimeStamps(timeStampDir,movieName,frameArr);
         frames = table(frame,frame_name, time_sec, verified_segmentation);
         clear('frame','frame_name','time_sec', 'verified_segmentation');
