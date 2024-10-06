@@ -153,6 +153,7 @@ classdef ImageLayerDrawData < handle
             % Input: type: string
             %returns: ImageDrawData
             colormaps=PresetValues.getColormaps;
+            value=convertCharsToStrings(value);
             if isstring(value)
                 if(ismember(value, colormaps))
                     obj.colormap_ = value;
