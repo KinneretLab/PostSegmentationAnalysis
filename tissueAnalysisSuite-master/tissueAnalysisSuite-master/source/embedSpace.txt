@@ -1,5 +1,0 @@
-embedSpace
-===============================================
-
-.. automodule:: +embedSpace
-    :members:

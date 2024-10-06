@@ -1,5 +1,0 @@
-measure
-===============================================
-
-.. automodule:: +measure
-    :members:

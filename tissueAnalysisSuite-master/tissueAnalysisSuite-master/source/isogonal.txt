@@ -1,5 +1,0 @@
-isogonal
-===============================================
-
-.. automodule:: +isogonal
-    :members:

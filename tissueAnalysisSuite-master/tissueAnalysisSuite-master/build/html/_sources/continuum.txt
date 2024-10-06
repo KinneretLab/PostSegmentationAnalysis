@@ -1,5 +1,0 @@
-continuum
-===============================================
-
-.. automodule:: +continuum
-    :members:
