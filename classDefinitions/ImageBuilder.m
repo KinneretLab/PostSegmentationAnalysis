@@ -53,17 +53,12 @@ classdef ImageBuilder <  FigureBuilder & handle
             obj@FigureBuilder()
 
             % generic global search for a particular folder; works independent of user
-            search_path = '../*/MatlabGeneralFunctions';
+            search_path = '../*/matlab-utility-functions';
             while isempty(dir(search_path))
                 search_path = ['../', search_path];
             end
             addpath(dir(search_path).folder)
             search_path = '../*/freezeColors';
-            while isempty(dir(search_path))
-                search_path = ['../', search_path];
-            end
-            addpath(dir(search_path).folder)
-            search_path = '../*/gui';
             while isempty(dir(search_path))
                 search_path = ['../', search_path];
             end
