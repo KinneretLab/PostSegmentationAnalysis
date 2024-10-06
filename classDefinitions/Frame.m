@@ -175,14 +175,14 @@ classdef Frame < PhysicalEntity
                 % to increase efficiency, we sort the search targets by
                 % frame.
                 map_key = entity.experiment.uniqueName;
-                full_map_key = map_key + ':' + entity.frame;
+                full_map_key = map_key + ":" + entity.frame;
                 if ~index.isKey(full_map_key)
                     % if the map is not aware of the frame, index the
                     % frame (and other frames in the experiment)
                     full_phys = entity.experiment.lookup(clazz);
                     frame_num = [full_phys.(full_phys.frameID)];
                     for frame_id=unique(frame_num)
-                        index(map_key + ':' + frame_id) = full_phys(frame_num == frame_id);
+                        index(map_key + ":" + frame_id) = full_phys(frame_num == frame_id);
                     end
                 end
                 % no need to actually look up anything, the index already
